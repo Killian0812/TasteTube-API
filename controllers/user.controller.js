@@ -87,36 +87,36 @@ const handleChangePassword = async (req, res) => {
             const { oldPassword, newPassword, matchPassword } = req.body;
             if (newPassword !== matchPassword) {
                 // console.log(newPassword, matchPassword);
-                return res.status(401).json('Confirm password does not match')
+                return res.status(401).json({ "message": 'Confirm password does not match' })
             }
 
             const correctPassword = await bcrypt.compare(oldPassword, user.password);
             if (correctPassword) {
                 bcrypt.genSalt(10, (err, salt) => {
                     if (err) {
-                        return res.status(500).json('Internal Server Error');
+                        return res.status(500).json({ "message": 'Internal Server Error' });
                     }
 
                     // Hash the password using the generated salt
                     bcrypt.hash(newPassword, salt, async (err, hashedPassword) => {
                         if (err) {
-                            return res.status(500).json("Error hashing password: " + err);
+                            return res.status(500).json({ "message": "Error hashing password: " + err });
                         }
                         user.password = hashedPassword;
                         await user.save();
-                        return res.status(200).json('Password saved');
+                        return res.status(200).json({ "message": 'Password saved' });
                     });
                 });
             }
             else
-                return res.status(401).json('Current password does not correct')
+                return res.status(401).json({ "message": 'Current password does not correct' })
         }
         else {
-            return res.status(500).json('Internal Server Error');
+            return res.status(500).json({ "message": 'Internal Server Error' });
         }
     } catch (error) {
         console.log(error);
-        return res.status(500).json('Internal Server Error');
+        return res.status(500).json({ "message": 'Internal Server Error' });
     }
 }
 

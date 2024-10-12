@@ -1,10 +1,14 @@
 const JWT = require('jsonwebtoken');
 const { generateFromEmail } = require("unique-username-generator");
 var User = require('../models/user.model');
+const { EMAIL_REGEX } = require('../utils/regex');
 
 const handleRegister = async (req, res) => {
     const email = req.body.email;
     const password = req.body.password;
+
+    if (!EMAIL_REGEX.test(email))
+        return res.status(400).json({ "message": "Not a valid email address" });
 
     let existingUser = await User.findOne({ email });
     if (existingUser) {
@@ -56,7 +60,7 @@ const handleRegister = async (req, res) => {
         })
         .catch(err => {
             console.log(err);
-            return res.status(400).json(err)
+            return res.status(400).json({ "message": err })
         });
 }
 module.exports = { handleRegister };

@@ -1,9 +1,8 @@
 const JWT = require('jsonwebtoken');
 const { v4: uuidv4 } = require('uuid');
-var User = require('../models/user.model');
 const { generateFromEmail } = require("unique-username-generator");
-
-const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+var User = require('../models/user.model');
+const { EMAIL_REGEX } = require('../utils/regex');
 
 const handleLogin = async (req, res) => {
     const email = req.body.email;
@@ -13,15 +12,15 @@ const handleLogin = async (req, res) => {
 
     let existingUser = null;
     if (!EMAIL_REGEX.test(email))
-        return res.status(400).json("Invalid email");
+        return res.status(400).json({ "message": "Invalid email" });
 
     existingUser = await User.findOne({ email: email });
     if (!existingUser)
-        return res.status(400).json("User not found");
+        return res.status(400).json({ "message": "User not found" });
 
     try {
         if (password != existingUser.password)
-            return res.status(400).json("Wrong Password");
+            return res.status(400).json({ "message": "Wrong Password" });
 
         // create JWTs
         const accessToken = JWT.sign(
@@ -70,7 +69,7 @@ const handleLogin = async (req, res) => {
         });
     } catch (error) {
         console.log(error);
-        res.status(500).json("Error Authenticating User");
+        res.status(500).json({ "message": "Error Authenticating User" });
     }
 }
 
@@ -79,14 +78,14 @@ const handleVerifyToken = async (req, res) => {
         const { token } = req.body;
 
         if (!token) {
-            return res.status(500).json('Internal server error');
+            return res.status(500).json({ "message": 'Internal server error' });
         }
 
         JWT.verify(token, process.env.ACCESS_TOKEN_SECRET,
             async (err, decoded) => {
                 if (err) {
                     console.log(err);
-                    return res.status(403).json("Token Expired");
+                    return res.status(403).json({ "message": "Token Expired" });
                 }
 
                 const user = await User.findOne({ email: decoded.email });
@@ -100,7 +99,7 @@ const handleVerifyToken = async (req, res) => {
         );
     } catch (error) {
         console.error('Error verifying recover token:', error);
-        return res.status(500).json('Internal server error');
+        return res.status(500).json({ "message": 'Internal server error' });
     }
 };
 
@@ -169,7 +168,7 @@ const handleGoogleLogin = async (req, res) => {
         });
     } catch (error) {
         console.error("Error login with Google:", error);
-        res.status(500).json("Error login with Google");
+        res.status(500).json({ "message": "Error login with Google" });
     }
 };
 
