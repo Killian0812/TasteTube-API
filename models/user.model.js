@@ -5,9 +5,10 @@ const userSchema = new mongoose.Schema({
     email: String,
     username: String,
     password: String,
-    filename: String,
-    image: String,
+    filename: String, // filename in storage
+    image: String, // avatar
     refreshToken: String,
+    role: String, // "customer" | "restaurant"
 })
 
 module.exports = mongoose.model('User', userSchema)

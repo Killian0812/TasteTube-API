@@ -17,45 +17,15 @@ const handleRegister = async (req, res) => {
     }
 
     const username = generateFromEmail(email, 3);
-    const refreshToken = JWT.sign(
-        {
-            "userInfo": {
-                "email": email,
-                "username": username,
-            }
-        },
-        process.env.REFRESH_TOKEN_SECRET,
-        { expiresIn: '7d' }
-    );
-
     const newUser = new User({
-        email, password, username, refreshToken,
+        email, password, username,
         image: `https://shorturl.at/ajFg5`
     });
     newUser.save()
         .then(() => {
             console.log("Registered");
-            const accessToken = JWT.sign(
-                {
-                    "userInfo": {
-                        "userId": newUser._id,
-                        "email": newUser.email,
-                        "username": username,
-                    }
-                },
-                process.env.ACCESS_TOKEN_SECRET,
-                { expiresIn: '8h' }
-            );
-
-            // sent refresh token as http cookie, last for 1d
-            res.cookie('jwt', refreshToken, { httpOnly: true, sameSite: 'Strict', secure: true, maxAge: 24 * 60 * 60 * 1000 });
-
             return res.status(200).json({
-                accessToken: accessToken,
-                userId: newUser._id,
-                email: newUser.email,
-                username: newUser.username,
-                image: newUser.image,
+                "userId": newUser.id,
             });
         })
         .catch(err => {
@@ -63,4 +33,43 @@ const handleRegister = async (req, res) => {
             return res.status(400).json({ "message": err })
         });
 }
-module.exports = { handleRegister };
+
+const handleSetAccountType = async (req, res) => {
+    const { userId, role } = req.body;
+
+    console.log(req.body);
+
+    if (role !== "RESTAURANT" && role !== "CUSTOMER" || !userId)
+        return res.status(400).json({
+            "message": "Not a valid account role"
+        });
+
+    let existingUser = await User.findById(userId);
+
+    if (!existingUser)
+        return res.status(400).json({
+            "message": "Something went wrong"
+        });
+
+    if (existingUser.role)
+        return res.status(400).json({
+            "message": "Can not change role when created"
+        });
+
+    existingUser.role = role;
+    try {
+        await existingUser.save();
+
+        return res.status(200).json({
+            "message": "Account role updated successfully",
+            "role": existingUser.role
+        });
+    } catch (error) {
+        console.error("Error updating account type:", error);
+        return res.status(500).json({
+            "message": "Internal server error. Please try again later."
+        });
+    }
+}
+
+module.exports = { handleRegister, handleSetAccountType };

@@ -20,7 +20,7 @@ const handleLogin = async (req, res) => {
 
     try {
         if (password != existingUser.password)
-            return res.status(400).json({ "message": "Wrong Password" });
+            return res.status(400).json({ "message": "Wrong password" });
 
         // create JWTs
         const accessToken = JWT.sign(
@@ -69,7 +69,7 @@ const handleLogin = async (req, res) => {
         });
     } catch (error) {
         console.log(error);
-        res.status(500).json({ "message": "Error Authenticating User" });
+        res.status(500).json({ "message": "Error authenticating user" });
     }
 }
 
@@ -85,7 +85,7 @@ const handleVerifyToken = async (req, res) => {
             async (err, decoded) => {
                 if (err) {
                     console.log(err);
-                    return res.status(403).json({ "message": "Token Expired" });
+                    return res.status(403).json({ "message": "Token expired" });
                 }
 
                 const user = await User.findOne({ email: decoded.email });

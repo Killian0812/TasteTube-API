@@ -5,30 +5,26 @@ const handleRefreshToken = async (req, res) => {
 
     console.log('Someone refreshing');
 
-    const cookies = req.cookies;
-    if (!cookies?.jwt) {
-        return res.status(401).send("No JWT cookies");
+    const refreshToken = req.body.refreshToken;
+    if (!refreshToken) {
+        return res.status(401).json({ "message": "No JWT" });
     }
-
-    const refreshToken = cookies.jwt;
-
-    // console.log(refreshToken);
 
     const existingUser = await User.findOne({ refreshToken: refreshToken });
     if (!existingUser) {
-        return res.status(403).send("Invalid refresh token");
+        return res.status(403).json({ "message": "Invalid refresh token" });
     }
 
     // evaluate jwt 
     JWT.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET,
         async (err, decoded) => {
             if (err || existingUser.username !== decoded.userInfo.username)
-                return res.status(403).send("Error verifying jwt\nToken maybe expired");
+                return res.status(403).send({ "message": "Token expired" });
 
             const userId = existingUser._id;
             const username = existingUser.username;
             const email = existingUser.email;
-            const image = existingUser.image || `https://shorturl.at/ajFg5`;
+            const image = existingUser.image;
 
             const newAccessToken = JWT.sign(
                 {
