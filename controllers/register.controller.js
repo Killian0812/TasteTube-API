@@ -1,6 +1,7 @@
 const JWT = require('jsonwebtoken');
 const { generateFromEmail } = require("unique-username-generator");
 var User = require('../models/user.model');
+const { defaultAvatar } = require('../utils/constant');
 const { EMAIL_REGEX } = require('../utils/regex');
 
 const handleRegister = async (req, res) => {
@@ -19,7 +20,7 @@ const handleRegister = async (req, res) => {
     const username = generateFromEmail(email, 3);
     const newUser = new User({
         email, password, username,
-        image: `https://shorturl.at/ajFg5`
+        image: defaultAvatar
     });
     newUser.save()
         .then(() => {

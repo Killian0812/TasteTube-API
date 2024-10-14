@@ -2,6 +2,7 @@ const JWT = require('jsonwebtoken');
 const { v4: uuidv4 } = require('uuid');
 const { generateFromEmail } = require("unique-username-generator");
 var User = require('../models/user.model');
+const { defaultAvatar } = require('../utils/constant');
 const { EMAIL_REGEX } = require('../utils/regex');
 
 const handleLogin = async (req, res) => {
@@ -65,7 +66,7 @@ const handleLogin = async (req, res) => {
             userId: existingUser._id,
             email: existingUser.email,
             username: existingUser.username,
-            image: existingUser.image || `https://shorturl.at/ajFg5`,
+            image: existingUser.image || defaultAvatar,
         });
     } catch (error) {
         console.log(error);
@@ -164,7 +165,7 @@ const handleGoogleLogin = async (req, res) => {
             userId: user._id,
             email: user.email,
             username: user.username,
-            image: user.image || `https://shorturl.at/ajFg5`,
+            image: user.image || defaultAvatar,
         });
     } catch (error) {
         console.error("Error login with Google:", error);

@@ -9,6 +9,7 @@ const userSchema = new mongoose.Schema({
     image: String, // avatar
     refreshToken: String,
     role: String, // "customer" | "restaurant"
+    bio: String,
 })
 
 module.exports = mongoose.model('User', userSchema)

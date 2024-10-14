@@ -27,6 +27,7 @@ const authRouter = require('./routes/auth.router');
 const logoutRouter = require('./routes/logout.router');
 const refreshTokenRouter = require('./routes/refreshToken.router');
 const userRouter = require('./routes/user.router');
+const profileRouter = require('./routes/profile.router');
 
 const verifyJWT = require('./middlewares/verifyJWT');
 
@@ -47,7 +48,8 @@ app.use('/api/register', registerRouter);
 app.use('/api/auth', authRouter);
 app.use('/api/refresh', refreshTokenRouter);
 app.use('/api/logout', logoutRouter);
-app.use('/api/user', verifyJWT, userRouter);
+app.use('/api/user', userRouter);
+app.use('/api/profile', verifyJWT, profileRouter);
 
 const port = process.env.PORT;
 const ip = process.env.IP;
