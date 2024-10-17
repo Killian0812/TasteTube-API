@@ -2,34 +2,39 @@ const JWT = require('jsonwebtoken');
 const { v4: uuidv4 } = require('uuid');
 const { generateFromEmail } = require("unique-username-generator");
 var User = require('../models/user.model');
+const { FirebaseAuth } = require('../firebase');
 const { defaultAvatar } = require('../utils/constant');
 const { EMAIL_REGEX } = require('../utils/regex');
 
 const handleLogin = async (req, res) => {
-    const email = req.body.email;
-    const password = req.body.password;
+    const { email, password } = req.body;
 
-    console.log("Email login");
-
-    let existingUser = null;
     if (!EMAIL_REGEX.test(email))
-        return res.status(400).json({ "message": "Invalid email" });
-
-    existingUser = await User.findOne({ email: email });
-    if (!existingUser)
-        return res.status(400).json({ "message": "User not found" });
+        return res.status(400).json({ "message": "Invalid email address. Please check again." });
 
     try {
-        if (password != existingUser.password)
+        const userRecord = await FirebaseAuth.getUserByEmail(email);
+
+        if (!userRecord) {
+            return res.status(400).json({ "message": "No account registered with entered email." })
+        }
+
+        if (!userRecord.emailVerified) {
+            return res.status(400).json({ "message": "Account not verified. Please check your email." })
+        }
+
+        const user = await User.findOne({ email: email });
+
+        if (password != user.password)
             return res.status(400).json({ "message": "Wrong password" });
 
         // create JWTs
         const accessToken = JWT.sign(
             {
                 "userInfo": {
-                    "username": existingUser.username,
-                    "userId": existingUser._id,
-                    "email": existingUser.email,
+                    "username": user.username,
+                    "userId": user._id,
+                    "email": user.email,
                 }
             },
             process.env.ACCESS_TOKEN_SECRET,
@@ -38,39 +43,35 @@ const handleLogin = async (req, res) => {
         const refreshToken = JWT.sign(
             {
                 "userInfo": {
-                    "username": existingUser.username,
-                    "userId": existingUser._id,
-                    "email": existingUser.email,
+                    "username": user.username,
+                    "userId": user._id,
+                    "email": user.email,
                 }
             },
             process.env.REFRESH_TOKEN_SECRET,
             { expiresIn: '7d' }
         );
 
-        // Saving refreshToken with current user
-        try {
-            existingUser.refreshToken = refreshToken;
-            await existingUser.save();
-        } catch (error) {
-            console.log("Error saving refreshToken to DB");
-            console.log(error);
-        }
+        user.refreshToken = refreshToken;
+        await user.save();
 
         // send refresh token as http cookie, last for 1d
         res.cookie('jwt', refreshToken, { httpOnly: true, sameSite: 'Strict', secure: true, maxAge: 24 * 60 * 60 * 1000 });
 
-        console.log("Login successful");
+        console.log(`Login successful: ${email}`);
 
-        res.status(200).json({
+        return res.status(200).json({
             accessToken: accessToken,
-            userId: existingUser._id,
-            email: existingUser.email,
-            username: existingUser.username,
-            image: existingUser.image || defaultAvatar,
+            userId: user._id,
+            email: user.email,
+            username: user.username,
+            image: user.image || defaultAvatar,
         });
     } catch (error) {
-        console.log(error);
-        res.status(500).json({ "message": "Error authenticating user" });
+        if (error.code) {
+            return res.status(400).json({ "message": error.errorInfo.message });
+        }
+        return res.status(500).json({ "message": error })
     }
 }
 

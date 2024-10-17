@@ -1,38 +1,35 @@
 const JWT = require('jsonwebtoken');
 const { generateFromEmail } = require("unique-username-generator");
 var User = require('../models/user.model');
+const { sendVerificationLink } = require('../services/gmail.service');
 const { defaultAvatar } = require('../utils/constant');
-const { EMAIL_REGEX } = require('../utils/regex');
+const { FirebaseAuth } = require('../firebase');
 
 const handleRegister = async (req, res) => {
-    const email = req.body.email;
-    const password = req.body.password;
+    const { email, password } = req.body;
 
-    if (!EMAIL_REGEX.test(email))
-        return res.status(400).json({ "message": "Not a valid email address" });
-
-    let existingUser = await User.findOne({ email });
-    if (existingUser) {
-        console.log("Email duplicated");
-        return res.status(409).json({ "message": "Email duplicated" });
-    }
-
-    const username = generateFromEmail(email, 3);
-    const newUser = new User({
-        email, password, username,
-        image: defaultAvatar
-    });
-    newUser.save()
-        .then(() => {
-            console.log("Registered");
-            return res.status(200).json({
-                "userId": newUser.id,
-            });
-        })
-        .catch(err => {
-            console.log(err);
-            return res.status(400).json({ "message": err })
+    await FirebaseAuth.createUser({
+        email: email,
+        password: password,
+        displayName: generateFromEmail(email, 3),
+        photoURL: defaultAvatar,
+        emailVerified: false,
+        disabled: false,
+    }).then(async (userRecord) => {
+        const newUser = new User({
+            email, password,
+            username: userRecord.displayName,
+            uid: userRecord.uid,
+            image: defaultAvatar
         });
+        await newUser.save();
+        sendVerificationLink(email);
+        return res.status(200).json({
+            "userId": newUser.id,
+        });
+    }).catch((error) => {
+        return res.status(400).json({ "message": error.message ?? error });
+    });
 }
 
 const handleSetAccountType = async (req, res) => {

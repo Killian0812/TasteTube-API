@@ -18,4 +18,6 @@ const Firestore = admin.firestore();
 
 const FirebaseStorage = admin.storage();
 
-module.exports = { Firestore, FirebaseStorage };
+const FirebaseAuth = admin.auth();
+
+module.exports = { FirebaseAuth, Firestore, FirebaseStorage };
