@@ -64,6 +64,7 @@ const handleLogin = async (req, res) => {
             accessToken: accessToken,
             userId: user._id,
             email: user.email,
+            role: user.role ?? '',
             username: user.username,
             image: user.image || defaultAvatar,
         });
