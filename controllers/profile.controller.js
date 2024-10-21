@@ -35,8 +35,8 @@ const editInfo = async (req, res) => {
 
         const oldFilename = user.filename;
         if (image) {
-            const { imageURL, filename } = await uploadToFirebaseStorage(image);
-            user.image = imageURL;
+            const { url, filename } = await uploadToFirebaseStorage(image);
+            user.image = url;
             user.filename = filename;
         }
 

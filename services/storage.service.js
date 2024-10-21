@@ -12,13 +12,13 @@ const uploadToFirebaseStorage = async (file) => {
             public: true,
         });
 
-        const [downloadURL] = await remoteFile.getSignedUrl({
+        const [downloadUrl] = await remoteFile.getSignedUrl({
             action: 'read',
             expires: '01-01-3000'
         });
 
         console.log("File uploaded to Firebase");
-        return { imageURL: downloadURL, filename: uuid };
+        return { url: downloadUrl, filename: uuid };
 
     } catch (err) {
         console.error("Error uploading to Firebase:", err);
