@@ -1,7 +1,7 @@
 var User = require('../models/user.model');
 const { uploadToFirebaseStorage, deleteFromFirebaseStorage } = require('../services/storage.service');
 
-const handleEditInfo = async (req, res) => {
+const editInfo = async (req, res) => {
     try {
         console.log(`${req.username} updating profile`);
 
@@ -58,7 +58,7 @@ const handleEditInfo = async (req, res) => {
     }
 };
 
-const handleChangePassword = async (req, res) => {
+const changePassword = async (req, res) => {
     console.log(`${req.username} changing password`);
     try {
         const user = await User.findById(req.userId);
@@ -86,7 +86,7 @@ const handleChangePassword = async (req, res) => {
     }
 }
 
-const handleGetProfile = async (req, res) => {
+const getProfile = async (req, res) => {
     console.log(`${req.username} getting info`);
     try {
         const user = await User.findById(req.userId);
@@ -106,4 +106,4 @@ const handleGetProfile = async (req, res) => {
     }
 }
 
-module.exports = { handleChangePassword, handleEditInfo, handleGetProfile }
+module.exports = { changePassword, editInfo, getProfile }

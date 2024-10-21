@@ -6,7 +6,7 @@ const { FirebaseAuth } = require('../firebase');
 const { defaultAvatar } = require('../utils/constant');
 const { EMAIL_REGEX } = require('../utils/regex');
 
-const handleLogin = async (req, res) => {
+const login = async (req, res) => {
     const { email, password } = req.body;
 
     if (!EMAIL_REGEX.test(email))
@@ -76,7 +76,7 @@ const handleLogin = async (req, res) => {
     }
 }
 
-const handleVerifyToken = async (req, res) => {
+const verifyToken = async (req, res) => {
     try {
         const { token } = req.body;
 
@@ -106,7 +106,7 @@ const handleVerifyToken = async (req, res) => {
     }
 };
 
-const handleGoogleLogin = async (req, res) => {
+const googleLogin = async (req, res) => {
 
     const { email, picture } = req.body;
 
@@ -175,4 +175,4 @@ const handleGoogleLogin = async (req, res) => {
     }
 };
 
-module.exports = { handleLogin, handleVerifyToken, handleGoogleLogin };
+module.exports = { login, verifyToken, googleLogin };

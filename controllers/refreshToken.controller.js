@@ -1,7 +1,7 @@
 const JWT = require('jsonwebtoken');
 var User = require('../models/user.model');
 
-const handleRefreshToken = async (req, res) => {
+const refreshToken = async (req, res) => {
 
     console.log('Someone refreshing');
 
@@ -45,4 +45,4 @@ const handleRefreshToken = async (req, res) => {
     );
 }
 
-module.exports = { handleRefreshToken }
+module.exports = { refreshToken }

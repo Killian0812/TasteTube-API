@@ -1,6 +1,6 @@
 var User = require('../models/user.model');
 
-const handleLogout = async (req, res) => {
+const logout = async (req, res) => {
 
     console.log("Someone loging out");
     const cookies = req.cookies;
@@ -28,4 +28,4 @@ const handleLogout = async (req, res) => {
     }
 }
 
-module.exports = { handleLogout }
+module.exports = { logout }

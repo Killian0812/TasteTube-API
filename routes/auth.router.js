@@ -1,10 +1,10 @@
 const router = require('express').Router();
 const authController = require('../controllers/auth.controller');
 
-router.post('/', authController.handleLogin)
+router.post('/', authController.login)
 
-router.post('/google', authController.handleGoogleLogin)
+router.post('/google', authController.googleLogin)
 
-router.post('/verify', authController.handleVerifyToken)
+router.post('/verify', authController.verifyToken)
 
 module.exports = router;

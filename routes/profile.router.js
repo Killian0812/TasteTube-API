@@ -5,8 +5,8 @@ const upload = multer({ storage: storage });
 const profileController = require('../controllers/profile.controller');
 
 // has userId from verifyJWT middleware
-router.get('/', profileController.handleGetProfile)
-router.post('/edit', upload.single('image'), profileController.handleEditInfo)
-router.post('/change_password', profileController.handleChangePassword)
+router.get('/', profileController.getProfile)
+router.post('/edit', upload.single('image'), profileController.editInfo)
+router.post('/change_password', profileController.changePassword)
 
 module.exports = router;

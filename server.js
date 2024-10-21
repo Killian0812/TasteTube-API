@@ -48,7 +48,7 @@ app.use('/api/register', registerRouter);
 app.use('/api/auth', authRouter);
 app.use('/api/refresh', refreshTokenRouter);
 app.use('/api/logout', logoutRouter);
-app.use('/api/user', userRouter);
+app.use('/api/users', verifyJWT, userRouter);
 app.use('/api/profile', verifyJWT, profileRouter);
 
 const port = process.env.PORT;

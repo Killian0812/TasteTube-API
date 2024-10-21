@@ -5,7 +5,7 @@ const { sendVerificationLink } = require('../services/gmail.service');
 const { defaultAvatar } = require('../utils/constant');
 const { FirebaseAuth } = require('../firebase');
 
-const handleRegister = async (req, res) => {
+const register = async (req, res) => {
     const { email, password } = req.body;
 
     await FirebaseAuth.createUser({
@@ -32,7 +32,7 @@ const handleRegister = async (req, res) => {
     });
 }
 
-const handleSetAccountType = async (req, res) => {
+const setAccountType = async (req, res) => {
     const { userId, role } = req.body;
 
     console.log(req.body);
@@ -70,4 +70,4 @@ const handleSetAccountType = async (req, res) => {
     }
 }
 
-module.exports = { handleRegister, handleSetAccountType };
+module.exports = { register, setAccountType };
