@@ -25,6 +25,7 @@ const refreshToken = async (req, res) => {
             const username = existingUser.username;
             const email = existingUser.email;
             const image = existingUser.image;
+            const role = existingUser.role;
 
             const newAccessToken = JWT.sign(
                 {
@@ -39,7 +40,7 @@ const refreshToken = async (req, res) => {
             );
 
             return res.status(200).json({
-                username, userId, email, accessToken: newAccessToken, image
+                username, userId, email, accessToken: newAccessToken, image, role
             });
         }
     );

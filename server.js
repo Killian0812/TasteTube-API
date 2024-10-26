@@ -49,7 +49,7 @@ app.use('/api/register', registerRouter);
 app.use('/api/auth', authRouter);
 app.use('/api/refresh', refreshTokenRouter);
 app.use('/api/logout', logoutRouter);
-app.use('/api/users', verifyJWT, userRouter);
+app.use('/api/users', userRouter);
 app.use('/api/profile', verifyJWT, profileRouter);
 app.use('/api/videos', verifyJWT, videoRouter);
 
