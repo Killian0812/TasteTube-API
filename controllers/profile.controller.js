@@ -1,4 +1,4 @@
-var User = require('../models/user.model');
+const User = require('../models/user.model');
 const { uploadToFirebaseStorage, deleteFromFirebaseStorage } = require('../services/storage.service');
 
 const editInfo = async (req, res) => {

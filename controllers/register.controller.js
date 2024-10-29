@@ -1,6 +1,6 @@
 const JWT = require('jsonwebtoken');
 const { generateFromEmail } = require("unique-username-generator");
-var User = require('../models/user.model');
+const User = require('../models/user.model');
 const { sendVerificationLink } = require('../services/gmail.service');
 const { defaultAvatar } = require('../utils/constant');
 const { FirebaseAuth } = require('../firebase');

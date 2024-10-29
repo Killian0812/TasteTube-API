@@ -1,5 +1,5 @@
-var Video = require('../models/video.model');
-var User = require('../models/user.model');
+const Video = require('../models/video.model');
+const User = require('../models/user.model');
 const { uploadToFirebaseStorage, deleteFromFirebaseStorage } = require('../services/storage.service');
 
 const getVideo = async (req, res) => {

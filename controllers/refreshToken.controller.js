@@ -1,5 +1,5 @@
 const JWT = require('jsonwebtoken');
-var User = require('../models/user.model');
+const User = require('../models/user.model');
 
 const refreshToken = async (req, res) => {
 
