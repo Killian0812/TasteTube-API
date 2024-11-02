@@ -1,7 +1,4 @@
-const { v4: uuidv4 } = require('uuid');
-const bcrypt = require('bcrypt');
-const { FirebaseStorage } = require('../firebase');
-const bucket = FirebaseStorage.bucket();
+const { uploadToFirebaseStorage, deleteFromFirebaseStorage } = require('../services/storage.service');
 const User = require('../models/user.model');
 
 const getUserInfo = async (req, res) => {
@@ -30,15 +27,12 @@ const getUserInfo = async (req, res) => {
 
 const updateUserInfo = async (req, res) => {
     try {
-        console.log(`${req.username} updating profile`);
-
-        const user = await User.findById(req.userId);
+        const user = await User.findById(req.userId).populate('videos').populate('likedVideos');
         if (!user) {
             return res.status(500).json({ message: "Internal Server Error" });
         }
 
-        const image = req.file;
-        let { username, email, phone } = req.body;
+        let { username, email, phone, bio } = req.body;
 
         if (username && username.trim() !== user.username) {
             user.username = username.trim();
@@ -60,9 +54,14 @@ const updateUserInfo = async (req, res) => {
             user.email = email.trim();
         }
 
+        if (bio && bio.trim() !== user.bio) {
+            user.bio = bio.trim();
+        }
+
+        const newImage = req.file;
         const oldFilename = user.filename;
-        if (image) {
-            const { url, filename } = await uploadToFirebaseStorage(image);
+        if (newImage) {
+            const { url, filename } = await uploadToFirebaseStorage(newImage);
             user.image = url;
             user.filename = filename;
         }
@@ -77,7 +76,13 @@ const updateUserInfo = async (req, res) => {
                 console.error("Error deleting old avatar:", error);
             }
 
-        return res.status(200).json(user);
+        const { followers, followings, videos, likedVideos } = user;
+        return res.status(200).json({
+            username: user.username, email: user.email, phone: user.phone, bio: user.bio,
+            filename: user.filename, image: user.image, videos, likedVideos,
+            followers: followers.length, // only return counts
+            followings: followings.length,
+        });
 
     } catch (error) {
         console.error("Error handling profile update:", error);
