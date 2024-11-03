@@ -34,6 +34,10 @@ const productSchema = new Schema({
         set: v => Math.round(v),
         alias: 'qty'
     },
+    category: {
+        type: Schema.Types.ObjectId,
+        ref: 'Category'
+    },
     images: [
         {
             url: {
