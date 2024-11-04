@@ -103,7 +103,8 @@ const createProduct = async (req, res) => {
         if (!name || !cost || !quantity) {
             return res.status(400).json({ message: "Missing required information" });
         }
-        if (!req.files)
+
+        if (!req.files || req.files.length == 0)
             return res.status(400).json({ message: "Please upload at least 1 product image" });
 
         const images = await Promise.all(req.files.map(async (file) => {
@@ -122,6 +123,7 @@ const createProduct = async (req, res) => {
             images
         });
         await newProduct.save();
+        await newProduct.populate('category');
         return res.status(201).json(newProduct);
     } catch (err) {
         return res.status(500).json({ message: err });
@@ -130,7 +132,7 @@ const createProduct = async (req, res) => {
 
 const updateProduct = async (req, res) => {
     try {
-        const { name, cost, currency, description, quantity, category, removeImages } = req.body;
+        const { name, cost, currency, description, quantity, category } = req.body;
         const product = await Product.findById(req.params.productId);
         if (!product || product.userId.toString() !== req.userId) {
             return res.status(404).json({ message: 'Product not found' });
@@ -143,21 +145,16 @@ const updateProduct = async (req, res) => {
         product.quantity = quantity || product.quantity;
         product.category = category || product.category;
 
-        if (!req.files && removeImages.length == product.images.length) {
-            return res.status(400).json({ message: "Product must have at least 1 image" });
-        }
-
-        if (removeImages.length > 0) {
-            await Promise.all(removeImages.map(async (filename) => {
-                await deleteFromFirebaseStorage(filename);
+        if (req.files.length > 0) {
+            const newImages = await Promise.all(req.files.map(async (file) => {
+                const { url, filename } = await uploadToFirebaseStorage(file);
+                return { url, filename };
             }));
+            await Promise.all(product.images.map(async (image) => {
+                await deleteFromFirebaseStorage(image.filename);
+            }));
+            product.images = newImages;
         }
-
-        const newImages = await Promise.all(req.files.map(async (file) => {
-            const { url, filename } = await uploadToFirebaseStorage(file);
-            return { url, filename };
-        }));
-        product.images = [...product.images, ...newImages];
 
         await product.save();
         res.status(200).json(product);
