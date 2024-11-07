@@ -132,8 +132,9 @@ const createProduct = async (req, res) => {
 
 const updateProduct = async (req, res) => {
     try {
-        const { name, cost, currency, description, quantity, category } = req.body;
+        const { name, cost, currency, description, quantity, category, reordered_images } = req.body;
         const product = await Product.findById(req.params.productId);
+        console.log(req.params.productId);
         if (!product || product.userId.toString() !== req.userId) {
             return res.status(404).json({ message: 'Product not found' });
         }
@@ -144,22 +145,46 @@ const updateProduct = async (req, res) => {
         product.description = description || product.description;
         product.quantity = quantity || product.quantity;
         product.category = category || product.category;
+        product.images = reordered_images || product.images;
 
         if (req.files.length > 0) {
             const newImages = await Promise.all(req.files.map(async (file) => {
                 const { url, filename } = await uploadToFirebaseStorage(file);
                 return { url, filename };
             }));
-            await Promise.all(product.images.map(async (image) => {
-                await deleteFromFirebaseStorage(image.filename);
-            }));
-            product.images = newImages;
+            product.images.push(...newImages);
         }
 
         await product.save();
+        await product.populate('category');
         res.status(200).json(product);
     } catch (err) {
         res.status(500).json({ message: err });
+    }
+};
+
+const deleteSingleProductImage = async (req, res) => {
+    try {
+        const product = await Product.findById(req.params.productId);
+        const filename = req.body.filename;
+        if (product.userId.toString() !== req.userId) {
+            return res.status(403).json({ message: 'Permission denied' });
+        }
+        if (!product) {
+            return res.status(404).json({ message: 'Product not found' });
+        }
+        const imageIndex = product.images.findIndex(image => image.filename === filename);
+        if (imageIndex === -1) {
+            return res.status(400).json({ message: 'Image not found in product' });
+        }
+
+        await deleteFromFirebaseStorage(filename);
+        product.images.splice(imageIndex, 1);
+        await product.save();
+
+        return res.status(200).json({ message: 'Product image deleted successfully' });
+    } catch (err) {
+        return res.status(500).json({ message: 'Error deleting product', error: err });
     }
 };
 
@@ -172,10 +197,13 @@ const deleteProduct = async (req, res) => {
         if (!product) {
             return res.status(404).json({ message: 'Product not found' });
         }
+
         await Promise.all(product.images.map(async (image) => {
             await deleteFromFirebaseStorage(image.filename);
         }));
-        await product.remove();
+
+        await Product.findByIdAndDelete(req.params.productId);
+
         res.status(200).json({ message: 'Product deleted successfully' });
     } catch (err) {
         res.status(500).json({ message: 'Error deleting product', error: err });
@@ -183,6 +211,6 @@ const deleteProduct = async (req, res) => {
 };
 
 module.exports = {
-    getCategories, addCategory, updateCategory, deleteCategory,
+    getCategories, addCategory, updateCategory, deleteCategory, deleteSingleProductImage,
     getProducts, getProduct, createProduct, updateProduct, deleteProduct
 };

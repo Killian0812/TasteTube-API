@@ -16,6 +16,7 @@ router.get('/', productController.getProducts);
 router.get('/:productId', productController.getProduct);
 router.post('/', verifyJWT, upload.array('images', 5), productController.createProduct);
 router.put('/:productId', verifyJWT, upload.array('images', 5), productController.updateProduct);
+router.delete('/:productId/image', verifyJWT, productController.deleteSingleProductImage);
 router.delete('/:productId', verifyJWT, productController.deleteProduct);
 
 module.exports = router;
