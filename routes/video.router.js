@@ -7,5 +7,11 @@ const videoController = require('../controllers/video.controller');
 router.get('/:videoId', videoController.getVideo)
 router.post('/', upload.single('video'), videoController.uploadVideo)
 router.delete('/:videoId', videoController.deleteVideo)
+// Video interactions
+router.get('/:videoId/comment', videoController.getVideoComment);
+router.post("/:videoId/comment", videoController.commentVideo);
+router.post("/:videoId/comment", videoController.deleteComment);
+router.post("/:videoId/like", videoController.likeVideo);
+router.delete("/:videoId/like", videoController.unlikeVideo);
 
 module.exports = router;
