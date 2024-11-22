@@ -13,13 +13,23 @@ const getVideo = async (req, res) => {
     if (!videoId)
       return res.status(401).json({ message: "Please specify a video" });
 
-    const video = await Video.findById(videoId).populate({
-      path: "userId",
-      select: "_id username image", // Get id, username and image of owner
-    });
+    const video = await Video.findById(videoId)
+      .populate({
+        path: "userId",
+        select: "_id username image", // Get id, username and image of owner
+      })
+      .populate({
+        path: "likes",
+        select: "_id userId", // Get id, userId owner
+      });
 
     if (!video)
       return res.status(404).json({ message: "Can't find requested video" });
+
+    const videoJSON = {
+      ...video.toObject(),
+      userLiked: video.likes.some((like) => like.userId.equals(req.userId)),
+    };
 
     const isOwner = video.userId.equals(req.userId);
 
@@ -28,21 +38,22 @@ const getVideo = async (req, res) => {
         if (!isOwner)
           return res.status(403).json({ message: "Private content" });
       case "FOLLOWERS_ONLY": {
-        if (isOwner) return res.status(200).json(video);
+        if (isOwner) return res.status(200).json(videoJSON);
         const ownerFollowers = (await User.findById(video.userId)).followers;
         if (ownerFollowers.some((follower) => follower.equals(req.userId)))
-          return res.status(200).json(video);
+          return res.status(200).json(videoJSON);
         return res.status(403).json({ message: "Content for followers only" });
       }
       case "PUBLIC":
-        return res.status(200).json(video);
+        return res.status(200).json(videoJSON);
     }
   } catch (error) {
-    return res.status(500).json({ message: "Internal Server Error" });
+    console.log(error);
+    return res.status(500).json({ message: error });
   }
 };
 
-const getVideoComment = async (req, res) => {
+const getVideoComments = async (req, res) => {
   try {
     const videoId = req.params.videoId;
     if (!videoId)
@@ -185,10 +196,14 @@ const commentVideo = async (req, res) => {
     video.comments.push(comment._id);
     await video.save();
 
-    return res.status(201).json({
-      message: "Comment added successfully",
-      comment,
-    });
+    const commentJSON = (
+      await comment.populate({
+        path: "userId",
+        select: "_id username image", // Get id, username and image of owner
+      })
+    ).toObject();
+
+    return res.status(201).json(commentJSON);
   } catch (error) {
     return res.status(500).json({ message: "Internal Server Error", error });
   }
@@ -253,6 +268,9 @@ const likeVideo = async (req, res) => {
 
     await like.save();
 
+    video.likes.push(like._id);
+    await video.save();
+
     return res.status(201).json({
       message: "Video liked successfully",
     });
@@ -295,7 +313,7 @@ module.exports = {
   uploadVideo,
   deleteVideo,
   commentVideo,
-  getVideoComment,
+  getVideoComments,
   deleteComment,
   likeVideo,
   unlikeVideo,
