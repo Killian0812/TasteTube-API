@@ -61,10 +61,20 @@ const getVideoComments = async (req, res) => {
 
     const video = await Video.findById(videoId).populate({
       path: "comments",
-      populate: {
-        path: "userId",
-        select: "_id username image", // Get id, username and image of commenter
-      },
+      match: { parentCommentId: null },
+      populate: [
+        {
+          path: "userId",
+          select: "_id username image", // Get id, username and image of commenter
+        },
+        {
+          path: "replies", // Populate replies
+          populate: {
+            path: "userId",
+            select: "_id username image",
+          },
+        },
+      ],
     });
 
     if (!video)
@@ -177,7 +187,7 @@ const deleteVideo = async (req, res) => {
 const commentVideo = async (req, res) => {
   try {
     const { videoId } = req.params;
-    const { text } = req.body;
+    const { text, parentCommentId } = req.body;
 
     if (!text)
       return res.status(400).json({ message: "Comment text is required" });
@@ -189,12 +199,19 @@ const commentVideo = async (req, res) => {
       userId: req.userId,
       videoId,
       text,
+      parentCommentId: parentCommentId ?? null,
     });
 
     await comment.save();
 
     video.comments.push(comment._id);
     await video.save();
+
+    if (parentCommentId) {
+      const parentComment = await Comment.findById(parentCommentId);
+      parentComment.replies.push(comment._id);
+      await parentComment.save();
+    }
 
     const commentJSON = (
       await comment.populate({
@@ -235,6 +252,16 @@ const deleteComment = async (req, res) => {
       { _id: comment.videoId },
       { $pull: { comments: comment._id } }
     );
+
+    if (comment.parentCommentId)
+      await Comment.updateOne(
+        { _id: comment.parentCommentId },
+        { $pull: { replies: comment._id } }
+      );
+
+    await Comment.deleteMany({
+      _id: { $in: comment.replies },
+    });
 
     await Comment.deleteOne({ _id: commentId });
 
