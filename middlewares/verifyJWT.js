@@ -2,7 +2,7 @@ const jwt = require("jsonwebtoken");
 
 const verifyJWT = (publicView = false) => {
   return (req, res, next) => {
-    console.log("verifying JWTs");
+    console.log("Recived request. Verifying JWT");
     // extracing token from header
     const authHeader =
       req.headers["authorization"] || req.headers["Authorization"]; // 'Authorization': Bearer token
@@ -11,7 +11,6 @@ const verifyJWT = (publicView = false) => {
     const tokenInBearerHeader = req.headers["bearer"]; // 'Bearer': token
 
     if (!tokenInAuthHeader && !tokenInBearerHeader) {
-      console.log("No JWT");
       if (!publicView) return res.status(401).send("No authorization header");
     }
     jwt.verify(
@@ -24,7 +23,6 @@ const verifyJWT = (publicView = false) => {
         }
         req.username = decoded.userInfo.username;
         req.userId = decoded.userInfo.userId;
-        console.log("JWT Verified");
         next();
       }
     );

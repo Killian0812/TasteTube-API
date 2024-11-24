@@ -1,4 +1,5 @@
 const Video = require("../models/video.model");
+const Product = require("../models/product.model");
 const User = require("../models/user.model");
 const Comment = require("../models/comment.model");
 const VideoLike = require("../models/videoLike.model");
@@ -21,6 +22,12 @@ const getVideo = async (req, res) => {
       .populate({
         path: "likes",
         select: "_id userId", // Get id, userId owner
+      })
+      .populate({
+        path: "products",
+        populate: {
+          path: "category",
+        },
       });
 
     if (!video)
@@ -107,7 +114,7 @@ const uploadVideo = async (req, res) => {
     const {
       title,
       description,
-      products,
+      productIds,
       hashtags,
       direction,
       thumbnail,
@@ -125,6 +132,15 @@ const uploadVideo = async (req, res) => {
 
     const { url, filename } = await uploadToFirebaseStorage(file);
 
+    const productIdList = JSON.parse(productIds);
+    const validProducts = await Product.find()
+      .where("_id")
+      .in(productIdList)
+      .exec();
+    if (validProducts.length !== productIdList.length) {
+      return res.status(400).json({ message: "Invalid product IDs" });
+    }
+
     const video = new Video({
       userId: req.userId,
       url: url,
@@ -132,9 +148,9 @@ const uploadVideo = async (req, res) => {
       direction: direction,
       title: title,
       description: description,
-      hashtags: hashtags,
+      hashtags: JSON.parse(hashtags),
       thumbnail: thumbnail,
-      // products: products, // TODO: Fix this
+      products: validProducts.map((p) => p._id),
       visibility: visibility,
     });
     video
@@ -162,25 +178,33 @@ const deleteVideo = async (req, res) => {
     const videoId = req.params.videoId;
     if (!videoId)
       return res.status(401).json({ message: "Please specify a video" });
+
     const video = await Video.findById(videoId);
     if (!video)
       return res.status(404).json({ message: "Can't find requested video" });
-    if (video.userId != req.userId)
+
+    if (!video.userId.equals(req.userId))
       return res
         .status(403)
         .json({ message: "You're not the owner of the video" });
+
     await deleteFromFirebaseStorage(video.filename);
-    Video.deleteOne({ _id: videoId }).then(async (_) => {
-      const user = await User.findById(req.userId);
-      const updatedVideos = user.videos.filter((e) => e._id != videoId);
-      user.videos = updatedVideos;
-      await user.save();
-      return res.status(200).json({
-        message: "Deleted",
-      });
+
+    await Video.deleteOne({ _id: videoId });
+
+    const user = await User.findById(req.userId);
+    const updatedVideos = user.videos.filter((e) => !e._id.equals(videoId));
+    user.videos = updatedVideos;
+    await user.save();
+
+    await VideoLike.deleteMany({ videoId });
+    await Comment.deleteMany({ videoId });
+
+    return res.status(200).json({
+      message: "Video deleted successfully",
     });
   } catch (error) {
-    return res.status(500).json({ message: error });
+    return res.status(500).json({ message: error.message });
   }
 };
 

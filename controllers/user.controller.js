@@ -13,10 +13,18 @@ const getUserInfo = async (req, res) => {
   try {
     const user = await User.findById(userId).populate({
       path: "videos",
-      populate: {
-        path: "userId",
-        select: "_id username image", // Get id, username and image of owner
-      },
+      populate: [
+        {
+          path: "userId",
+          select: "_id username image", // Populate userId with id, username, and image
+        },
+        {
+          path: "products",
+          populate: {
+            path: "category",
+          },
+        },
+      ],
     });
 
     if (!user) {
