@@ -25,8 +25,6 @@ const search = async (req, res) => {
 
     const usersWithNoVideo = users.map((user) => ({
       ...user.toObject(),
-      followers: user.followers.length,
-      followings: user.followings.length,
       videos: [],
     }));
 

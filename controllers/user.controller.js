@@ -37,10 +37,15 @@ const getUserInfo = async (req, res) => {
       email,
       phone,
       bio,
+      role,
       filename,
       image,
       videos,
     } = user;
+
+    const isFollower = user.followers.some((follower) =>
+      follower.equals(req.userId)
+    );
 
     const visibleVideos = videos.filter((video) => {
       let canView = false;
@@ -48,9 +53,7 @@ const getUserInfo = async (req, res) => {
       if (video.visibility === "PRIVATE") {
         canView = video.userId.equals(req.userId); // Only the owner can view
       } else if (video.visibility === "FOLLOWERS_ONLY") {
-        canView =
-          video.userId.equals(req.userId) ||
-          user.followers.some((follower) => follower.equals(req.userId)); // Only followers can view
+        canView = video.userId.equals(req.userId) || isFollower; // Only followers can view
       } else {
         canView = true;
       }
@@ -72,8 +75,10 @@ const getUserInfo = async (req, res) => {
       image,
       videos: videosWithUserLiked,
       bio,
-      followers: followers.length, // only return counts
-      followings: followings.length,
+      role,
+      followers: followers,
+      followings: followings,
+      isFollower,
     });
   } catch (e) {
     return res.status(500).json({ message: e.message });
@@ -160,8 +165,8 @@ const updateUserInfo = async (req, res) => {
       filename: user.filename,
       image: user.image,
       videos,
-      followers: followers.length, // only return counts
-      followings: followings.length,
+      followers: followers,
+      followings: followings,
     });
   } catch (error) {
     console.error("Error handling profile update:", error);
@@ -199,4 +204,70 @@ const changePassword = async (req, res) => {
   }
 };
 
-module.exports = { getUserInfo, updateUserInfo, changePassword };
+const followUser = async (req, res) => {
+  const userId = req.params.userId;
+  if (!userId) {
+    return res.status(400).json({ message: "No user found", code: 2 });
+  }
+
+  try {
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    if (user.followers.includes(req.userId))
+      return res.status(200).json({
+        code: 1,
+      });
+
+    user.followers.push(req.userId);
+    await user.save();
+    return res.status(200).json({
+      code: 0,
+    });
+  } catch (e) {
+    return res.status(500).json({ message: e.message, code: 2 });
+  }
+};
+
+const unfollowUser = async (req, res) => {
+  const userId = req.params.userId;
+  if (!userId) {
+    return res.status(400).json({ message: "No user found", code: 2 });
+  }
+
+  try {
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    if (user.followers.some((follower) => follower.equals(req.userId))) {
+      const filteredFollowers = user.followers.filter(
+        (follower) => !follower.equals(req.userId)
+      );
+      user.followers = filteredFollowers;
+      await user.save();
+      return res.status(200).json({
+        code: 0,
+      });
+    }
+
+    return res.status(200).json({
+      code: 1,
+    });
+  } catch (e) {
+    return res.status(500).json({ message: e.message, code: 2 });
+  }
+};
+
+module.exports = {
+  getUserInfo,
+  updateUserInfo,
+  changePassword,
+  followUser,
+  unfollowUser,
+};

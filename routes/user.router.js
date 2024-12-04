@@ -17,5 +17,7 @@ router.put(
   verifyJWT(),
   userController.changePassword
 );
+router.put("/:userId/follow", verifyJWT(), userController.followUser);
+router.put("/:userId/unfollow", verifyJWT(), userController.unfollowUser);
 
 module.exports = router;
