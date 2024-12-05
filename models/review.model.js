@@ -11,7 +11,6 @@ const reviewSchema = new Schema(
     targetUserId: {
       type: Schema.Types.ObjectId,
       ref: "User",
-      required: true,
     },
     url: {
       type: String,
@@ -50,6 +49,11 @@ const reviewSchema = new Schema(
         ref: "Product",
       },
     ],
+    visibility: {
+      type: String,
+      enum: ["PRIVATE", "FOLLOWERS_ONLY", "PUBLIC"],
+      default: "PUBLIC",
+    },
   },
   {
     timestamps: true,

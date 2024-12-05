@@ -20,6 +20,7 @@ const verifyJWT = (publicView = false) => {
         if (err) {
           console.log(err);
           if (!publicView) return res.status(403).send("Error verifying JWTs");
+          next();
         }
         req.username = decoded.userInfo.username;
         req.userId = decoded.userInfo.userId;
