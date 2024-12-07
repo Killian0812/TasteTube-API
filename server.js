@@ -29,7 +29,6 @@ const refreshTokenRouter = require('./routes/refreshToken.router');
 const userRouter = require('./routes/user.router');
 const productRouter = require('./routes/product.router');
 const videoRouter = require('./routes/video.router');
-const reviewRouter = require('./routes/review.router');
 const contentRouter = require('./routes/content.router');
 
 const verifyJWT = require('./middlewares/verifyJWT');
@@ -54,7 +53,6 @@ app.use('/api/logout', logoutRouter);
 app.use('/api/users', userRouter);
 app.use('/api/product', productRouter);
 app.use('/api/videos', verifyJWT(), videoRouter);
-app.use('/api/reviews', verifyJWT(), reviewRouter);
 app.use('/api/content', verifyJWT(), contentRouter);
 
 const port = process.env.PORT;

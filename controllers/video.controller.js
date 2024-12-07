@@ -60,6 +60,45 @@ const getVideo = async (req, res) => {
   }
 };
 
+const getUserLikedVideos = async (req, res) => {
+  const userId = req.userId;
+  if (!userId) {
+    return res.status(400).json({ message: "No user found" });
+  }
+
+  try {
+    const videoLikes = await VideoLike.find({ userId: userId }).populate({
+      path: "videoId",
+      populate: [
+        {
+          path: "userId",
+          select: "_id username image", // Populate userId with id, username, and image
+        },
+        {
+          path: "products",
+          populate: {
+            path: "category",
+          },
+        },
+      ],
+    });
+
+    const videosWithUserLiked = videoLikes.map((videoLike) => {
+      const video = videoLike.videoId;
+      return {
+        ...video.toObject(),
+        userLiked: true,
+      };
+    });
+
+    return res.status(200).json({
+      videos: videosWithUserLiked,
+    });
+  } catch (e) {
+    return res.status(500).json({ message: e.message });
+  }
+};
+
 const getVideoComments = async (req, res) => {
   try {
     const videoId = req.params.videoId;
@@ -364,6 +403,7 @@ module.exports = {
   uploadVideo,
   deleteVideo,
   commentVideo,
+  getUserLikedVideos,
   getVideoComments,
   deleteComment,
   likeVideo,
