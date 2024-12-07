@@ -19,10 +19,18 @@ const getUserInfo = async (req, res) => {
           select: "_id username image", // Populate userId with id, username, and image
         },
         {
+          path: "targetUserId",
+          select: "_id username image", // Populate targetUserId with id, username, and image
+        },
+        {
           path: "products",
           populate: {
             path: "category",
           },
+        },
+        {
+          path: "likes",
+          select: "_id userId",
         },
       ],
     });
@@ -63,7 +71,7 @@ const getUserInfo = async (req, res) => {
 
     const videosWithUserLiked = visibleVideos.map((video) => ({
       ...video.toObject(),
-      userLiked: video.likes.some((like) => like.equals(userId)),
+      userLiked: video.likes.some((like) => like.userId.equals(req.userId)),
     }));
 
     return res.status(200).json({
@@ -87,7 +95,29 @@ const getUserInfo = async (req, res) => {
 
 const updateUserInfo = async (req, res) => {
   try {
-    const user = await User.findById(req.userId).populate("videos");
+    const user = await User.findById(req.userId).populate({
+      path: "videos",
+      populate: [
+        {
+          path: "userId",
+          select: "_id username image", // Populate userId with id, username, and image
+        },
+        {
+          path: "targetUserId",
+          select: "_id username image", // Populate targetUserId with id, username, and image
+        },
+        {
+          path: "products",
+          populate: {
+            path: "category",
+          },
+        },
+        {
+          path: "likes",
+          select: "_id userId",
+        },
+      ],
+    });
 
     if (!user) {
       return res.status(500).json({ message: "Internal Server Error" });
@@ -150,21 +180,20 @@ const updateUserInfo = async (req, res) => {
 
     const { followers, followings, videos } = user;
 
-    videos.forEach((video) => {
-      video.userLiked = video.likes.some((like) =>
-        like.userId.equals(user._id)
-      );
-    });
+    const videosWithUserLiked = videos.map((video) => ({
+      ...video.toObject(),
+      userLiked: video.likes.some((like) => like.userId.equals(user._id)),
+    }));
 
     return res.status(200).json({
-      _id: userId,
+      _id: req.userId,
       username: user.username,
       email: user.email,
       phone: user.phone,
       bio: user.bio,
       filename: user.filename,
       image: user.image,
-      videos,
+      videos: videosWithUserLiked,
       followers: followers,
       followings: followings,
     });

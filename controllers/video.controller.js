@@ -20,6 +20,10 @@ const getVideo = async (req, res) => {
         select: "_id username image", // Get id, username and image of owner
       })
       .populate({
+        path: "targetUserId",
+        select: "_id username image", // Get id, username and image of target user
+      })
+      .populate({
         path: "likes",
         select: "_id userId", // Get id, userId owner
       })
@@ -75,6 +79,10 @@ const getUserLikedVideos = async (req, res) => {
           select: "_id username image", // Populate userId with id, username, and image
         },
         {
+          path: "targetUserId",
+          select: "_id username image", // Populate targetUserId with id, username, and image
+        },
+        {
           path: "products",
           populate: {
             path: "category",
@@ -93,6 +101,50 @@ const getUserLikedVideos = async (req, res) => {
 
     return res.status(200).json({
       videos: videosWithUserLiked,
+    });
+  } catch (e) {
+    return res.status(500).json({ message: e.message });
+  }
+};
+
+const getUserTargetedReviews = async (req, res) => {
+  const targetUserId = req.query.targetUserId;
+  if (!targetUserId) {
+    return res.status(400).json({ message: "No target user found" });
+  }
+
+  try {
+    const userTargetedReviews = await Video.find({
+      targetUserId: targetUserId,
+    })
+      .populate({
+        path: "userId",
+        select: "_id username image", // Get id, username and image of owner
+      })
+      .populate({
+        path: "targetUserId",
+        select: "_id username image", // Get id, username and image of target user
+      })
+      .populate({
+        path: "likes",
+        select: "_id userId", // Get id, userId owner
+      })
+      .populate({
+        path: "products",
+        populate: {
+          path: "category",
+        },
+      });
+
+    const reviewsWithUserLiked = userTargetedReviews.map((review) => {
+      return {
+        ...review.toObject(),
+        userLiked: review.likes.some((like) => like.userId.equals(req.userId)),
+      };
+    });
+
+    return res.status(200).json({
+      videos: reviewsWithUserLiked,
     });
   } catch (e) {
     return res.status(500).json({ message: e.message });
@@ -158,6 +210,7 @@ const uploadVideo = async (req, res) => {
       direction,
       thumbnail,
       visibility,
+      targetUserId,
     } = req.body;
 
     if (!user) {
@@ -192,6 +245,12 @@ const uploadVideo = async (req, res) => {
       products: validProducts.map((p) => p._id),
       visibility: visibility,
     });
+
+    if (targetUserId) {
+      const targetUser = await User.findById(targetUserId);
+      if (targetUser) video.targetUserId = targetUser._id;
+    }
+
     video
       .save()
       .then(async (video) => {
@@ -404,6 +463,7 @@ module.exports = {
   deleteVideo,
   commentVideo,
   getUserLikedVideos,
+  getUserTargetedReviews,
   getVideoComments,
   deleteComment,
   likeVideo,
