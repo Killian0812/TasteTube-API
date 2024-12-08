@@ -30,6 +30,7 @@ const userRouter = require('./routes/user.router');
 const productRouter = require('./routes/product.router');
 const videoRouter = require('./routes/video.router');
 const contentRouter = require('./routes/content.router');
+const shopRouter = require('./routes/shop.router');
 
 const verifyJWT = require('./middlewares/verifyJWT');
 
@@ -54,6 +55,7 @@ app.use('/api/users', userRouter);
 app.use('/api/product', productRouter);
 app.use('/api/videos', verifyJWT(), videoRouter);
 app.use('/api/content', verifyJWT(), contentRouter);
+app.use('/api/shop', verifyJWT(), shopRouter);
 
 const port = process.env.PORT;
 const ip = process.env.IP;

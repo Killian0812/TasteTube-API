@@ -24,9 +24,16 @@ const getUserInfo = async (req, res) => {
         },
         {
           path: "products",
-          populate: {
-            path: "category",
-          },
+          populate: [
+            {
+              path: "category",
+              select: "_id name",
+            },
+            {
+              path: "userId",
+              select: "_id image username",
+            },
+          ],
         },
         {
           path: "likes",

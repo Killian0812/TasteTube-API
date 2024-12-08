@@ -37,6 +37,9 @@ const getVideo = async (req, res) => {
     if (!video)
       return res.status(404).json({ message: "Can't find requested video" });
 
+    video.views++;
+    video.save();
+
     const videoJSON = {
       ...video.toObject(),
       userLiked: video.likes.some((like) => like.userId.equals(req.userId)),
@@ -131,9 +134,16 @@ const getUserTargetedReviews = async (req, res) => {
       })
       .populate({
         path: "products",
-        populate: {
-          path: "category",
-        },
+        populate: [
+          {
+            path: "category",
+            select: "_id name",
+          },
+          {
+            path: "userId",
+            select: "_id image username",
+          },
+        ],
       });
 
     const reviewsWithUserLiked = userTargetedReviews.map((review) => {
@@ -225,10 +235,8 @@ const uploadVideo = async (req, res) => {
     const { url, filename } = await uploadToFirebaseStorage(file);
 
     const productIdList = JSON.parse(productIds);
-    const validProducts = await Product.find()
-      .where("_id")
-      .in(productIdList)
-      .exec();
+    const validProducts = await Product.find().where("_id").in(productIdList);
+
     if (validProducts.length !== productIdList.length) {
       return res.status(400).json({ message: "Invalid product IDs" });
     }

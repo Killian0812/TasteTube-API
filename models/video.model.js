@@ -54,6 +54,10 @@ const videoSchema = new Schema(
       enum: ["PRIVATE", "FOLLOWERS_ONLY", "PUBLIC"],
       default: "PUBLIC",
     },
+    views: {
+      type: Number,
+      default: 0,
+    }
   },
   {
     timestamps: true,
