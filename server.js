@@ -31,6 +31,8 @@ const productRouter = require('./routes/product.router');
 const videoRouter = require('./routes/video.router');
 const contentRouter = require('./routes/content.router');
 const shopRouter = require('./routes/shop.router');
+const cartRouter = require('./routes/cart.router');
+const orderRouter = require('./routes/order.router');
 
 const verifyJWT = require('./middlewares/verifyJWT');
 
@@ -56,6 +58,8 @@ app.use('/api/product', productRouter);
 app.use('/api/videos', verifyJWT(), videoRouter);
 app.use('/api/content', verifyJWT(), contentRouter);
 app.use('/api/shop', verifyJWT(), shopRouter);
+app.use('/api/cart', verifyJWT(), cartRouter);
+app.use('/api/order', verifyJWT(), orderRouter);
 
 const port = process.env.PORT;
 const ip = process.env.IP;

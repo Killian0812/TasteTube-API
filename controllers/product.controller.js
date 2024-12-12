@@ -121,7 +121,9 @@ const getProduct = async (req, res) => {
 
 const createProduct = async (req, res) => {
   try {
-    const { name, cost, currency, description, quantity, category } = req.body;
+    const { name, cost, currency, description, quantity, category, ship } =
+      req.body;
+
     if (!name || !cost || !quantity) {
       return res.status(400).json({ message: "Missing required information" });
     }
@@ -147,6 +149,7 @@ const createProduct = async (req, res) => {
       quantity,
       category,
       images,
+      ship,
     });
     await newProduct.save();
     await newProduct.populate("category");

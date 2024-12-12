@@ -4,6 +4,13 @@ const { Schema } = mongoose;
 const orderSchema = new Schema(
   {
     userId: {
+      // Customer
+      type: Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+    shopId: {
+      // Shop
       type: Schema.Types.ObjectId,
       ref: "User",
       required: true,
@@ -12,13 +19,19 @@ const orderSchema = new Schema(
       type: Number,
       // Auto-increment on Trigger (prior to 'counters' collection)
     },
+    orderId: {
+      type: String,
+      required: true,
+      // Random string of 6 characters
+    },
     total: {
       type: Number,
       required: true,
       min: 0,
     },
     address: {
-      type: String,
+      type: Schema.Types.ObjectId,
+      ref: "Address",
     },
     note: {
       type: String,
@@ -29,10 +42,6 @@ const orderSchema = new Schema(
         ref: "Product",
       },
     ],
-    shopId: {
-      type: Schema.Types.ObjectId,
-      ref: "User",
-    },
     paymentMethod: {
       type: String,
       // TODO: May add enum
@@ -44,12 +53,29 @@ const orderSchema = new Schema(
     status: {
       type: String,
       enum: ["PENDING", "CONFIRMED", "DELIVERY", "COMPLELETED"],
-      default: "PUBLIC",
+      default: "PENDING",
+    },
+    note: {
+      type: String,
+      // Optional note from customer
     },
   },
   {
     timestamps: true,
   }
 );
+
+orderSchema.pre("save", async function (next) {
+  const order = this;
+
+  if (!order.isNew) return next();
+
+  try {
+    order.orderId = Math.random().toString(36).substring(1, 7).toUpperCase();
+    next();
+  } catch (error) {
+    next(error);
+  }
+});
 
 module.exports = mongoose.model("Order", orderSchema);
