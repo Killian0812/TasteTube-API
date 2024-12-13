@@ -31,7 +31,7 @@ const getUserInfo = async (req, res) => {
             },
             {
               path: "userId",
-              select: "_id image username",
+              select: "_id image username phone",
             },
           ],
         },
@@ -115,9 +115,16 @@ const updateUserInfo = async (req, res) => {
         },
         {
           path: "products",
-          populate: {
-            path: "category",
-          },
+          populate: [
+            {
+              path: "category",
+              select: "_id name",
+            },
+            {
+              path: "userId",
+              select: "_id image username phone",
+            },
+          ],
         },
         {
           path: "likes",

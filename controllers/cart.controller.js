@@ -121,7 +121,7 @@ const getCart = async (req, res) => {
   const userId = req.userId;
 
   try {
-    const cart = await Cart.findOne({ userId }).populate({
+    let cart = await Cart.findOne({ userId }).populate({
       path: "items",
       populate: {
         path: "product",
@@ -137,7 +137,8 @@ const getCart = async (req, res) => {
     });
 
     if (!cart) {
-      return res.status(200).json({ cart: [] });
+      cart = new Cart({ userId: userId, items: [] });
+      await cart.save();
     }
 
     return res.status(200).json({ cart });

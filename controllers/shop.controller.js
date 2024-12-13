@@ -4,7 +4,7 @@ async function getRecommendedProducts(req, res) {
   try {
     const products = await Product.find()
       .populate("category", "_id name")
-      .populate("userId", "_id image username");
+      .populate("userId", "_id image username phone");
 
     res.status(200).json(products);
   } catch (error) {
@@ -17,7 +17,7 @@ async function getProductsInShop(req, res) {
   try {
     const products = await Product.find({ userId: userId })
       .populate("category", "_id name")
-      .populate("userId", "_id image username");
+      .populate("userId", "_id image username phone");
 
     res.status(200).json(products);
   } catch (error) {
@@ -36,7 +36,7 @@ async function searchProducts(req, res) {
       ],
     })
       .populate("category", "_id name")
-      .populate("userId", "_id image username");
+      .populate("userId", "_id image username phone");
 
     res.status(200).json(products);
   } catch (error) {
@@ -57,7 +57,7 @@ async function searchProductsInShop(req, res) {
       userId: userId,
     })
       .populate("category", "_id name")
-      .populate("userId", "_id image username");
+      .populate("userId", "_id image username phone");
 
     res.status(200).json(products);
   } catch (error) {

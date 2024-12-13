@@ -29,9 +29,16 @@ const getVideo = async (req, res) => {
       })
       .populate({
         path: "products",
-        populate: {
-          path: "category",
-        },
+        populate: [
+          {
+            path: "category",
+            select: "_id name",
+          },
+          {
+            path: "userId",
+            select: "_id image username phone",
+          },
+        ],
       });
 
     if (!video)
@@ -87,9 +94,16 @@ const getUserLikedVideos = async (req, res) => {
         },
         {
           path: "products",
-          populate: {
-            path: "category",
-          },
+          populate: [
+            {
+              path: "category",
+              select: "_id name",
+            },
+            {
+              path: "userId",
+              select: "_id image username phone",
+            },
+          ],
         },
       ],
     });
@@ -141,7 +155,7 @@ const getUserTargetedReviews = async (req, res) => {
           },
           {
             path: "userId",
-            select: "_id image username",
+            select: "_id image username phone",
           },
         ],
       });
