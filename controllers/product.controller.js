@@ -151,10 +151,7 @@ const createProduct = async (req, res) => {
       images,
       ship,
     });
-    await newProduct.save();
-    await newProduct
-      .populate("category", "_id name")
-      .populate("userId", "_id image username phone");
+    await newProduct.save().then((t) => t.populate(["category", "userId"]));
 
     return res.status(201).json(newProduct);
   } catch (err) {
@@ -174,7 +171,7 @@ const updateProduct = async (req, res) => {
       reordered_images,
     } = req.body;
     const product = await Product.findById(req.params.productId);
-    console.log(req.params.productId);
+
     if (!product || product.userId.toString() !== req.userId) {
       return res.status(404).json({ message: "Product not found" });
     }
@@ -197,10 +194,7 @@ const updateProduct = async (req, res) => {
       product.images.push(...newImages);
     }
 
-    await product.save();
-    await product
-      .populate("category", "_id image")
-      .populate("userId", "_id image username phone");
+    await product.save().then((t) => t.populate(["category", "userId"]));
 
     res.status(200).json(product);
   } catch (err) {
