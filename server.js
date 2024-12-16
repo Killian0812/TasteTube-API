@@ -12,6 +12,7 @@ const { app, server } = require('./socket');
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
+app.use(cors());
 
 // mongodb atlas connect
 const uri = process.env.MONGODB_CLUSTER_URI;

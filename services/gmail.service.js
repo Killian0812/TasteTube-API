@@ -54,7 +54,7 @@ const sendRecoverLink = async (email, username) => {
 
   const htmlContent = `
         <div style="background-color: #f4f4f4; padding: 20px;">
-            <img src=${logoUrl} alt="ChatK Logo" style="display: block; margin: 0 auto; width: 150px; height: auto;">
+            <img src=${logoUrl} alt="TasteTube Logo" style="display: block; margin: 0 auto; width: 150px; height: auto;">
             <div style="background-color: #ffffff; padding: 20px; border-radius: 10px; margin-top: 20px;">
                 <p style="font-size: 18px;">Hello ${username},</p>
                 <p>We have received a request to recover your account.</p>
@@ -62,7 +62,7 @@ const sendRecoverLink = async (email, username) => {
                 <a href="${recoverLink}" style="background-color: #007bff; color: #ffffff; text-decoration: none; padding: 10px 20px; border-radius: 5px; display: inline-block; margin-top: 10px;">Reset Password</a>
                 <p>Please note that the recovery link will expire in one hour.</p>
                 <p>If you did not request this, please ignore this email.</p>
-                <p>Thank you,<br>ChatK</p>
+                <p>Thank you,<br>TasteTube</p>
             </div>
         </div>
     `;
@@ -78,4 +78,63 @@ const sendRecoverLink = async (email, username) => {
   console.log(`Recovery link sent to ${email}`);
 };
 
-module.exports = { sendVerificationLink, sendRecoverLink };
+const sendNewRegisteredPassword = async (email, username, password) => {
+  const transporter = nodemailer.createTransport({
+    service: "gmail",
+    auth: {
+      user: process.env.GMAIL_ADDRESS,
+      pass: process.env.APP_PASSWORD,
+    },
+  });
+
+  const htmlContent = `
+        <div style="background-color: #f4f4f4; padding: 20px;">
+            <img src="${logoUrl}" alt="TasteTube Logo" style="display: block; margin: 0 auto; width: 150px; height: auto;">
+            <div style="background-color: #ffffff; padding: 20px; border-radius: 10px; margin-top: 20px;">
+                <p style="font-size: 18px;">Hello ${username},</p>
+                <p>Welcome to TasteTube! You've successfully registered using a third-party application.</p>
+                <p>Here is your temporary password:</p>
+                <p style="font-size: 20px; font-weight: bold;">
+                    <span id="passwordText">${password}</span>
+                    <button onclick="togglePasswordVisibility()" style="margin-left: 10px; background-color: #7C4DFF; color: white; padding: 5px; border: none; border-radius: 5px;">Show</button>
+                </p>
+                <p>We highly recommend that you log in and change your password immediately for security purposes.</p>
+                <p>Once you have saved your password, it is recommended to delete this email.</p>
+                <p>Thank you,<br>TasteTube</p>
+            </div>
+        </div>
+
+        <script>
+          function togglePasswordVisibility() {
+            var passwordText = document.getElementById("passwordText");
+            if (passwordText.textContent === "${password}") {
+              passwordText.textContent = "********"; 
+              event.target.textContent = "Show";
+            } else {
+              passwordText.textContent = "${password}";
+              event.target.textContent = "Hide";
+            }
+          }
+        </script>
+    `;
+
+  const mailOptions = {
+    from: process.env.GMAIL_ADDRESS,
+    to: email,
+    subject: "TasteTube - Your default password",
+    html: htmlContent,
+  };
+
+  try {
+    await transporter.sendMail(mailOptions);
+    console.log(`Default password sent to ${email}`);
+  } catch (error) {
+    console.error(`Failed to send email to ${email}:`, error);
+  }
+};
+
+module.exports = {
+  sendVerificationLink,
+  sendRecoverLink,
+  sendNewRegisteredPassword,
+};
