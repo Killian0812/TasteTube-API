@@ -7,7 +7,7 @@ const Address = require("../models/address.model");
 
 const createOrder = async (req, res) => {
   const userId = req.userId;
-  const { selectedCartItems, addressId, paymentMethod } = req.body;
+  const { selectedCartItems, addressId, paymentMethod, note } = req.body;
 
   if (!paymentMethod) {
     return res.status(400).json({ message: "Please select a payment method" });
@@ -70,6 +70,7 @@ const createOrder = async (req, res) => {
         total,
         address: addressId,
         products: items.map((item) => item.product._id),
+        note,
         paymentMethod,
       });
 

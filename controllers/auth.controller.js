@@ -68,6 +68,7 @@ const login = async (req, res) => {
       secure: true,
       maxAge: 24 * 60 * 60 * 1000,
     });
+    res.set("x-auth-token", refreshToken);
 
     console.log(`Login successful: ${email}`);
 
@@ -182,6 +183,7 @@ const googleAuth = async (req, res) => {
       secure: true,
       maxAge: 24 * 60 * 60 * 1000,
     });
+    res.set("x-auth-token", refreshToken);
 
     console.log("Login with Google successful");
 
@@ -266,6 +268,7 @@ const facebookAuth = async (req, res) => {
       secure: true,
       maxAge: 24 * 60 * 60 * 1000,
     });
+    res.set("x-auth-token", refreshToken);
 
     console.log("Login with Facebook successful");
 
