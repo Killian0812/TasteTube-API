@@ -23,11 +23,11 @@ const addressSchema = new Schema(
       required: true,
     },
     latitude: {
-      type: String,
+      type: Number,
       alias: "lat",
     },
-    longtitude: {
-      type: String,
+    longitude: {
+      type: Number,
       alias: "lng",
     },
   },
