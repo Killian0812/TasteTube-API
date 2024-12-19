@@ -1,13 +1,11 @@
 const { Cart } = require("../models/cart.model");
-const Product = require("../models/product.model");
 const Order = require("../models/order.model");
-const Address = require("../models/address.model");
 
 // Create by Customer, modify by Shop
 
 const createOrder = async (req, res) => {
   const userId = req.userId;
-  const { selectedCartItems, addressId, paymentMethod, note } = req.body;
+  const { selectedCartItems, addressId, paymentMethod, notes } = req.body;
 
   if (!paymentMethod) {
     return res.status(400).json({ message: "Please select a payment method" });
@@ -70,7 +68,7 @@ const createOrder = async (req, res) => {
         total,
         address: addressId,
         products: items.map((item) => item.product._id),
-        note,
+        notes,
         paymentMethod,
       });
 
@@ -90,4 +88,58 @@ const createOrder = async (req, res) => {
   }
 };
 
-module.exports = { createOrder };
+const getCustomerOrder = async (req, res) => {
+  const userId = req.userId;
+
+  try {
+    const orders = await Order.find({ userId: userId }).populate([
+      {
+        path: "products",
+        populate: [
+          {
+            path: "category",
+          },
+          {
+            path: "userId",
+          },
+        ],
+      },
+      {
+        path: "address",
+      },
+    ]);
+
+    return res.status(200).json(orders);
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
+  }
+};
+
+const getShopOrder = async (req, res) => {
+  const userId = req.userId;
+
+  try {
+    const orders = await Order.find({ shopId: userId }).populate([
+      {
+        path: "products",
+        populate: [
+          {
+            path: "category",
+          },
+          {
+            path: "userId",
+          },
+        ],
+      },
+      {
+        path: "address",
+      },
+    ]);
+
+    return res.status(200).json(orders);
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
+  }
+};
+
+module.exports = { createOrder, getCustomerOrder, getShopOrder };

@@ -55,7 +55,7 @@ const orderSchema = new Schema(
       enum: ["PENDING", "CONFIRMED", "DELIVERY", "COMPLELETED"],
       default: "PENDING",
     },
-    note: {
+    notes: {
       type: String,
       // Optional note from customer
     },
