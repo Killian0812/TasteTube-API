@@ -48,7 +48,7 @@ const createOrder = async (req, res) => {
     // Group selected items by shopId
     const groupedItems = {};
     selectedItems.forEach((item) => {
-      const shopId = item.product.userId.toString();
+      const shopId = item.product.userId._id.toString();
       if (!groupedItems[shopId]) {
         groupedItems[shopId] = [];
       }
@@ -60,7 +60,7 @@ const createOrder = async (req, res) => {
     for (const [shopId, items] of Object.entries(groupedItems)) {
       // Calculate the total price for current shop order
       const total = items.reduce((sum, item) => {
-        return sum + item.product.price * item.quantity;
+        return sum + item.product.cost * item.quantity;
       }, 0);
 
       // Create single order
@@ -86,8 +86,7 @@ const createOrder = async (req, res) => {
 
     return res.status(201).json({ message: "Orders created successfully" });
   } catch (error) {
-    console.error(error);
-    return res.status(500).json({ message: "Something went wrong" });
+    return res.status(500).json({ message: error.message });
   }
 };
 

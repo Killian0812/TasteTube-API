@@ -65,13 +65,14 @@ const orderSchema = new Schema(
   }
 );
 
-orderSchema.pre("save", async function (next) {
+// on validation, before saving
+orderSchema.pre("validate", async function (next) {
   const order = this;
 
   if (!order.isNew) return next();
 
   try {
-    order.orderId = Math.random().toString(36).substring(1, 7).toUpperCase();
+    order.orderId = Math.random().toString(36).substring(2, 8).toUpperCase();
     next();
   } catch (error) {
     next(error);
