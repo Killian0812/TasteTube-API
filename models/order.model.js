@@ -36,10 +36,18 @@ const orderSchema = new Schema(
     note: {
       type: String,
     },
-    products: [
+    items: [
       {
-        type: Schema.Types.ObjectId,
-        ref: "Product",
+        product: {
+          type: Schema.Types.ObjectId,
+          ref: "Product",
+          required: true,
+        },
+        quantity: {
+          type: Number,
+          required: true,
+          min: 1,
+        },
       },
     ],
     paymentMethod: {
@@ -52,7 +60,7 @@ const orderSchema = new Schema(
     },
     status: {
       type: String,
-      enum: ["PENDING", "CONFIRMED", "DELIVERY", "COMPLELETED"],
+      enum: ["PENDING", "CONFIRMED", "DELIVERY", "COMPLETED", "CANCELED"],
       default: "PENDING",
     },
     notes: {

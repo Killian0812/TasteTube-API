@@ -67,7 +67,10 @@ const createOrder = async (req, res) => {
         shopId,
         total,
         address: addressId,
-        products: items.map((item) => item.product._id),
+        items: items.map((item) => ({
+          product: item.product._id,
+          quantity: item.quantity,
+        })),
         notes,
         paymentMethod,
       });
@@ -94,18 +97,27 @@ const getCustomerOrder = async (req, res) => {
   try {
     const orders = await Order.find({ userId: userId }).populate([
       {
-        path: "products",
+        path: "items",
         populate: [
           {
-            path: "category",
-          },
-          {
-            path: "userId",
+            path: "product",
+            populate: [
+              {
+                path: "category",
+              },
+              {
+                path: "userId",
+              },
+            ],
           },
         ],
       },
       {
         path: "address",
+      },
+      {
+        path: "userId",
+        select: "_id phone email username image",
       },
     ]);
 
@@ -121,18 +133,27 @@ const getShopOrder = async (req, res) => {
   try {
     const orders = await Order.find({ shopId: userId }).populate([
       {
-        path: "products",
+        path: "items",
         populate: [
           {
-            path: "category",
-          },
-          {
-            path: "userId",
+            path: "product",
+            populate: [
+              {
+                path: "category",
+              },
+              {
+                path: "userId",
+              },
+            ],
           },
         ],
       },
       {
         path: "address",
+      },
+      {
+        path: "userId",
+        select: "_id phone email username image",
       },
     ]);
 
@@ -142,4 +163,57 @@ const getShopOrder = async (req, res) => {
   }
 };
 
-module.exports = { createOrder, getCustomerOrder, getShopOrder };
+const updateOrderStatus = async (req, res) => {
+  const newStatus = req.body.newStatus;
+  const id = req.params.id;
+
+  if (!newStatus) {
+    return res.status(400).json({ message: "Invalid status" });
+  }
+
+  try {
+    const order = await Order.findById(id).populate([
+      {
+        path: "items",
+        populate: [
+          {
+            path: "product",
+            populate: [
+              {
+                path: "category",
+              },
+              {
+                path: "userId",
+              },
+            ],
+          },
+        ],
+      },
+      {
+        path: "address",
+      },
+      {
+        path: "userId",
+        select: "_id phone email username image",
+      },
+    ]);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    order.status = newStatus;
+    await order.save();
+
+    return res.status(200).json(order);
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
+  }
+};
+
+module.exports = {
+  createOrder,
+  getCustomerOrder,
+  getShopOrder,
+  updateOrderStatus,
+};
