@@ -38,11 +38,34 @@ const shopRouter = require("./routes/shop.router");
 const cartRouter = require("./routes/cart.router");
 const orderRouter = require("./routes/order.router");
 const addressRouter = require("./routes/address.router");
+const paymentRouter = require("./routes/payment.router");
 
 const verifyJWT = require("./middlewares/verifyJWT");
 
 // serve static files
 app.use(express.static(path.join(__dirname, "static")));
+
+app.get("/payment/success", function (_, res) {
+  res.sendFile(
+    path.join(__dirname, "./static/payment_success.html"),
+    function (err) {
+      if (err) {
+        res.status(500).send(err);
+      }
+    }
+  );
+});
+app.get("/payment/failed", function (_, res) {
+  res.sendFile(
+    path.join(__dirname, "./static/payment_failed.html"),
+    function (err) {
+      if (err) {
+        res.status(500).send(err);
+      }
+    }
+  );
+});
+
 app.get(/^\/(?!api).*/, function (_, res) {
   res.sendFile(path.join(__dirname, "./static/index.html"), function (err) {
     if (err) {
@@ -63,6 +86,7 @@ app.use("/api/shop", verifyJWT(), shopRouter);
 app.use("/api/cart", verifyJWT(), cartRouter);
 app.use("/api/order", verifyJWT(), orderRouter);
 app.use("/api/address", verifyJWT(), addressRouter);
+app.use("/api/payment", paymentRouter);
 
 const port = process.env.PORT;
 const ip = process.env.IP;

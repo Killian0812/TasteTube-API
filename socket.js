@@ -1,6 +1,6 @@
-const express = require('express');
-const http = require('http');
-const { Server } = require('socket.io');
+const express = require("express");
+const http = require("http");
+const { Server } = require("socket.io");
 
 const app = express();
 
@@ -10,18 +10,29 @@ const io = new Server(server);
 const userSocketMap = {};
 
 io.on("connection", (socket) => {
-    const _id = socket.handshake.query._id;
+  const userId = socket.handshake.query.userId;
 
-    if (_id) {
-        console.log(`Created socket connection for ${_id}: ${socket.id}`);
-        userSocketMap[_id] = socket.id;
+  if (userId) {
+    console.log(`Created socket connection for ${userId}`);
+    userSocketMap[userId] = socket.id;
 
-        socket.on("calling", (data) => {
-        });
+    socket.on("calling", (data) => {});
 
-        socket.on("disconnect", () => {
-        });
-    }
+    socket.on("disconnect", () => console.log(`${userId} disconnected`));
+  } else {
+    console.log("Unknown connection");
+  }
 });
 
-module.exports = { app, io, server };
+const notifyPayment = (userId, status, pid) => {
+  const socketId = userSocketMap[userId];
+
+  if (!socketId) return;
+
+  io.to(socketId).emit("payment", {
+    status: status,
+    pid: pid,
+  });
+};
+
+module.exports = { app, io, server, notifyPayment };
