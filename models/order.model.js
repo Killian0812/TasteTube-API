@@ -19,6 +19,10 @@ const orderSchema = new Schema(
       type: Number,
       // Auto-increment on Trigger (prior to 'counters' collection)
     },
+    trackingId: {
+      type: String,
+      // YYYYMMDD-orderNum
+    },
     orderId: {
       type: String,
       required: true,
