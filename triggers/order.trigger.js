@@ -10,19 +10,29 @@ exports = async function (changeEvent) {
     .db(changeEvent.ns.db)
     .collection(changeEvent.ns.coll);
 
+  // Get the current date in 'YYYYMMDD' format
+  const currentDate = new Date();
+  const year = currentDate.getFullYear();
+  const month = (currentDate.getMonth() + 1).toString().padStart(2, "0");
+  const day = currentDate.getDate().toString().padStart(2, "0");
+  const formattedDate = `${year}${month}${day}`;
+
   var counter = await countercollection.findOneAndUpdate(
-    { _id: doc.shopId },
-    { $inc: { seq_value: 1 } },
+    { _id: doc.shopId, date: formattedDate },
+    { $inc: { value: 1 } },
     { returnNewDocument: true, upsert: true }
   );
+
+  var trackingId = `${formattedDate}-${counter.value}`;
+
   var updateRes = await ordercollection.updateOne(
     { _id: doc._id },
-    { $set: { orderNum: counter.seq_value } }
+    { $set: { orderNum: counter.value, trackingId: trackingId } }
   );
 
   console.log(
-    `Updated ${JSON.stringify(changeEvent.ns)} with counter ${
-      counter.seq_value
-    } result : ${JSON.stringify(updateRes)}`
+    `Updated ${JSON.stringify(changeEvent.ns)} with orderNum: ${
+      counter.value
+    }, trackingId: ${trackingId}, result: ${JSON.stringify(updateRes)}`
   );
 };
