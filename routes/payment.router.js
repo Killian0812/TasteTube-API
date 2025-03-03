@@ -4,6 +4,6 @@ const vnpayController = require("../controllers/vnpay.controller");
 const verifyJWT = require("../middlewares/verifyJWT");
 
 router.post("/vnpay/getUrl", verifyJWT(), paymentController.getPaymentVnpayUrl);
-router.post("/vnpay/ipn", vnpayController.ipn);
+router.get("/vnpay/ipn", vnpayController.ipn);
 
 module.exports = router;

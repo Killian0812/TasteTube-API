@@ -2,9 +2,9 @@ const Payment = require("../models/Payment.model");
 const { notifyPayment } = require("../socket.js");
 
 const ipn = async (req, res) => {
-  console.log("Recieved VNPAY IPN");
   try {
     const pid = req.query.vnp_TxnRef;
+    console.log(`Recieved VNPAY IPN: ${pid}`);
     const payment = await Payment.findById(pid);
 
     if (!payment) {

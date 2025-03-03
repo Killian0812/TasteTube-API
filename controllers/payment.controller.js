@@ -1,9 +1,6 @@
 const Payment = require("../models/Payment.model");
-const { sortObject } = require("../utils/object");
-const { vnpayConfig } = require("../config/vnpay.config");
-const querystring = require("qs");
-const crypto = require("crypto");
-const moment = require("moment");
+const { ProductCode, VnpLocale } = require("vnpay");
+const { vnpayConfig, vnpay } = require("../config/vnpay.config");
 
 const getPaymentVnpayUrl = async (req, res) => {
   const userId = req.userId;
@@ -18,43 +15,21 @@ const getPaymentVnpayUrl = async (req, res) => {
 
     await payment.save();
 
-    const date = new Date();
-    const createDate = moment(date).format("YYYYMMDDHHmmss");
-
     const ipAddr =
       req.headers["x-forwarded-for"] ||
       req.connection.remoteAddress ||
       req.socket.remoteAddress ||
       req.connection.socket.remoteAddress;
 
-    const ipnUrl =
-      vnpayConfig.ipnUrl +
-      "?" +
-      querystring.stringify({ pid: payment.id }, { encode: false });
-
-    const params = {};
-    params["vnp_Version"] = "2.1.0";
-    params["vnp_Command"] = "pay";
-    params["vnp_TmnCode"] = vnpayConfig.terminalId;
-    params["vnp_Locale"] = "en";
-    params["vnp_CurrCode"] = currency;
-    params["vnp_TxnRef"] = payment.id;
-    params["vnp_OrderInfo"] = "Thanh toan cho ma GD:" + payment.id;
-    params["vnp_OrderType"] = "other";
-    params["vnp_Amount"] = amount * 100;
-    params["vnp_IpAddr"] = ipAddr;
-    params["vnp_CreateDate"] = createDate;
-    params["vnp_ReturnUrl"] = vnpayConfig.returnUrl;
-
-    const signData = querystring.stringify(sortObject(params), {
-      encode: false,
+    const url = vnpay.buildPaymentUrl({
+      vnp_Amount: amount,
+      vnp_IpAddr: ipAddr,
+      vnp_TxnRef: payment.id,
+      vnp_OrderInfo: "Thanh toan cho ma GD:" + payment.id,
+      vnp_OrderType: ProductCode.Other,
+      vnp_ReturnUrl: vnpayConfig.returnUrl,
+      vnp_Locale: VnpLocale.EN,
     });
-    const hmac = crypto.createHmac("sha512", vnpayConfig.hashSecret);
-    const signed = hmac.update(Buffer.from(signData, "utf-8")).digest("hex");
-    params["vnp_SecureHash"] = signed;
-
-    const url =
-      vnpayConfig.url + "?" + querystring.stringify(params, { encode: false });
 
     return res.status(201).json({ url: url, pid: payment.id });
   } catch (error) {
