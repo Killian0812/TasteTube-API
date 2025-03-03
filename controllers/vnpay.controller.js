@@ -14,6 +14,9 @@ const ipn = async (req, res) => {
     }
 
     const userId = payment.userId;
+    payment.status = "paid";
+    await payment.save();
+
     notifyPayment(userId.toString(), "success", pid);
 
     return res.status(200).json({ RspCode: "00", Message: "Success" });

@@ -197,7 +197,9 @@ const googleAuth = async (req, res) => {
     });
   } catch (error) {
     console.error("Error login with Google:", error);
-    res.status(500).json({ message: "Error login with Google" });
+    res
+      .status(500)
+      .json({ message: error.message ?? "Error login with Google" });
   }
 };
 
@@ -282,7 +284,9 @@ const facebookAuth = async (req, res) => {
     });
   } catch (error) {
     console.error("Error login with Facebook:", error);
-    res.status(500).json({ message: "Error login with Facebook" });
+    res
+      .status(500)
+      .json({ message: error.message ?? "Error login with Facebook" });
   }
 };
 

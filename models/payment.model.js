@@ -14,6 +14,9 @@ const paymentSchema = new Schema(
     currency: {
       type: String,
     },
+    status: {
+      type: String,
+    },
   },
   {
     timestamps: true,

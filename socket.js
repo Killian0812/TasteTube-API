@@ -13,7 +13,7 @@ io.on("connection", (socket) => {
   const userId = socket.handshake.query.userId;
 
   if (userId) {
-    console.log(`Created socket connection for ${userId}`);
+    console.log(`Created socket connection for ${userId}: ${socket.id}`);
     userSocketMap[userId] = socket.id;
 
     socket.on("calling", (data) => {});

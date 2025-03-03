@@ -1,11 +1,12 @@
 const { Cart } = require("../models/cart.model");
 const Order = require("../models/order.model");
+const Payment = require("../models/Payment.model");
 
 // Create by Customer, modify by Shop
 
 const createOrder = async (req, res) => {
   const userId = req.userId;
-  const { selectedCartItems, addressId, paymentMethod, notes } = req.body;
+  const { selectedCartItems, addressId, paymentMethod, notes, pid } = req.body;
 
   if (!paymentMethod) {
     return res.status(400).json({ message: "Please select a payment method" });
@@ -15,6 +16,11 @@ const createOrder = async (req, res) => {
   }
 
   try {
+    let payment = null;
+    if (pid) {
+      payment = await Payment.findById(pid);
+    }
+
     const cart = await Cart.findOne({ userId }).populate({
       path: "items",
       populate: {
@@ -73,6 +79,7 @@ const createOrder = async (req, res) => {
         })),
         notes,
         paymentMethod,
+        paid: payment?.status === "paid",
       });
 
       await order.save();
