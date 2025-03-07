@@ -14,11 +14,19 @@ const createOrder = async (req, res) => {
   if (!addressId) {
     return res.status(400).json({ message: "Invalid delivery address" });
   }
+  if (paymentMethod !== "COD" && !pid) {
+    return res.status(400).json({ message: "Payment invalid" });
+  }
 
   try {
     let payment = null;
     if (pid) {
       payment = await Payment.findById(pid);
+      if (!payment || payment.status !== "paid") {
+        return res
+          .status(400)
+          .json({ message: "Must pay before creating order" });
+      }
     }
 
     const cart = await Cart.findOne({ userId }).populate({
@@ -79,8 +87,11 @@ const createOrder = async (req, res) => {
         })),
         notes,
         paymentMethod,
-        paid: payment?.status === "paid",
       });
+      if (payment) {
+        order.paid = payment.status === "paid";
+        order.paymentId = payment._id;
+      }
 
       await order.save();
       orders.push(order);

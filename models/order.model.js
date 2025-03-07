@@ -62,6 +62,9 @@ const orderSchema = new Schema(
       type: Boolean,
       default: false,
     },
+    paymentId: {
+      type: Schema.Types.ObjectId,
+    },
     status: {
       type: String,
       enum: ["PENDING", "CONFIRMED", "DELIVERY", "COMPLETED", "CANCELED"],
