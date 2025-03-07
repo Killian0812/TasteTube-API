@@ -21,6 +21,10 @@ const orderSchema = new Schema(
     },
     orderId: {
       type: String,
+      // YYYYMMDD-orderNum
+    },
+    trackingId: {
+      type: String,
       required: true,
       // Random string of 6 characters
     },
@@ -80,7 +84,7 @@ orderSchema.pre("validate", async function (next) {
   if (!order.isNew) return next();
 
   try {
-    order.orderId = Math.random().toString(36).substring(2, 8).toUpperCase();
+    order.trackingId = Math.random().toString(36).substring(2, 8).toUpperCase();
     next();
   } catch (error) {
     next(error);
