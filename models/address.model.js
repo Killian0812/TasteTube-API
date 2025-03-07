@@ -24,10 +24,12 @@ const addressSchema = new Schema(
     },
     latitude: {
       type: Number,
+      required: true,
       alias: "lat",
     },
     longitude: {
       type: Number,
+      required: true,
       alias: "lng",
     },
   },

@@ -10,30 +10,36 @@ const getAddresses = async (req, res) => {
   }
 };
 
-const createAddress = async (req, res) => {
+const upsertAddress = async (req, res) => {
+  const { addressId } = req.query;
   const userId = req.userId;
-  const { name, phone, value } = req.body;
-  try {
-    const newAddress = new Address({ userId, name, phone, value });
-    await newAddress.save();
-    res.status(201).json(newAddress);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-};
+  const { name, phone, value, latitude, longitude } = req.body;
 
-const updateAddress = async (req, res) => {
-  const { addressId } = req.params;
-  const { name, phone, value } = req.body;
   try {
-    const updatedAddress = await Address.findByIdAndUpdate(
-      addressId,
-      { name: name, phone: phone, value: value },
-      { new: true }
-    );
-    if (!updatedAddress)
-      return res.status(404).json({ message: "Category not found" });
-    return res.status(200).json(updatedAddress);
+    let result;
+
+    if (addressId) {
+      result = await Address.findByIdAndUpdate(
+        addressId,
+        { name, phone, value, latitude, longitude },
+        { new: true, runValidators: true }
+      );
+      if (!result) {
+        return res.status(404).json({ message: "Address not found" });
+      }
+      return res.status(200).json(result);
+    } else {
+      const newAddress = new Address({
+        userId,
+        name,
+        phone,
+        value,
+        latitude,
+        longitude,
+      });
+      result = await newAddress.save();
+      return res.status(201).json(result);
+    }
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -51,4 +57,4 @@ const deleteAddress = async (req, res) => {
   }
 };
 
-module.exports = { getAddresses, deleteAddress, createAddress, updateAddress };
+module.exports = { getAddresses, upsertAddress, deleteAddress };
