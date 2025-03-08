@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
 const { Schema } = mongoose;
+const mongoosePaginate = require("mongoose-paginate-v2");
 
 const videoSchema = new Schema(
   {
@@ -57,11 +58,13 @@ const videoSchema = new Schema(
     views: {
       type: Number,
       default: 0,
-    }
+    },
   },
   {
     timestamps: true,
   }
 );
+
+videoSchema.plugin(mongoosePaginate);
 
 module.exports = mongoose.model("Video", videoSchema);

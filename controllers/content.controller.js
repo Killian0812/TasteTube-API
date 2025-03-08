@@ -33,45 +33,64 @@ const search = async (req, res) => {
 
 const getFeeds = async (req, res) => {
   try {
-    const feeds = await Video.find({
-      $or: [
-        { visibility: "PUBLIC" },
-        { visibility: "PRIVATE", userId: req.userId },
-      ],
-      userId: { $ne: req.userId }, // Exclude owned videos
-    })
-      .populate({
-        path: "userId",
-        select: "_id username image", // Get id, username and image of owner
-      })
-      .populate({
-        path: "targetUserId",
-        select: "_id username image", // Get id, username and image of target user
-      })
-      .populate({
-        path: "likes",
-        select: "_id userId", // Get id, userId owner
-      })
-      .populate({
-        path: "products",
+    const { page = 1, limit = 10 } = req.query;
+
+    const feeds = await Video.paginate(
+      {
+        $or: [
+          { visibility: "PUBLIC" },
+          { visibility: "PRIVATE", userId: req.userId },
+        ],
+        userId: { $ne: req.userId }, // Exclude owned videos
+      },
+      {
+        page,
+        limit,
         populate: [
           {
-            path: "category",
-            select: "_id name",
+            path: "userId",
+            select: "_id username image", // Get id, username and image of owner
           },
           {
-            path: "userId",
-            select: "_id image username phone",
+            path: "targetUserId",
+            select: "_id username image", // Get id, username and image of target user
+          },
+          {
+            path: "likes",
+            select: "_id userId", // Get id, userId owner
+          },
+          {
+            path: "products",
+            populate: [
+              {
+                path: "category",
+                select: "_id name",
+              },
+              {
+                path: "userId",
+                select: "_id image username phone",
+              },
+            ],
           },
         ],
-      });
+      }
+    );
 
-    const feedsWithUserLiked = feeds.map((video) => ({
+    const feedsWithUserLiked = feeds.docs.map((video) => ({
       ...video.toObject(),
       userLiked: video.likes.some((like) => like.userId.equals(req.userId)),
     }));
 
-    return res.status(200).json(feedsWithUserLiked);
+    return res.status(200).json({
+      feeds: feedsWithUserLiked,
+      totalDocs: feeds.totalDocs, // Total number of videos
+      totalPages: feeds.totalPages, // Total number of pages
+      currentPage: feeds.page, // Current page number
+      hasNextPage: feeds.hasNextPage, // If there is a next page
+      hasPrevPage: feeds.hasPrevPage, // If there is a previous page
+      nextPage: feeds.nextPage, // Next page number (if exists)
+      prevPage: feeds.prevPage, // Previous page number (if exists)
+    });
   } catch (error) {
     return res.status(500).json({ message: error });
   }
