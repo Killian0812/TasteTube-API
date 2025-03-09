@@ -35,10 +35,6 @@ const getUserInfo = async (req, res) => {
             },
           ],
         },
-        {
-          path: "likes",
-          select: "_id userId",
-        },
       ],
     });
 
@@ -76,11 +72,6 @@ const getUserInfo = async (req, res) => {
       return canView;
     });
 
-    const videosWithUserLiked = visibleVideos.map((video) => ({
-      ...video.toObject(),
-      userLiked: video.likes.some((like) => like.userId.equals(req.userId)),
-    }));
-
     return res.status(200).json({
       _id: userId,
       username,
@@ -88,7 +79,7 @@ const getUserInfo = async (req, res) => {
       phone,
       filename,
       image,
-      videos: videosWithUserLiked,
+      videos: visibleVideos,
       bio,
       role,
       followers: followers,
@@ -125,10 +116,6 @@ const updateUserInfo = async (req, res) => {
               select: "_id image username phone",
             },
           ],
-        },
-        {
-          path: "likes",
-          select: "_id userId",
         },
       ],
     });
@@ -194,11 +181,6 @@ const updateUserInfo = async (req, res) => {
 
     const { followers, followings, videos } = user;
 
-    const videosWithUserLiked = videos.map((video) => ({
-      ...video.toObject(),
-      userLiked: video.likes.some((like) => like.userId.equals(user._id)),
-    }));
-
     return res.status(200).json({
       _id: req.userId,
       username: user.username,
@@ -207,7 +189,7 @@ const updateUserInfo = async (req, res) => {
       bio: user.bio,
       filename: user.filename,
       image: user.image,
-      videos: videosWithUserLiked,
+      videos: videos,
       followers: followers,
       followings: followings,
     });
