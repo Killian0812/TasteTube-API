@@ -56,10 +56,6 @@ const getFeeds = async (req, res) => {
             select: "_id username image", // Get id, username and image of target user
           },
           {
-            path: "likes",
-            select: "_id userId", // Get id, userId owner
-          },
-          {
             path: "products",
             populate: [
               {
@@ -76,13 +72,10 @@ const getFeeds = async (req, res) => {
       }
     );
 
-    const feedsWithUserLiked = feeds.docs.map((video) => ({
-      ...video.toObject(),
-      userLiked: video.likes.some((like) => like.userId.equals(req.userId)),
-    }));
+    const feedsVideo = feeds.docs.map((video) => video.toObject());
 
     return res.status(200).json({
-      feeds: feedsWithUserLiked,
+      feeds: feedsVideo,
       totalDocs: feeds.totalDocs, // Total number of videos
       totalPages: feeds.totalPages, // Total number of pages
       currentPage: feeds.page, // Current page number

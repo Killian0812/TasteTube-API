@@ -32,18 +32,6 @@ const videoSchema = new Schema(
     description: String,
     thumbnail: String,
     hashtags: [String],
-    likes: [
-      {
-        type: Schema.Types.ObjectId,
-        ref: "VideoLike",
-      },
-    ],
-    comments: [
-      {
-        type: Schema.Types.ObjectId,
-        ref: "Comment",
-      },
-    ],
     products: [
       {
         type: Schema.Types.ObjectId,
