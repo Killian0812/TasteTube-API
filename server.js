@@ -19,7 +19,7 @@ app.use(cors(corsOptions));
 
 // mongodb atlas connect
 const uri = process.env.MONGODB_CLUSTER_URI;
-mongoose.connect(uri, { dbName: "tastetube" });
+mongoose.connect(uri, { dbName: "tastetube", autoIndex: true });
 const connection = mongoose.connection;
 connection.once("open", () => {
   console.log("MongoDB Cloud connection established successfully");

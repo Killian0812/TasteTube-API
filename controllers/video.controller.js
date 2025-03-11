@@ -40,6 +40,27 @@ const getVideo = async (req, res) => {
     if (!video)
       return res.status(404).json({ message: "Can't find requested video" });
 
+    video.views++;
+    Promise.resolve().then(() => {
+      Promise.all([
+        Interaction.findOneAndUpdate(
+          { userId: req.userId, videoId },
+          { $inc: { views: 1 } },
+          { upsert: true, new: true }
+        ),
+        video.save(),
+      ])
+        .then((_) => {
+          console.log(`Views incremented ${videoId}`);
+        })
+        .catch((error) => {
+          console.error(
+            `Error updating interaction or saving video ${videoId}`,
+            error
+          );
+        });
+    });
+
     const videoJSON = video.toObject();
 
     const isOwner = video.userId.equals(req.userId);
@@ -387,7 +408,7 @@ const likeVideo = async (req, res) => {
 
     await Interaction.findOneAndUpdate(
       { userId: req.userId, videoId },
-      { $inc: { likes: 1 } },
+      { $inc: { likes: 1 }, $setOnInsert: { views: 1, shares: 0 } },
       { upsert: true, new: true }
     );
 
