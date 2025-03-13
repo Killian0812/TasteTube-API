@@ -10,7 +10,7 @@ const { app, server } = require("./socket");
 
 // middlewares
 app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.urlencoded({ extended: true, limit: "30mb" }));
 app.use(cookieParser());
 const corsOptions = {
   exposedHeaders: ["x-auth-token"], // exposed since set-cookie can't be used through ngrok
@@ -80,7 +80,7 @@ app.use("/api/refresh", refreshTokenRouter);
 app.use("/api/logout", logoutRouter);
 app.use("/api/users", userRouter);
 app.use("/api/product", productRouter);
-app.use("/api/videos", verifyJWT(), videoRouter);
+app.use("/api/videos", videoRouter);
 app.use("/api/content", verifyJWT(), contentRouter);
 app.use("/api/shop", verifyJWT(), shopRouter);
 app.use("/api/cart", verifyJWT(), cartRouter);

@@ -40,49 +40,81 @@ const getVideo = async (req, res) => {
     if (!video)
       return res.status(404).json({ message: "Can't find requested video" });
 
-    video.views++;
-    Promise.resolve().then(() => {
-      Promise.all([
-        Interaction.findOneAndUpdate(
-          { userId: req.userId, videoId },
-          { $inc: { views: 1 } },
-          { upsert: true, new: true }
-        ),
-        video.save(),
-      ])
-        .then((_) => {
-          console.log(`Views incremented ${videoId}`);
-        })
-        .catch((error) => {
-          console.error(
-            `Error updating interaction or saving video ${videoId}`,
-            error
-          );
-        });
-    });
+    const interactions = await Interaction.find({ videoId: videoId });
+    const totalInteractions = interactions.reduce(
+      (acc, interaction) => {
+        if (interaction.likes > 0) acc.totalLikes += 1;
 
-    const videoJSON = video.toObject();
+        acc.totalViews += interaction.views;
+
+        if (interaction.shared) acc.totalShares += 1;
+
+        if (interaction.bookmarked) acc.totalBookmarked += 1;
+
+        if (interaction.userId.equals(req.userId) && interaction.likes > 0)
+          acc.userLiked = true;
+
+        return acc;
+      },
+      {
+        videoId: videoId,
+        totalLikes: 0,
+        totalViews: 0,
+        totalShares: 0,
+        totalBookmarked: 0,
+        userLiked: false,
+      }
+    );
 
     const isOwner = video.userId.equals(req.userId);
-
     switch (video.visibility) {
       case "PRIVATE":
         if (!isOwner)
           return res.status(403).json({ message: "Private content" });
       case "FOLLOWERS_ONLY": {
-        if (isOwner) return res.status(200).json(videoJSON);
+        if (isOwner) {
+          _incrementVideoView(video, req.userId);
+          return res.status(200).json(totalInteractions);
+        }
         const ownerFollowers = (await User.findById(video.userId)).followers;
-        if (ownerFollowers.some((follower) => follower.equals(req.userId)))
-          return res.status(200).json(videoJSON);
+        if (ownerFollowers.some((follower) => follower.equals(req.userId))) {
+          _incrementVideoView(video, req.userId);
+          return res.status(200).json(totalInteractions);
+        }
         return res.status(403).json({ message: "Content for followers only" });
       }
       case "PUBLIC":
-        return res.status(200).json(videoJSON);
+        _incrementVideoView(video, req.userId);
+        return res.status(200).json(totalInteractions);
     }
   } catch (error) {
     console.log(error);
     return res.status(500).json({ message: error });
   }
+};
+
+// TODO: Maybe only increment on minimum watchtime
+const _incrementVideoView = (video, userId) => {
+  video.views++;
+  Promise.resolve().then(() => {
+    Promise.all([
+      Interaction.findOneAndUpdate(
+        { userId: userId, videoId },
+        { $inc: { views: 1 } },
+        { upsert: true, new: true }
+      ),
+      video.save(),
+    ])
+      .then((_) => {
+        console.log(`Views incremented ${videoId}`);
+      })
+      .catch((error) => {
+        console.error(
+          `Error updating interaction or saving video ${videoId}`,
+          error
+        );
+      });
+  });
 };
 
 const getUserLikedVideos = async (req, res) => {
@@ -408,7 +440,7 @@ const likeVideo = async (req, res) => {
 
     await Interaction.findOneAndUpdate(
       { userId: req.userId, videoId },
-      { $inc: { likes: 1 }, $setOnInsert: { views: 1, shares: 0 } },
+      { $inc: { likes: 1 } },
       { upsert: true, new: true }
     );
 

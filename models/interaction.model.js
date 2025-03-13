@@ -15,9 +15,15 @@ const interactionSchema = new Schema(
     },
     likes: {
       type: Number,
+      default: 0,
     },
     views: {
       type: Number,
+      default: 0,
+    },
+    shared: {
+      type: Boolean,
+      default: false,
     },
     bookmarked: {
       type: Boolean,
