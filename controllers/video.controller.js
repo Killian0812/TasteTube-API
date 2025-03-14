@@ -99,18 +99,18 @@ const _incrementVideoView = (video, userId) => {
   Promise.resolve().then(() => {
     Promise.all([
       Interaction.findOneAndUpdate(
-        { userId: userId, videoId },
+        { userId: userId, videoId: video.id },
         { $inc: { views: 1 } },
         { upsert: true, new: true }
       ),
       video.save(),
     ])
       .then((_) => {
-        console.log(`Views incremented ${videoId}`);
+        console.log(`Views incremented ${video.id}`);
       })
       .catch((error) => {
         console.error(
-          `Error updating interaction or saving video ${videoId}`,
+          `Error updating interaction or saving video ${video.id}`,
           error
         );
       });
