@@ -14,7 +14,7 @@ const register = async (req, res) => {
     photoURL: defaultAvatar,
     emailVerified: false,
     disabled: false,
-  })
+  }) // TODO: Use secret encryption for password
     .then(async (userRecord) => {
       const newUser = new User({
         email,

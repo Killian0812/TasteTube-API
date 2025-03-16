@@ -39,6 +39,7 @@ const cartRouter = require("./routes/cart.router");
 const orderRouter = require("./routes/order.router");
 const addressRouter = require("./routes/address.router");
 const paymentRouter = require("./routes/payment.router");
+const paymentOptionRouter = require("./routes/paymentOption.router");
 
 const verifyJWT = require("./middlewares/verifyJWT");
 
@@ -87,6 +88,7 @@ app.use("/api/cart", verifyJWT(), cartRouter);
 app.use("/api/order", verifyJWT(), orderRouter);
 app.use("/api/address", verifyJWT(), addressRouter);
 app.use("/api/payment", paymentRouter);
+app.use("/api/payment-option", verifyJWT(), paymentOptionRouter);
 
 const port = process.env.PORT;
 const ip = process.env.IP;

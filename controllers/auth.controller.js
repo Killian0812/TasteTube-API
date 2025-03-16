@@ -31,6 +31,7 @@ const login = async (req, res) => {
 
     const user = await User.findOne({ email: email });
 
+    // TODO: Use secret encryption for password
     if (password != user.password)
       return res.status(400).json({ message: "Wrong password" });
 
