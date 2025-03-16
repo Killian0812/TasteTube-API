@@ -1,4 +1,4 @@
-const Payment = require("../models/Payment.model");
+const Payment = require("../models/payment.model");
 const { notifyPayment } = require("../socket.js");
 
 const ipn = async (req, res) => {

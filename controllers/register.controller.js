@@ -22,6 +22,7 @@ const register = async (req, res) => {
         username: userRecord.displayName,
         uid: userRecord.uid,
         image: defaultAvatar,
+        currency: "VND",
       });
       await newUser.save();
       sendVerificationLink(email);

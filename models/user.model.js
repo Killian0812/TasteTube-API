@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
 const { Schema } = mongoose;
+const { currencies } = require("../utils/constant");
 
 const userSchema = new Schema(
   {
@@ -36,6 +37,11 @@ const userSchema = new Schema(
         ref: "Video",
       },
     ],
+    currency: {
+      type: String,
+      enum: currencies,
+      default: "VND",
+    },
   },
   {
     timestamps: true,

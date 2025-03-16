@@ -1,63 +1,67 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 const { Schema } = mongoose;
+const { currencies } = require("../utils/constant");
 
-const productSchema = new Schema({
+const productSchema = new Schema(
+  {
     userId: {
-        type: Schema.Types.ObjectId,
-        ref: 'User',
-        required: true
+      type: Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
     },
     name: {
-        type: String,
-        required: true,
-        trim: true
+      type: String,
+      required: true,
+      trim: true,
     },
     cost: {
-        type: Number,
-        required: true,
-        min: 0
+      type: Number,
+      required: true,
+      min: 0,
     },
     currency: {
-        type: String,
-        enum: ['USD', 'VND'],
-        default: 'VND'
+      type: String,
+      enum: currencies,
+      default: "VND",
     },
     description: {
-        type: String,
-        trim: true
+      type: String,
+      trim: true,
     },
     quantity: {
-        type: Number,
-        min: 0,
-        required: true,
-        get: v => Math.round(v),
-        set: v => Math.round(v),
-        alias: 'qty'
+      type: Number,
+      min: 0,
+      required: true,
+      get: (v) => Math.round(v),
+      set: (v) => Math.round(v),
+      alias: "qty",
     },
     category: {
-        type: Schema.Types.ObjectId,
-        ref: 'Category'
+      type: Schema.Types.ObjectId,
+      ref: "Category",
     },
     ship: {
-        type: Boolean,
-        default: true,
+      type: Boolean,
+      default: true,
     },
     images: [
-        {
-            url: {
-                type: String,
-                required: true,
-                trim: true
-            },
-            filename: {
-                type: String,
-                required: true,
-                trim: true
-            }
-        }
+      {
+        url: {
+          type: String,
+          required: true,
+          trim: true,
+        },
+        filename: {
+          type: String,
+          required: true,
+          trim: true,
+        },
+      },
     ],
-}, {
-    timestamps: true
-});
+  },
+  {
+    timestamps: true,
+  }
+);
 
-module.exports = mongoose.model('Product', productSchema);
+module.exports = mongoose.model("Product", productSchema);

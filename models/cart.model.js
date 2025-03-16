@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
 const { Schema } = mongoose;
+const { currencies } = require("../utils/constant");
 
 const cartSchema = new Schema(
   {
@@ -41,7 +42,7 @@ const cartItemSchema = new Schema(
     },
     currency: {
       type: String,
-      enum: ["USD", "VND"],
+      enum: currencies,
       default: "VND",
     },
   },

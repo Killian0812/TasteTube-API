@@ -1,4 +1,4 @@
-const Payment = require("../models/Payment.model");
+const Payment = require("../models/payment.model");
 const { ProductCode, VnpLocale } = require("vnpay");
 const { vnpayConfig, vnpay } = require("../config/vnpay.config");
 

@@ -1,6 +1,6 @@
 const { Cart } = require("../models/cart.model");
 const Order = require("../models/order.model");
-const Payment = require("../models/Payment.model");
+const Payment = require("../models/payment.model");
 
 // Create by Customer, modify by Shop
 

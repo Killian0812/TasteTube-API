@@ -1,5 +1,7 @@
 const Category = require("../models/category.model");
 const Product = require("../models/product.model");
+const User = require("../models/user.model");
+
 const {
   uploadToFirebaseStorage,
   deleteFromFirebaseStorage,
@@ -121,8 +123,7 @@ const getProduct = async (req, res) => {
 
 const createProduct = async (req, res) => {
   try {
-    const { name, cost, currency, description, quantity, category, ship } =
-      req.body;
+    const { name, cost, description, quantity, category, ship } = req.body;
 
     if (!name || !cost || !quantity) {
       return res.status(400).json({ message: "Missing required information" });
@@ -140,11 +141,13 @@ const createProduct = async (req, res) => {
       })
     );
 
+    const shop = await User.findById(req.userId);
+
     const newProduct = new Product({
       userId: req.userId,
       name,
       cost,
-      currency,
+      currency: shop.currency ?? "VND",
       description,
       quantity,
       category,

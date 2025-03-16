@@ -79,6 +79,7 @@ const login = async (req, res) => {
       role: user.role ?? "",
       username: user.username,
       image: user.image || defaultAvatar,
+      currency: user.currency,
     });
   } catch (error) {
     if (error.code) {
@@ -134,6 +135,7 @@ const googleAuth = async (req, res) => {
         email,
         password,
         image: picture,
+        currency: "VND",
       });
 
       await FirebaseAuth.createUser({
@@ -194,6 +196,7 @@ const googleAuth = async (req, res) => {
       role: user.role ?? "",
       username: user.username,
       image: user.image || defaultAvatar,
+      currency: user.currency,
     });
   } catch (error) {
     console.error("Error login with Google:", error);
@@ -221,6 +224,7 @@ const facebookAuth = async (req, res) => {
         email,
         password,
         image: picture.data.url,
+        currency: "VND",
       });
 
       await FirebaseAuth.createUser({
@@ -281,6 +285,7 @@ const facebookAuth = async (req, res) => {
       role: user.role ?? "",
       username: user.username,
       image: user.image || defaultAvatar,
+      currency: user.currency,
     });
   } catch (error) {
     console.error("Error login with Facebook:", error);
