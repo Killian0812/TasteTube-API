@@ -167,6 +167,7 @@ const updateProduct = async (req, res) => {
       currency,
       description,
       quantity,
+      ship,
       category,
       reordered_images,
     } = req.body;
@@ -182,6 +183,7 @@ const updateProduct = async (req, res) => {
     product.description = description || product.description;
     product.quantity = quantity || product.quantity;
     product.category = category || product.category;
+    product.ship = ship || product.ship;
     product.images = reordered_images || product.images;
 
     if (req.files.length > 0) {
