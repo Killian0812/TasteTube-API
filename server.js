@@ -17,7 +17,7 @@ const corsOptions = {
 app.use(cors(corsOptions));
 
 // mongodb atlas connect
-const uri = process.env.MONGODB_CLUSTER_URI;
+const uri = process.env.MONGODB_URI;
 mongoose.connect(uri, { dbName: "tastetube", autoIndex: true });
 const connection = mongoose.connection;
 connection.once("open", () => {

@@ -228,7 +228,7 @@ const mongoose = require("mongoose");
 const Video = require("./models/video.model");
 require("dotenv").config();
 
-const uri = process.env.MONGODB_CLUSTER_URI;
+const uri = process.env.MONGODB_URI;
 mongoose
   .connect(uri, { dbName: "tastetube" })
   .then(async () => {
