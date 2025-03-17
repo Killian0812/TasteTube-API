@@ -3,6 +3,9 @@
   "version": "0.1.0",
   "description": "backend for chatk web app",
   "main": "server.js",
+  "engines": {
+    "node": "22.x"
+  },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "ngrok": "ngrok http 8080 --url first-shepherd-legible.ngrok-free.app",
