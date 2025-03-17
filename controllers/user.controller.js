@@ -171,13 +171,7 @@ const updateUserInfo = async (req, res) => {
     await user.save();
 
     // only delete old avatar when user save succeeded
-    if (oldFilename)
-      try {
-        await deleteFromFirebaseStorage(oldFilename);
-      } catch (error) {
-        // shouldn't affect user response
-        console.error("Error deleting old avatar:", error);
-      }
+    if (oldFilename) await deleteFromFirebaseStorage(oldFilename);
 
     const { followers, followings, videos } = user;
 

@@ -38,8 +38,6 @@ const register = async (req, res) => {
 const setAccountType = async (req, res) => {
   const { userId, role } = req.body;
 
-  console.log(req.body);
-
   if ((role !== "RESTAURANT" && role !== "CUSTOMER") || !userId)
     return res.status(400).json({
       message: "Not a valid account role",
