@@ -1,11 +1,12 @@
 const { VNPay } = require("vnpay");
+const { baseUrl } = require("../utils/constant");
 
 const vnpayConfig = {
   url: "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html",
   terminalId: process.env.VNPAY_TERMINAL_ID,
   hashSecret: process.env.VNPAY_SECRET,
-  returnUrl: "https://first-shepherd-legible.ngrok-free.app/payment/success",
-  ipnUrl: "https://first-shepherd-legible.ngrok-free.app/api/payment/vnpay/ipn",
+  returnUrl: `${baseUrl}/payment/success`,
+  ipnUrl: `${baseUrl}/api/payment/vnpay/ipn`,
 };
 
 const vnpay = new VNPay({
