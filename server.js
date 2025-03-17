@@ -18,11 +18,19 @@ app.use(cors(corsOptions));
 
 // mongodb atlas connect
 const uri = process.env.MONGODB_URI;
-mongoose.connect(uri, { dbName: "tastetube", autoIndex: true });
-const connection = mongoose.connection;
-connection.once("open", () => {
-  console.log("MongoDB Cloud connection established successfully");
-});
+const databaseConnect = () => {
+  mongoose
+    .connect(uri, { dbName: "tastetube", autoIndex: true })
+    .then(() => {
+      console.log("MongoDB Cloud connection established successfully");
+    })
+    .catch((err) => {
+      console.error("MongoDB connection error:", err);
+      setTimeout(databaseConnect, 3000); // Retry connection after 3 seconds
+    });
+};
+
+databaseConnect();
 
 // routing
 const registerRouter = require("./routes/register.router");
