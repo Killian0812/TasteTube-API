@@ -9,15 +9,19 @@ const deliveryOptionSchema = new Schema({
   },
   freeDistance: {
     type: Number,
-    default: 0,
+    default: 1,
   },
   feePerKm: {
     type: Number,
-    default: 0,
+    default: 10000,
   },
   maxDistance: {
     type: Number,
-    default: 0,
+    default: 15,
+  },
+  address: {
+    type: Schema.Types.ObjectId,
+    ref: "Address",
   },
 });
 
