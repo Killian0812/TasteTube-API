@@ -16,9 +16,10 @@ exports = async function (changeEvent) {
   const month = (currentDate.getMonth() + 1).toString().padStart(2, "0");
   const day = currentDate.getDate().toString().padStart(2, "0");
   const formattedDate = `${year}${month}${day}`;
+  const shopAndDate = `${doc.shopId.toString()}-${formattedDate}`;
 
   var counter = await countercollection.findOneAndUpdate(
-    { _id: doc.shopId, date: formattedDate },
+    { _id: shopAndDate },
     { $inc: { value: 1 } },
     { returnNewDocument: true, upsert: true }
   );
