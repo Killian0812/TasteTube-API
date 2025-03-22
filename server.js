@@ -1,5 +1,6 @@
 const express = require("express");
 const mongoose = require("mongoose");
+const axios = require("axios");
 const cors = require("cors");
 const path = require("path");
 const cookieParser = require("cookie-parser");
@@ -75,6 +76,54 @@ app.get(/^\/(?!api).*/, function (_, res) {
       res.status(500).send(err);
     }
   });
+});
+
+// proxy Google Maps API requests
+app.all("/api/maps/*", async (req, res) => {
+  try {
+    const apiPath = req.path.slice("/api/maps/".length);
+    const fullUrl = `https://maps.googleapis.com/maps/api/${apiPath}`;
+
+    const apiKey = process.env.GOOGLE_MAPS_APIKEY || req.query.key;
+    if (!apiKey) {
+      return res.status(400).json({ error: "API key is required" });
+    }
+
+    const { key, ...queryParams } = req.query;
+
+    const config = {
+      url: fullUrl,
+      params: {
+        ...queryParams,
+        key: apiKey,
+      },
+      data: req.body,
+    };
+
+    let response;
+    switch (req.method) {
+      case "GET":
+        response = await axios.get(fullUrl, { params: config.params });
+        break;
+      case "POST":
+        response = await axios.post(fullUrl, config.data, {
+          params: config.params,
+        });
+        break;
+      default:
+        return res.status(405).json({ error: "Method Not Allowed" });
+    }
+    res.status(response.status).json(response.data);
+  } catch (error) {
+    if (error.response) {
+      res.status(error.response.status).send(error.response.data);
+    } else {
+      res.status(500).json({
+        error: "Internal Server Error",
+        message: error.message,
+      });
+    }
+  }
 });
 
 app.use("/api/register", registerRouter);
