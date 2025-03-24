@@ -25,4 +25,6 @@ const deliveryOptionSchema = new Schema({
   },
 });
 
+deliveryOptionSchema.index({ shopId: 1 }, { unique: true });
+
 module.exports = mongoose.model("DeliveryOption", deliveryOptionSchema);

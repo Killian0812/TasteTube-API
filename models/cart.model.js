@@ -51,6 +51,8 @@ const cartItemSchema = new Schema(
   }
 );
 
+cartSchema.index({ userId: 1 });
+
 module.exports = {
   Cart: mongoose.model("Cart", cartSchema),
   CartItem: mongoose.model("CartItem", cartItemSchema),

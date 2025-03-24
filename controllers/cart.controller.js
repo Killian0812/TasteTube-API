@@ -1,5 +1,7 @@
 const { Cart, CartItem } = require("../models/cart.model");
+const DeliveryOption = require("../models/deliveryOption.model");
 const Product = require("../models/product.model");
+const { getDistanceBetweenAddress } = require("../services/location.service");
 
 const addToCart = async (req, res) => {
   const userId = req.userId;
@@ -193,4 +195,85 @@ const getCart = async (req, res) => {
   }
 };
 
-module.exports = { getCart, removeFromCart, updateItemQuantity, addToCart };
+const getOrderSummary = async (req, res) => {
+  const userId = req.userId;
+  const { selectedItems, address } = req.body;
+
+  try {
+    const cart = await Cart.findOne({ userId }).populate({
+      path: "items",
+      populate: {
+        path: "product",
+      },
+    });
+    if (!cart) {
+      return res.status(404).json({ message: "Cart not found" });
+    }
+
+    // Group selected items by shopId
+    const filteredItems = cart.items.filter((item) =>
+      selectedItems.includes(item.id)
+    );
+    const groupedItems = filteredItems.reduce((acc, item) => {
+      const shopId = item.product.userId._id.toString();
+      if (!acc[shopId]) {
+        acc[shopId] = [];
+      }
+      acc[shopId].push(item);
+      return acc;
+    }, {});
+
+    const orderSummaryPromises = Object.entries(groupedItems).map(
+      async ([shopId, items]) => {
+        const deliveryOption = await DeliveryOption.findOne({
+          shopId,
+        }).populate("address");
+        if (!deliveryOption) {
+          throw new Error(`Shop ${shopId} haven't setup delivery`);
+        }
+
+        const discountAmount = 0;
+        const deliveryFee = await _getDeliveryFee(deliveryOption, address);
+        const totalAmount =
+          items.reduce((sum, item) => sum + item.cost, 0) +
+          deliveryFee -
+          discountAmount;
+
+        return {
+          shopId,
+          deliveryFee,
+          discountAmount,
+          totalAmount,
+        };
+      }
+    );
+
+    const orderSummary = await Promise.all(orderSummaryPromises);
+    return res.status(200).json({ orderSummary });
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
+  }
+};
+
+const _getDeliveryFee = async (deliveryOption, address) => {
+  const { freeDistance, feePerKm, maxDistance } = deliveryOption;
+  const distance = await getDistanceBetweenAddress(
+    deliveryOption.address,
+    address
+  );
+  if (distance <= freeDistance * 1000) {
+    return 0;
+  }
+  if (distance > maxDistance * 1000) {
+    return -1;
+  }
+  return ((distance - freeDistance * 1000) / 1000) * feePerKm;
+};
+
+module.exports = {
+  getCart,
+  removeFromCart,
+  updateItemQuantity,
+  addToCart,
+  getOrderSummary,
+};
