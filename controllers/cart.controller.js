@@ -1,6 +1,7 @@
 const { Cart, CartItem } = require("../models/cart.model");
 const DeliveryOption = require("../models/deliveryOption.model");
 const Product = require("../models/product.model");
+const User = require("../models/user.model");
 const { getDistanceBetweenAddress } = require("../services/location.service");
 
 const addToCart = async (req, res) => {
@@ -228,12 +229,23 @@ const getOrderSummary = async (req, res) => {
         const deliveryOption = await DeliveryOption.findOne({
           shopId,
         }).populate("address");
+
         if (!deliveryOption) {
-          throw new Error(`Shop ${shopId} haven't setup delivery`);
+          return {
+            shopId,
+            message: `Shop haven't setup delivery`,
+          };
+        }
+
+        const deliveryFee = await _getDeliveryFee(deliveryOption, address);
+        if (isNaN(deliveryFee)) {
+          return {
+            shopId,
+            message: `Outside of delivery area`,
+          };
         }
 
         const discountAmount = 0;
-        const deliveryFee = await _getDeliveryFee(deliveryOption, address);
         const totalAmount =
           items.reduce((sum, item) => sum + item.cost, 0) +
           deliveryFee -
@@ -265,7 +277,7 @@ const _getDeliveryFee = async (deliveryOption, address) => {
     return 0;
   }
   if (distance > maxDistance * 1000) {
-    return -1;
+    return NaN;
   }
   return ((distance - freeDistance * 1000) / 1000) * feePerKm;
 };

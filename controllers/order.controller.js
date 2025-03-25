@@ -4,9 +4,17 @@ const Payment = require("../models/payment.model");
 
 // Create by Customer, modify by Shop
 
+// May send voucher, discount, etc. in the future
 const createOrder = async (req, res) => {
   const userId = req.userId;
-  const { selectedCartItems, addressId, paymentMethod, notes, pid } = req.body;
+  const {
+    selectedCartItems,
+    addressId,
+    paymentMethod,
+    notes,
+    pid,
+    orderSummary,
+  } = req.body;
 
   if (!paymentMethod) {
     return res.status(400).json({ message: "Please select a payment method" });
@@ -70,10 +78,10 @@ const createOrder = async (req, res) => {
     // Create orders for each shop
     const orders = [];
     for (const [shopId, items] of Object.entries(groupedItems)) {
-      // Calculate the total price for current shop order
-      const total = items.reduce((sum, item) => {
-        return sum + item.product.cost * item.quantity;
-      }, 0);
+      // Get total price for current shop from orderSummary
+      const total = orderSummary.find((summary) => summary.shopId === shopId)[
+        "totalAmount"
+      ];
 
       // Create single order
       const order = new Order({

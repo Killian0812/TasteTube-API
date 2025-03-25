@@ -37,6 +37,23 @@ const getPaymentVnpayUrl = async (req, res) => {
   }
 };
 
+const createCashPayment = async (req, res) => {
+  const userId = req.userId;
+  const { amount, currency } = req.body;
+
+  try {
+    const payment = await Payment.create({
+      userId,
+      amount,
+      currency,
+    });
+    return res.status(201).json({ pid: payment.id });
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
+  }
+};
+
 module.exports = {
   getPaymentVnpayUrl,
+  createCashPayment,
 };
