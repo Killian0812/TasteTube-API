@@ -74,6 +74,17 @@ const orderSchema = new Schema(
       type: String,
       // Optional note from customer
     },
+    deliveryStatusLog: [
+      {
+        deliveryStatus: {
+          type: String,
+          enum: [], // TODO:
+        },
+        deliveryTimestamp: {
+          type: Number,
+        },
+      },
+    ],
   },
   {
     timestamps: true,
