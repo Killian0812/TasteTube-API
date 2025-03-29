@@ -2,7 +2,7 @@ const querystring = require("qs");
 const crypto = require("crypto");
 const { sortObject } = require("../utils/object");
 const moment = require("moment");
-const { vnpayConfig } = require("./vnpay.config");
+const { vnpayConfig } = require("../config/vnpay.config");
 
 const createPaymentUrl = (ipAddr, amount, currency, pid) => {
   const date = new Date();

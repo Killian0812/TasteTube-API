@@ -1,6 +1,6 @@
 const googleMapsConfig = {
-  url: "https://maps.googleapis.com/maps/api",
+  baseUrl: "https://maps.googleapis.com/maps/api",
   apiKey: process.env.GOOGLE_MAPS_APIKEY,
 };
 
-module.exports = { googleMapsConfig };
+module.exports = googleMapsConfig;

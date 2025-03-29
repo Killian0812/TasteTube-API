@@ -56,7 +56,7 @@ const orderSchema = new Schema(
     ],
     paymentMethod: {
       type: String,
-      // TODO: May add enum
+      enum: ["COD", "VNPAY", "ZALOPAY"],
     },
     paid: {
       type: Boolean,
@@ -73,6 +73,10 @@ const orderSchema = new Schema(
     notes: {
       type: String,
       // Optional note from customer
+    },
+    deliveryType: {
+      type: String,
+      enum: ["SELF", "GRAB"],
     },
     deliveryStatusLog: [
       {
