@@ -2,7 +2,7 @@ const { Cart, CartItem } = require("../models/cart.model");
 const DeliveryOption = require("../models/deliveryOption.model");
 const Product = require("../models/product.model");
 const User = require("../models/user.model");
-const { getDistanceBetweenAddress } = require("../services/location.service");
+const { getSelfDeliveryFee } = require("../services/orderDelivery.service");
 
 const addToCart = async (req, res) => {
   const userId = req.userId;
@@ -237,7 +237,7 @@ const getOrderSummary = async (req, res) => {
           };
         }
 
-        const deliveryFee = await _getDeliveryFee(deliveryOption, address);
+        const deliveryFee = await getSelfDeliveryFee(deliveryOption, address);
         if (isNaN(deliveryFee)) {
           return {
             shopId,
@@ -265,21 +265,6 @@ const getOrderSummary = async (req, res) => {
   } catch (error) {
     return res.status(500).json({ message: error.message });
   }
-};
-
-const _getDeliveryFee = async (deliveryOption, address) => {
-  const { freeDistance, feePerKm, maxDistance } = deliveryOption;
-  const distance = await getDistanceBetweenAddress(
-    deliveryOption.address,
-    address
-  );
-  if (distance <= freeDistance * 1000) {
-    return 0;
-  }
-  if (distance > maxDistance * 1000) {
-    return NaN;
-  }
-  return ((distance - freeDistance * 1000) / 1000) * feePerKm;
 };
 
 module.exports = {
