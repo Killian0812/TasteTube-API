@@ -62,7 +62,6 @@ const getGrabDeliveryQuote = async (deliveryOption, order) => {
 
   const requestBody = {
     serviceType: "INSTANT",
-    vehicleType: "BIKE",
     packages,
     origin,
     destination,
@@ -70,15 +69,96 @@ const getGrabDeliveryQuote = async (deliveryOption, order) => {
     paymentMethod: cashOnDelivery ? "CASH" : "CASHLESS",
   };
 
-  try {
-    const response = await grabAxios.post("/deliveries/quotes", requestBody);
-    return response.data;
-  } catch (e) {
-    return null;
+  const response = await grabAxios.post("/deliveries/quotes", requestBody);
+  const { amount, estimatedTimeline } = response.data.quotes[0];
+  return { amount, estimatedTimeline };
+};
+
+const createGrabDelivery = async (deliveryOption, order) => {
+  const customerAddress = order.address;
+  const shopAddress = deliveryOption.address;
+
+  const packages = order.items.map((item) => {
+    const product = item.product;
+    return {
+      name: product.name.slice(0, 500),
+      description: product.description
+        ? product.description.slice(0, 500)
+        : "No description",
+      quantity: item.quantity,
+      dimensions: {
+        height: product.dimensions?.height || 10,
+        width: product.dimensions?.width || 10,
+        depth: product.dimensions?.depth || 10,
+        weight: product.dimensions?.weight || 100,
+      },
+    };
+  });
+
+  const origin = {
+    address: shopAddress.value,
+    coordinates: {
+      latitude: shopAddress.latitude,
+      longitude: shopAddress.longitude,
+    },
+  };
+
+  const destination = {
+    address: customerAddress.value,
+    coordinates: {
+      latitude: customerAddress.latitude,
+      longitude: customerAddress.longitude,
+    },
+  };
+
+  const sender = {
+    firstName: shopAddress.name,
+    phone: customerAddress.phone,
+    smsEnabled: true,
+  };
+
+  const recipient = {
+    firstName: customerAddress.name,
+    phone: customerAddress.phone,
+    smsEnabled: true,
+  };
+
+  let cashOnDelivery;
+  if (order.paymentMethod === "COD" && !order.paid) {
+    cashOnDelivery = {
+      amount: order.total,
+    };
   }
+
+  const requestBody = {
+    merchantOrderID: order.trackingId,
+    serviceType: "INSTANT",
+    packages,
+    origin,
+    destination,
+    sender,
+    recipient,
+    paymentMethod: cashOnDelivery ? "CASH" : "CASHLESS",
+    ...(cashOnDelivery && { cashOnDelivery }),
+  };
+
+  const response = await grabAxios.post("/deliveries", requestBody);
+
+  // Update order with delivery details
+  order.deliveryType = "GRAB";
+  order.deliveryStatusLog = [
+    {
+      deliveryStatus: response.data.status,
+      deliveryTimestamp: Date.now(),
+    },
+  ];
+  await order.save();
+
+  return response.data;
 };
 
 module.exports = {
   getSelfDeliveryFee,
   getGrabDeliveryQuote,
+  createGrabDelivery,
 };

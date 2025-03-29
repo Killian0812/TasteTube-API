@@ -24,11 +24,13 @@ const getOrderDeliveryQuote = async (req, res) => {
     }
 
     const selfDeliveryQuote = {
-      deliveryFee: await getSelfDeliveryFee(deliveryOption, order.address),
+      amount: await getSelfDeliveryFee(deliveryOption, order.address),
     };
     const grabDeliveryQuote = await getGrabDeliveryQuote(deliveryOption, order);
 
     return res.status(200).json({
+      origin: deliveryOption.address.value,
+      destination: order.address.value,
       selfDeliveryQuote,
       grabDeliveryQuote,
     });

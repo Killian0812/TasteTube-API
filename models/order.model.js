@@ -82,7 +82,15 @@ const orderSchema = new Schema(
       {
         deliveryStatus: {
           type: String,
-          enum: [], // TODO:
+          enum: [
+            "ALLOCATING",
+            "PENDING_PICKUP",
+            "PICKING_UP",
+            "PENDING_DROP_OFF",
+            "IN_DELIVERY",
+            "RETURNED",
+            "FAILED",
+          ],
         },
         deliveryTimestamp: {
           type: Number,
