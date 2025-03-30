@@ -173,10 +173,32 @@ const cancelOrderDelivery = async (req, res) => {
   }
 };
 
+const renewOrderDelivery = async (req, res) => {
+  const orderId = req.params.orderId;
+
+  try {
+    const order = await Order.findById(orderId);
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    order.deliveryStatusLog = [];
+    order.deliveryType = "NONE";
+    order.deliveryId = "";
+    order.status = "DELIVERY";
+    await order.save();
+
+    return res.status(200).json(order);
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
+  }
+};
+
 module.exports = {
   getOrderDeliveryStatus,
   createOrderDelivery,
   getOrderDeliveryQuote,
   updateSelfOrderDelivery,
   cancelOrderDelivery,
+  renewOrderDelivery,
 };
