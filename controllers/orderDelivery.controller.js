@@ -6,6 +6,7 @@ const {
   createGrabDelivery,
   createSelfDelivery,
   getGrabDeliveryDetail,
+  updateSelfDelivery,
 } = require("../services/orderDelivery.service");
 
 const getOrderDeliveryStatus = async (req, res) => {
@@ -133,8 +134,23 @@ const getOrderDeliveryQuote = async (req, res) => {
   }
 };
 
+const updateSelfOrderDelivery = async (req, res) => {
+  const orderId = req.params.orderId;
+  const newStatus = req.query.newStatus;
+
+  try {
+    const order = await Order.findById(orderId);
+    const updated = await updateSelfDelivery(order, newStatus);
+
+    return res.status(200).json(updated);
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
+  }
+};
+
 module.exports = {
   getOrderDeliveryStatus,
   createOrderDelivery,
   getOrderDeliveryQuote,
+  updateSelfOrderDelivery,
 };

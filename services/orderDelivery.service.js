@@ -193,6 +193,32 @@ const createSelfDelivery = async (order) => {
   return order;
 };
 
+const updateSelfDelivery = async (order, newStatus) => {
+  const existingStatusIndex = order.deliveryStatusLog.findIndex(
+    (log) => log.deliveryStatus === newStatus
+  );
+
+  // Remove all logs after newStatus if exists
+  if (existingStatusIndex !== -1) {
+    order.deliveryStatusLog = order.deliveryStatusLog.slice(
+      0,
+      existingStatusIndex + 1
+    );
+    order.deliveryStatusLog[existingStatusIndex].deliveryTimestamp = Date.now();
+    order.status = "DELIVERY";
+  } else {
+    order.deliveryStatusLog.push({
+      deliveryStatus: newStatus,
+      deliveryTimestamp: Date.now(),
+    });
+  }
+
+  if (newStatus === "COMPLETED") order.status = "COMPLETED";
+  await order.save();
+
+  return order;
+};
+
 module.exports = {
   deliveryStatus,
   getSelfDeliveryFee,
@@ -200,4 +226,5 @@ module.exports = {
   createGrabDelivery,
   getGrabDeliveryDetail,
   createSelfDelivery,
+  updateSelfDelivery,
 };
