@@ -7,6 +7,7 @@ const {
   createSelfDelivery,
   getGrabDeliveryDetail,
   updateSelfDelivery,
+  cancelGrabDelivery,
 } = require("../services/orderDelivery.service");
 
 const getOrderDeliveryStatus = async (req, res) => {
@@ -28,6 +29,9 @@ const getOrderDeliveryStatus = async (req, res) => {
 
     if (order.deliveryType === "GRAB") {
       const detail = await getGrabDeliveryDetail(order);
+      if (detail.status === "COMPLETED") {
+        order.status = "COMPLETED";
+      }
       if (
         detail.status !=
         order.deliveryStatusLog[order.deliveryStatusLog.length - 1]
@@ -45,12 +49,9 @@ const getOrderDeliveryStatus = async (req, res) => {
             deliveryStatus: detail.status,
             deliveryTimestamp: Date.now(),
           });
-          if (detail.status === "COMPLETED") {
-            order.status = "COMPLETED";
-          }
-          await order.save();
         }
       }
+      await order.save();
     }
 
     return res.status(200).json({
@@ -148,9 +149,34 @@ const updateSelfOrderDelivery = async (req, res) => {
   }
 };
 
+const cancelOrderDelivery = async (req, res) => {
+  const orderId = req.params.orderId;
+
+  try {
+    const order = await Order.findById(orderId);
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    if (order.deliveryType === "SELF") {
+      order.deliveryStatusLog = [];
+      order.deliveryType = "NONE";
+      order.status = "DELIVERY";
+      await order.save();
+    } else if (order.deliveryType === "GRAB") {
+      await cancelGrabDelivery(order);
+    }
+
+    return res.status(200).json(order);
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
+  }
+};
+
 module.exports = {
   getOrderDeliveryStatus,
   createOrderDelivery,
   getOrderDeliveryQuote,
   updateSelfOrderDelivery,
+  cancelOrderDelivery,
 };

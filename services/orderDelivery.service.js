@@ -14,23 +14,6 @@ const deliveryStatus = [
   "FAILED",
 ];
 
-const getSelfDeliveryFee = async (deliveryOption, address) => {
-  const { freeDistance, feePerKm, maxDistance } = deliveryOption;
-  const distance = await getDistanceBetweenAddress(
-    deliveryOption.address,
-    address
-  );
-  if (distance == -1 || distance > maxDistance * 1000) {
-    return NaN;
-  }
-  if (distance <= freeDistance * 1000) {
-    return 0;
-  }
-  return (
-    Math.round(((distance - freeDistance * 1000) / 1000) * feePerKm * 10) / 10
-  );
-};
-
 const getGrabDeliveryQuote = async (deliveryOption, order) => {
   const packages = order.items.map((item) => {
     const product = item.product;
@@ -179,6 +162,32 @@ const getGrabDeliveryDetail = async (order) => {
   return response.data;
 };
 
+const cancelGrabDelivery = async (order) => {
+  const response = await grabAxios.delete(`/deliveries/${order.deliveryId}`);
+  order.deliveryId = "";
+  order.deliveryStatusLog = [];
+  order.deliveryType = "NONE";
+  await order.save();
+  return response.data;
+};
+
+const getSelfDeliveryFee = async (deliveryOption, address) => {
+  const { freeDistance, feePerKm, maxDistance } = deliveryOption;
+  const distance = await getDistanceBetweenAddress(
+    deliveryOption.address,
+    address
+  );
+  if (distance == -1 || distance > maxDistance * 1000) {
+    return NaN;
+  }
+  if (distance <= freeDistance * 1000) {
+    return 0;
+  }
+  return (
+    Math.round(((distance - freeDistance * 1000) / 1000) * feePerKm * 10) / 10
+  );
+};
+
 const createSelfDelivery = async (order) => {
   order.status = "DELIVERY";
   order.deliveryType = "SELF";
@@ -221,10 +230,15 @@ const updateSelfDelivery = async (order, newStatus) => {
 
 module.exports = {
   deliveryStatus,
-  getSelfDeliveryFee,
+
+  // Grab delivery
   getGrabDeliveryQuote,
   createGrabDelivery,
   getGrabDeliveryDetail,
+  cancelGrabDelivery,
+
+  // Self delivery
+  getSelfDeliveryFee,
   createSelfDelivery,
   updateSelfDelivery,
 };
