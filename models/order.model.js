@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
 const { Schema } = mongoose;
+const { deliveryStatus } = require("../services/orderDelivery.service");
 
 const orderSchema = new Schema(
   {
@@ -76,21 +77,13 @@ const orderSchema = new Schema(
     },
     deliveryType: {
       type: String,
-      enum: ["SELF", "GRAB"],
+      enum: ["NONE", "SELF", "GRAB"],
     },
     deliveryStatusLog: [
       {
         deliveryStatus: {
           type: String,
-          enum: [
-            "ALLOCATING",
-            "PENDING_PICKUP",
-            "PICKING_UP",
-            "PENDING_DROP_OFF",
-            "IN_DELIVERY",
-            "RETURNED",
-            "FAILED",
-          ],
+          enum: deliveryStatus,
         },
         deliveryTimestamp: {
           type: Number,

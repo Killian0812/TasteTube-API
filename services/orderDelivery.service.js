@@ -1,6 +1,19 @@
 const { getDistanceBetweenAddress } = require("../services/location.service");
 const grabAxios = require("../utils/axios/grab.axios");
 
+const deliveryStatus = [
+  "ALLOCATING",
+  "PENDING_PICKUP",
+  "PICKING_UP",
+  "PENDING_DROP_OFF",
+  "IN_DELIVERY",
+  "IN_RETURN",
+  "RETURNED",
+  "COMPLETED",
+  "CANCELED",
+  "FAILED",
+];
+
 const getSelfDeliveryFee = async (deliveryOption, address) => {
   const { freeDistance, feePerKm, maxDistance } = deliveryOption;
   const distance = await getDistanceBetweenAddress(
@@ -13,7 +26,9 @@ const getSelfDeliveryFee = async (deliveryOption, address) => {
   if (distance <= freeDistance * 1000) {
     return 0;
   }
-  return ((distance - freeDistance * 1000) / 1000) * feePerKm;
+  return (
+    Math.round(((distance - freeDistance * 1000) / 1000) * feePerKm * 10) / 10
+  );
 };
 
 const getGrabDeliveryQuote = async (deliveryOption, order) => {
@@ -145,6 +160,7 @@ const createGrabDelivery = async (deliveryOption, order) => {
   const response = await grabAxios.post("/deliveries", requestBody);
 
   // Update order with delivery details
+  order.status = "DELIVERY";
   order.deliveryType = "GRAB";
   order.deliveryStatusLog = [
     {
@@ -154,11 +170,27 @@ const createGrabDelivery = async (deliveryOption, order) => {
   ];
   await order.save();
 
-  return response.data;
+  return order;
+};
+
+const createSelfDelivery = async (order) => {
+  order.status = "DELIVERY";
+  order.deliveryType = "SELF";
+  order.deliveryStatusLog = [
+    {
+      deliveryStatus: "ALLOCATING",
+      deliveryTimestamp: Date.now(),
+    },
+  ];
+  await order.save();
+
+  return order;
 };
 
 module.exports = {
+  deliveryStatus,
   getSelfDeliveryFee,
   getGrabDeliveryQuote,
   createGrabDelivery,
+  createSelfDelivery,
 };

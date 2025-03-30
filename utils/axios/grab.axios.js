@@ -27,7 +27,7 @@ const _reissueAccessToken = async () => {
     setGrabAccessToken(accessToken);
     return accessToken;
   } catch (error) {
-    console.error("Failed to reissue access token:", error);
+    console.error("Failed to reissue access token:", error.message);
     return null;
   }
 };
