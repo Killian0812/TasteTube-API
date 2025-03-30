@@ -5,6 +5,7 @@ const {
   getGrabDeliveryQuote,
   createGrabDelivery,
   createSelfDelivery,
+  getGrabDeliveryDetail,
 } = require("../services/orderDelivery.service");
 
 const getOrderDeliveryStatus = async (req, res) => {
@@ -25,7 +26,30 @@ const getOrderDeliveryStatus = async (req, res) => {
     let deliveryStatusLog = order.deliveryStatusLog || [];
 
     if (order.deliveryType === "GRAB") {
-      // append here
+      const detail = await getGrabDeliveryDetail(order);
+      if (
+        detail.status !=
+        order.deliveryStatusLog[order.deliveryStatusLog.length - 1]
+          .deliveryStatus
+      ) {
+        if (detail.status === "ALLOCATING") {
+          order.deliveryStatusLog = [
+            {
+              deliveryStatus: detail.status,
+              deliveryTimestamp: Date.now(),
+            },
+          ];
+        } else {
+          order.deliveryStatusLog.push({
+            deliveryStatus: detail.status,
+            deliveryTimestamp: Date.now(),
+          });
+          if (detail.status === "COMPLETED") {
+            order.status = "COMPLETED";
+          }
+          await order.save();
+        }
+      }
     }
 
     return res.status(200).json({

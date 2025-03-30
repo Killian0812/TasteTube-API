@@ -168,9 +168,15 @@ const createGrabDelivery = async (deliveryOption, order) => {
       deliveryTimestamp: Date.now(),
     },
   ];
+  order.deliveryId = response.data.deliveryID;
   await order.save();
 
   return order;
+};
+
+const getGrabDeliveryDetail = async (order) => {
+  const response = await grabAxios.get(`/deliveries/${order.deliveryId}`);
+  return response.data;
 };
 
 const createSelfDelivery = async (order) => {
@@ -192,5 +198,6 @@ module.exports = {
   getSelfDeliveryFee,
   getGrabDeliveryQuote,
   createGrabDelivery,
+  getGrabDeliveryDetail,
   createSelfDelivery,
 };

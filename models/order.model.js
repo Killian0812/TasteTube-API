@@ -90,6 +90,9 @@ const orderSchema = new Schema(
         },
       },
     ],
+    deliveryId: {
+      type: String,
+    },
   },
   {
     timestamps: true,
