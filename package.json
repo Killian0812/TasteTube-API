@@ -1,26 +1,27 @@
 {
-  "name": "chatk_backend",
-  "version": "0.1.0",
-  "description": "backend for chatk web app",
+  "name": "tastetube_api",
+  "version": "1.0.0",
+  "description": "backend for tastetube app",
   "main": "server.js",
   "engines": {
     "node": "22.x"
   },
   "scripts": {
+    "dev": "nodemon",
     "test": "echo \"Error: no test specified\" && exit 1",
     "ngrok": "ngrok http 8080 --url first-shepherd-legible.ngrok-free.app",
     "new-ngrok": "ngrok http --domain first-shepherd-legible.ngrok-free.app 8080"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Killian0812/ChatK_backend.git"
+    "url": "git+https://github.com/Killian0812/TasteTube-API.git"
   },
   "author": "",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/Killian0812/ChatK_backend/issues"
+    "url": "https://github.com/Killian0812/TasteTube-API/issues"
   },
-  "homepage": "https://github.com/Killian0812/ChatK_backend#readme",
+  "homepage": "https://github.com/Killian0812/TasteTube-API#readme",
   "dependencies": {
     "bcrypt": "^5.1.1",
     "cookie-parser": "^1.4.6",
