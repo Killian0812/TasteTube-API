@@ -105,7 +105,6 @@ const verifyToken = async (req, res) => {
       }
 
       const user = await User.findOne({ email: decoded.email });
-      // console.log(user);
       return res.status(200).json({
         username: user.username,
         email: user.email,
@@ -120,8 +119,6 @@ const verifyToken = async (req, res) => {
 
 const googleAuth = async (req, res) => {
   const { name, email, picture } = req.body;
-
-  console.log("Login with Google");
 
   try {
     // Check duplication
@@ -188,7 +185,7 @@ const googleAuth = async (req, res) => {
     });
     res.set("x-auth-token", refreshToken);
 
-    console.log("Login with Google successful");
+    console.log(`Login with Google successful ${name}`);
 
     res.status(200).json({
       accessToken: accessToken,
@@ -209,8 +206,6 @@ const googleAuth = async (req, res) => {
 
 const facebookAuth = async (req, res) => {
   const { name, email, picture } = req.body;
-
-  console.log("Login with Facebook");
 
   try {
     // Check duplication
@@ -277,7 +272,7 @@ const facebookAuth = async (req, res) => {
     });
     res.set("x-auth-token", refreshToken);
 
-    console.log("Login with Facebook successful");
+    console.log(`Login with Facebook successful ${name}`);
 
     res.status(200).json({
       accessToken: accessToken,

@@ -27,14 +27,21 @@ async function getProductsInShop(req, res) {
 
 async function searchProducts(req, res) {
   const { keyword } = req.query;
+  const { shopId } = req.params;
 
   try {
-    const products = await Product.find({
+    const query = {
       $or: [
         { name: { $regex: keyword, $options: "i" } },
         { description: { $regex: keyword, $options: "i" } },
       ],
-    })
+    };
+
+    if (shopId) {
+      query.userId = shopId;
+    }
+
+    const products = await Product.find(query)
       .populate("category", "_id name")
       .populate("userId", "_id image username phone");
 
@@ -47,7 +54,7 @@ async function searchProducts(req, res) {
 async function searchProductsInShop(req, res) {
   const { keyword } = req.query;
   const userId = req.params.shopId;
-  
+
   try {
     const products = await Product.find({
       $or: [

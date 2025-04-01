@@ -304,7 +304,6 @@ const uploadVideo = async (req, res) => {
       .save()
       .then(async (video) => {
         user.videos.push(video._id);
-        console.log(video._id);
         await user.save();
         return res.status(200).json({
           message: "Uploaded",
