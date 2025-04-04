@@ -1,5 +1,5 @@
 const Payment = require("../models/payment.model");
-const { ProductCode, VnpLocale } = require("vnpay");
+const { ProductCode, VnpLocale, dateFormat } = require("vnpay");
 const { vnpayConfig, vnpay } = require("../config/vnpay.config");
 
 const getPaymentVnpayUrl = async (req, res) => {
@@ -21,6 +21,10 @@ const getPaymentVnpayUrl = async (req, res) => {
       req.socket.remoteAddress ||
       req.connection.socket.remoteAddress;
 
+    const createDate = new Date(
+      new Date().toLocaleString("en-US", { timeZone: "Asia/Bangkok" })
+    );
+
     const url = vnpay.buildPaymentUrl({
       vnp_Amount: amount,
       vnp_IpAddr: ipAddr,
@@ -29,6 +33,7 @@ const getPaymentVnpayUrl = async (req, res) => {
       vnp_OrderType: ProductCode.Other,
       vnp_ReturnUrl: vnpayConfig.returnUrl,
       vnp_Locale: VnpLocale.EN,
+      vnp_CreateDate: dateFormat(createDate, "yyyyMMddHHmmss"),
     });
 
     return res.status(201).json({ url: url, pid: payment.id });
