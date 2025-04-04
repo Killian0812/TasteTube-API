@@ -1,6 +1,7 @@
 const express = require("express");
 const http = require("http");
 const { Server } = require("socket.io");
+const { FirebaseRealtimeDatabase } = require("./firebase.js");
 
 const app = express();
 
@@ -24,15 +25,24 @@ io.on("connection", (socket) => {
   }
 });
 
-const notifyPayment = (userId, status, pid) => {
+const notifyPayment = async (userId, status, pid) => {
   const socketId = userSocketMap[userId];
 
-  if (!socketId) return;
+  if (!socketId) {
+    await FirebaseRealtimeDatabase.ref(`users/${userId}/payments/${pid}`).set({
+      pid,
+      status: "success",
+      createdAt: new Date().toISOString(),
+    });
+    console.log(`(Firebase RTDB) Notified ${userId}; payment ${pid}`);
+    return;
+  }
 
   io.to(socketId).emit("payment", {
     status: status,
     pid: pid,
   });
+  console.log(`(Socket) Notified ${userId}; payment ${pid}`);
 };
 
 module.exports = { app, io, server, notifyPayment };

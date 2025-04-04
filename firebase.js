@@ -10,6 +10,7 @@ const setupFirebase = () => {
     admin.initializeApp({
       credential: admin.credential.cert(serviceAccount),
       storageBucket: process.env.STORAGE_BUCKET,
+      databaseURL: process.env.RTDB_URL,
     });
     console.log("Firebase initialization successfully");
   } catch (error) {
@@ -24,4 +25,11 @@ const FirebaseStorage = admin.storage();
 
 const FirebaseAuth = admin.auth();
 
-module.exports = { FirebaseAuth, Firestore, FirebaseStorage };
+const FirebaseRealtimeDatabase = admin.database();
+
+module.exports = {
+  FirebaseAuth,
+  Firestore,
+  FirebaseStorage,
+  FirebaseRealtimeDatabase,
+};
