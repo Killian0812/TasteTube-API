@@ -125,6 +125,7 @@ const updateItemQuantity = async (req, res) => {
     });
 
     cartItem.quantity = quantity;
+    cartItem.cost = cartItem.product.cost * quantity;
     await cartItem.save();
 
     return res.status(200).json({ cartItem });
