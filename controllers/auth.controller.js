@@ -17,12 +17,6 @@ const login = async (req, res) => {
   try {
     const userRecord = await FirebaseAuth.getUserByEmail(email);
 
-    if (!userRecord) {
-      return res
-        .status(400)
-        .json({ message: "No account registered with entered email." });
-    }
-
     if (!userRecord.emailVerified) {
       return res
         .status(400)
@@ -84,6 +78,11 @@ const login = async (req, res) => {
     });
   } catch (error) {
     if (error.code) {
+      if (error.code === "auth/user-not-found")
+        return res.status(400).json({
+          message:
+            "No account is registered with the email address you provided.",
+        });
       return res.status(400).json({ message: error.errorInfo.message });
     }
     return res.status(500).json({ message: error });

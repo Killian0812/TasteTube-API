@@ -2,7 +2,7 @@ const nodemailer = require("nodemailer");
 const { FirebaseAuth } = require("../firebase");
 
 const logoUrl =
-  "https://firebasestorage.googleapis.com/v0/b/taste-tube.appspot.com/o/tastetube_inverted.png?alt=media&token=e8ee9349-cd56-4acd-8f4d-2e44b02c97c3";
+  "https://firebasestorage.googleapis.com/v0/b/taste-tube.appspot.com/o/tastetube_inverted.png?alt=media&token=3616ee3f-f0fa-4109-9951-9d91b1991d94";
 
 const sendVerificationLink = async (email) => {
   const transporter = nodemailer.createTransport({
