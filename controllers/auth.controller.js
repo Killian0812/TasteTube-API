@@ -1,10 +1,12 @@
 const JWT = require("jsonwebtoken");
-const { v4: uuidv4 } = require("uuid");
-const { sendNewRegisteredPassword } = require("../services/gmail.service");
 const User = require("../models/user.model");
 const { FirebaseAuth } = require("../firebase");
-const { defaultAvatar } = require("../utils/constant");
 const { EMAIL_REGEX } = require("../utils/regex");
+const {
+  setAuthResponse,
+  generateTokens,
+  createSocialOAuthUser,
+} = require("../services/auth.service");
 
 const login = async (req, res) => {
   const { email, password } = req.body;
@@ -16,278 +18,99 @@ const login = async (req, res) => {
 
   try {
     const userRecord = await FirebaseAuth.getUserByEmail(email);
-
-    if (!userRecord.emailVerified) {
+    if (!userRecord.emailVerified)
       return res
         .status(400)
         .json({ message: "Account not verified. Please check your email." });
-    }
 
-    const user = await User.findOne({ email: email });
+    const user = await User.findOne({ email });
+    if (!user)
+      return res.status(400).json({
+        message:
+          "No account is registered with the email address you provided.",
+      });
 
-    // TODO: Use secret encryption for password
-    if (password != user.password)
+    if (password !== user.password)
       return res.status(400).json({ message: "Wrong password" });
 
-    // create JWTs
-    const accessToken = JWT.sign(
-      {
-        userInfo: {
-          username: user.username,
-          userId: user._id,
-          email: user.email,
-        },
-      },
-      process.env.ACCESS_TOKEN_SECRET,
-      { expiresIn: "8h" }
-    );
-    const refreshToken = JWT.sign(
-      {
-        userInfo: {
-          username: user.username,
-          userId: user._id,
-          email: user.email,
-        },
-      },
-      process.env.REFRESH_TOKEN_SECRET,
-      { expiresIn: "7d" }
-    );
-
-    user.refreshToken = refreshToken;
+    const tokens = generateTokens(user);
+    user.refreshToken = tokens.refreshToken;
     await user.save();
 
-    // send refresh token as http cookie, last for 1d
-    res.cookie("jwt", refreshToken, {
-      httpOnly: true,
-      sameSite: "Strict",
-      secure: true,
-      maxAge: 24 * 60 * 60 * 1000,
-    });
-    res.set("x-auth-token", refreshToken);
-
     console.log(`Login successful: ${email}`);
-
-    return res.status(200).json({
-      accessToken: accessToken,
-      userId: user._id,
-      email: user.email,
-      role: user.role ?? "",
-      username: user.username,
-      image: user.image || defaultAvatar,
-      currency: user.currency,
-    });
+    return setAuthResponse(res, user, tokens);
   } catch (error) {
-    if (error.code) {
-      if (error.code === "auth/user-not-found")
-        return res.status(400).json({
-          message:
-            "No account is registered with the email address you provided.",
-        });
-      return res.status(400).json({ message: error.errorInfo.message });
-    }
-    return res.status(500).json({ message: error });
+    return res.status(error.code === "auth/user-not-found" ? 400 : 500).json({
+      message:
+        error.code === "auth/user-not-found"
+          ? "No account is registered with the email address you provided."
+          : error.errorInfo?.message || error,
+    });
   }
 };
 
 const verifyToken = async (req, res) => {
   try {
-    const { token } = req.body;
+    const { refreshToken } = req.body;
 
-    if (!token) {
+    if (!refreshToken) {
       return res.status(500).json({ message: "Internal server error" });
     }
 
-    JWT.verify(token, process.env.ACCESS_TOKEN_SECRET, async (err, decoded) => {
-      if (err) {
-        console.log(err);
-        return res.status(403).json({ message: "Token expired" });
-      }
+    JWT.verify(
+      refreshToken,
+      process.env.ACCESS_TOKEN_SECRET,
+      async (err, decoded) => {
+        if (err) {
+          console.log(err);
+          return res.status(403).json({ message: "Token expired" });
+        }
+        const user = await User.findOne({ email: decoded.email });
+        if (!user)
+          return res.status(400).json({
+            message:
+              "No account is registered with the email address you provided.",
+          });
 
-      const user = await User.findOne({ email: decoded.email });
-      return res.status(200).json({
-        username: user.username,
-        email: user.email,
-        image: user.image,
-      });
-    });
+        const tokens = generateTokens(user);
+
+        console.log(`Login persisted successful: ${user.email}`);
+        return setAuthResponse(res, user, tokens);
+      }
+    );
   } catch (error) {
-    console.error("Error verifying recover token:", error);
+    console.error("Error verifying refresh token:", error);
     return res.status(500).json({ message: "Internal server error" });
   }
 };
 
-const googleAuth = async (req, res) => {
+const socialAuth = async (req, res, source) => {
   const { name, email, picture } = req.body;
+  const image = source === "facebook" ? picture.data.url : picture;
 
   try {
-    // Check duplication
     let user = await User.findOne({ email });
     if (!user) {
-      // If user doesn't exist, create a new user
-      const password = uuidv4().substring(0, 6);
-
-      // Create and save the new user
-      user = new User({
-        username: name,
-        email,
-        password,
-        image: picture,
-        currency: "VND",
-      });
-
-      await FirebaseAuth.createUser({
-        email: email,
-        password: password,
-        displayName: name,
-        photoURL: picture,
-        emailVerified: true,
-        disabled: false,
-      });
-
-      sendNewRegisteredPassword(email, name, password);
+      user = await createSocialOAuthUser(email, name, image);
     }
 
-    // create JWTs
-    const accessToken = JWT.sign(
-      {
-        userInfo: {
-          username: user.username,
-          userId: user._id,
-          email: user.email,
-        },
-      },
-      process.env.ACCESS_TOKEN_SECRET,
-      { expiresIn: "8h" }
-    );
-    const refreshToken = JWT.sign(
-      {
-        userInfo: {
-          username: user.username,
-          userId: user._id,
-          email: user.email,
-        },
-      },
-      process.env.REFRESH_TOKEN_SECRET,
-      { expiresIn: "7d" }
-    );
-
-    // Save refresh token with current user
-    user.refreshToken = refreshToken;
+    const tokens = generateTokens(user);
+    user.refreshToken = tokens.refreshToken;
     await user.save();
 
-    // send refresh token as http cookie, last for 1d
-    res.cookie("jwt", refreshToken, {
-      httpOnly: true,
-      sameSite: "Strict",
-      secure: true,
-      maxAge: 24 * 60 * 60 * 1000,
-    });
-    res.set("x-auth-token", refreshToken);
-
-    console.log(`Login with Google successful ${name}`);
-
-    res.status(200).json({
-      accessToken: accessToken,
-      userId: user._id,
-      email: user.email,
-      role: user.role ?? "",
-      username: user.username,
-      image: user.image || defaultAvatar,
-      currency: user.currency,
-    });
+    console.log(`Login with ${source} successful: ${name}`);
+    return setAuthResponse(res, user, tokens);
   } catch (error) {
-    console.error("Error login with Google:", error);
-    res
+    console.error(`Error login with ${source}:`, error);
+    return res
       .status(500)
-      .json({ message: error.message ?? "Error login with Google" });
+      .json({ message: error.message ?? `Error login with ${source}` });
   }
 };
 
-const facebookAuth = async (req, res) => {
-  const { name, email, picture } = req.body;
-
-  try {
-    // Check duplication
-    let user = await User.findOne({ email });
-    if (!user) {
-      // If user doesn't exist, create a new user
-      const password = uuidv4().substring(0, 6);
-
-      // Create and save the new user
-      user = new User({
-        username: name,
-        email,
-        password,
-        image: picture.data.url,
-        currency: "VND",
-      });
-
-      await FirebaseAuth.createUser({
-        email: email,
-        password: password,
-        displayName: name,
-        photoURL: picture.data.url,
-        emailVerified: true,
-        disabled: false,
-      });
-
-      sendNewRegisteredPassword(email, name, password);
-    }
-
-    // create JWTs
-    const accessToken = JWT.sign(
-      {
-        userInfo: {
-          username: user.username,
-          userId: user._id,
-          email: user.email,
-        },
-      },
-      process.env.ACCESS_TOKEN_SECRET,
-      { expiresIn: "8h" }
-    );
-    const refreshToken = JWT.sign(
-      {
-        userInfo: {
-          username: user.username,
-          userId: user._id,
-          email: user.email,
-        },
-      },
-      process.env.REFRESH_TOKEN_SECRET,
-      { expiresIn: "7d" }
-    );
-
-    // Save refresh token with current user
-    user.refreshToken = refreshToken;
-    await user.save();
-
-    // send refresh token as http cookie, last for 1d
-    res.cookie("jwt", refreshToken, {
-      httpOnly: true,
-      sameSite: "Strict",
-      secure: true,
-      maxAge: 24 * 60 * 60 * 1000,
-    });
-    res.set("x-auth-token", refreshToken);
-
-    console.log(`Login with Facebook successful ${name}`);
-
-    res.status(200).json({
-      accessToken: accessToken,
-      userId: user._id,
-      email: user.email,
-      role: user.role ?? "",
-      username: user.username,
-      image: user.image || defaultAvatar,
-      currency: user.currency,
-    });
-  } catch (error) {
-    console.error("Error login with Facebook:", error);
-    res
-      .status(500)
-      .json({ message: error.message ?? "Error login with Facebook" });
-  }
+module.exports = {
+  login,
+  verifyToken,
+  googleAuth: (req, res) => socialAuth(req, res, "google"),
+  facebookAuth: (req, res) => socialAuth(req, res, "facebook"),
 };
-
-module.exports = { login, verifyToken, googleAuth, facebookAuth };

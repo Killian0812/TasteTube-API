@@ -1,5 +1,6 @@
 const JWT = require("jsonwebtoken");
 const User = require("../models/user.model");
+const { setAuthResponse, generateTokens } = require("../services/auth.service");
 
 const refreshToken = async (req, res) => {
   const refreshToken = req.body.refreshToken;
@@ -20,36 +21,10 @@ const refreshToken = async (req, res) => {
       if (err || existingUser.username !== decoded.userInfo.username)
         return res.status(403).send({ message: "Token expired" });
 
-      const userId = existingUser._id;
-      const username = existingUser.username;
-      const email = existingUser.email;
-      const image = existingUser.image;
-      const role = existingUser.role;
-      const currency = existingUser.currency;
+      const tokens = generateTokens(existingUser);
 
-      const newAccessToken = JWT.sign(
-        {
-          userInfo: {
-            username: username,
-            userId: userId,
-            email: email,
-          },
-        },
-        process.env.ACCESS_TOKEN_SECRET,
-        { expiresIn: "8h" }
-      );
-
-      console.log("Token refresh successfully");
-
-      return res.status(200).json({
-        username,
-        userId,
-        email,
-        accessToken: newAccessToken,
-        image,
-        role,
-        currency,
-      });
+      console.log(`Token refresh successfully: ${existingUser.email}`);
+      return setAuthResponse(res, existingUser, tokens);
     }
   );
 };
