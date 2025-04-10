@@ -11,7 +11,7 @@ const generateTokens = (user) => ({
     {
       userInfo: {
         username: user.username,
-        userId: user._id,
+        userId: user.id,
         email: user.email,
       },
     },
@@ -22,17 +22,17 @@ const generateTokens = (user) => ({
     {
       userInfo: {
         username: user.username,
-        userId: user._id,
+        userId: user.id,
         email: user.email,
       },
     },
     process.env.REFRESH_TOKEN_SECRET,
     { expiresIn: "7d" }
   ),
-  streamToken: StreamServer.createToken(user.username),
+  streamToken: StreamServer.createToken(user.id),
 });
 
-const setAuthResponse = (res, user, tokens) => {
+const setAuthResponse = async (res, user, tokens) => {
   res.cookie("jwt", tokens.refreshToken, {
     httpOnly: true,
     sameSite: "Strict",
@@ -40,6 +40,13 @@ const setAuthResponse = (res, user, tokens) => {
     maxAge: 7 * 24 * 60 * 60 * 1000,
   });
   res.set("x-auth-token", tokens.refreshToken);
+
+  // update or create Stream user
+  const _streamUser = await StreamServer.upsertUser({
+    id: user.id,
+    name: user.username,
+    image: user.image,
+  });
 
   return res.status(200).json({
     userId: user._id,
