@@ -42,6 +42,16 @@ const userSchema = new Schema(
       enum: currencies,
       default: "VND",
     },
+    fcmTokens: [
+      {
+        platform: {
+          type: String,
+        },
+        token: {
+          type: String,
+        },
+      },
+    ],
   },
   {
     timestamps: true,

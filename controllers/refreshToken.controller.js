@@ -22,6 +22,8 @@ const refreshToken = async (req, res) => {
         return res.status(403).send({ message: "Token expired" });
 
       const tokens = generateTokens(existingUser);
+      existingUser.refreshToken = tokens.refreshToken;
+      await existingUser.save();
 
       console.log(`Token refresh successfully: ${existingUser.email}`);
       return setAuthResponse(res, existingUser, tokens);
