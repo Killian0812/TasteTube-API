@@ -1,9 +1,9 @@
 const { Cart } = require("../models/cart.model");
 const Order = require("../models/order.model");
 const Payment = require("../models/payment.model");
+const { sendFcmNotification } = require("../services/fcm.service");
 
 // Create by Customer, modify by Shop
-
 // May send voucher, discount, etc. in the future
 const createOrder = async (req, res) => {
   const userId = req.userId;
@@ -102,6 +102,13 @@ const createOrder = async (req, res) => {
       }
 
       await order.save();
+      setTimeout(() => {
+        sendFcmNotification(
+          shopId,
+          "You have a new order from TasteTube Shop.",
+          `Total order cost: ${total}.`
+        );
+      }, 1);
       orders.push(order);
     }
 
