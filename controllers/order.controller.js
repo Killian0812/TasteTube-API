@@ -102,8 +102,8 @@ const createOrder = async (req, res) => {
       }
 
       await order.save();
-      setTimeout(() => {
-        sendFcmNotification(
+      setTimeout(async () => {
+        await sendFcmNotification(
           shopId,
           "You have a new order from TasteTube Shop.",
           `Total order cost: ${total}.`
