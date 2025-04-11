@@ -13,12 +13,16 @@ const refreshToken = async (req, res) => {
     refreshToken,
     process.env.REFRESH_TOKEN_SECRET,
     async (err, decoded) => {
-      if (err || existingUser.username !== decoded.userInfo.username)
-        return res.status(403).send({ message: "Token expired" });
+      if (err) return res.status(403).send({ message: "Token expired" });
+
+      const existingUser = await User.findById(decoded.userInfo.userId);
 
       const tokens = generateTokens(existingUser);
-      existingUser.refreshToken = tokens.refreshToken;
-      await existingUser.save();
+
+      setTimeout(async () => {
+        existingUser.refreshToken = tokens.refreshToken;
+        await existingUser.save();
+      }, 0);
 
       console.log(`Token refresh successfully: ${existingUser.email}`);
       return setAuthResponse(res, existingUser, tokens);
