@@ -8,11 +8,6 @@ const refreshToken = async (req, res) => {
     return res.status(401).json({ message: "No JWT" });
   }
 
-  const existingUser = await User.findOne({ refreshToken: refreshToken });
-  if (!existingUser) {
-    return res.status(403).json({ message: "Invalid refresh token" });
-  }
-
   // evaluate jwt
   JWT.verify(
     refreshToken,
