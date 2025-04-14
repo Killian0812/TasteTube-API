@@ -2,11 +2,12 @@ const express = require("express");
 const mongoose = require("mongoose");
 const axios = require("axios");
 const cors = require("cors");
-const path = require("path");
+const fs = require("fs");
 const cookieParser = require("cookie-parser");
 require("dotenv").config();
 const { staticFolderPath } = require("./utils/path");
 const { app, server } = require("./socket");
+const version = require("./package.json").version;
 
 // middlewares
 app.use(express.json());
@@ -74,10 +75,14 @@ app.get("/payment/failed", function (_, res) {
   });
 });
 
+app.get("/version", function (req, res) {
+  res.json({ version });
+});
+
 app.get(/^\/(?!api).*/, function (_, res) {
   res.sendFile(`${staticFolderPath}/index.html`, function (err) {
     if (err) {
-      res.status(500).send(err);
+      return res.status(500).send(err);
     }
   });
 });
@@ -152,7 +157,7 @@ const port = process.env.PORT;
 const ip = process.env.IP;
 
 server.listen(port, ip, () => {
-  console.log(`Server is running at ${ip}:${port}`);
+  console.log(`Server is running at http://${ip}:${port}`);
 });
 
 const cronjobs = require("./cronjob");

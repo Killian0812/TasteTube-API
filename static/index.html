@@ -39,6 +39,21 @@
       <img src="tastetube_inverted.png" alt="TasteTubeAPI Logo" class="logo" />
       <h1>Welcome to TasteTubeAPI</h1>
       <p>Your gateway to delicious culinary content.</p>
+      <p>Version: <span id="version">Loading...</span></p>
     </div>
+    <script>
+      fetch("/version")
+        .then((response) => {
+          if (!response.ok) throw new Error("Failed to fetch version");
+          return response.json();
+        })
+        .then((data) => {
+          document.getElementById("version").textContent = data.version;
+        })
+        .catch((error) => {
+          console.error("Error fetching version:", error);
+          document.getElementById("version").textContent = "Unknown";
+        });
+    </script>
   </body>
 </html>
