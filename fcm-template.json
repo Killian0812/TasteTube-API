@@ -1,6 +1,6 @@
 {
   "title": "New message from {{ sender.name }}",
   "body": "{{ message.text }}",
-  "click_action": "OPEN_ACTIVITY_1",
+  "click_action": "OPEN_CHAT_PAGE",
   "sound": "default"
 }
