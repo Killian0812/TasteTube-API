@@ -103,13 +103,16 @@ const createOrder = async (req, res) => {
 
       await order.save();
       setTimeout(async () => {
-        await sendFcmNotification(
-          shopId,
-          "You have a new order from TasteTube Shop.",
-          `Total order cost: ${total} ${items[0].currency}. Payment status: ${
-            order.paid ? "Paid" : "Unpaid"
-          }`
-        );
+        await sendFcmNotification({
+          userId: shopId,
+          title: "You have a new order from TasteTube Shop.",
+          body: `Total order cost: ${total} ${
+            items[0].currency
+          }. Payment status: ${order.paid ? "Paid" : "Unpaid"}`,
+          data: {
+            type: "order.new",
+          },
+        });
       }, 1);
       orders.push(order);
     }

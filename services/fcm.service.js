@@ -1,7 +1,7 @@
 const { getMessaging } = require("firebase-admin/messaging");
 const User = require("../models/user.model");
 
-const sendFcmNotification = async (userId, title, body) => {
+const sendFcmNotification = async ({ userId, title, body, data }) => {
   const user = await User.findById(userId);
   const fcmTokens = user.fcmTokens.map((e) => e.token) || [];
   if (!user || fcmTokens.length == 0) return;
@@ -11,6 +11,7 @@ const sendFcmNotification = async (userId, title, body) => {
       title,
       body,
     },
+    data: data,
     tokens: fcmTokens,
   };
 
