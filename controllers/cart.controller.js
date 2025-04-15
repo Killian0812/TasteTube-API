@@ -1,3 +1,4 @@
+const logger = require("../logger");
 const { Cart, CartItem } = require("../models/cart.model");
 const DeliveryOption = require("../models/deliveryOption.model");
 const Product = require("../models/product.model");
@@ -82,7 +83,7 @@ const addToCart = async (req, res) => {
 
     return res.status(200).json({ cartItem });
   } catch (error) {
-    console.error(error);
+    logger.error(error);
     return res.status(500).json({ message: "An error occurred." });
   }
 };
@@ -130,7 +131,7 @@ const updateItemQuantity = async (req, res) => {
 
     return res.status(200).json({ cartItem });
   } catch (error) {
-    console.error(error);
+    logger.error(error);
     return res.status(500).json({ message: "An error occurred." });
   }
 };
@@ -161,7 +162,7 @@ const removeFromCart = async (req, res) => {
 
     return res.status(200).json({ message: "Item removed from cart." });
   } catch (error) {
-    console.error(error);
+    logger.error(error);
     return res.status(500).json({ message: "An error occurred." });
   }
 };
@@ -192,7 +193,7 @@ const getCart = async (req, res) => {
 
     return res.status(200).json({ cart });
   } catch (error) {
-    console.error(error);
+    logger.error(error);
     return res.status(500).json({ message: "An error occurred." });
   }
 };

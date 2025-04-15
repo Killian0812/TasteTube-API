@@ -5,6 +5,7 @@ const {
   getGrabAccessToken,
   setGrabAccessToken,
 } = require("../../config/grab.config");
+const logger = require("../../logger");
 
 const _reissueAccessToken = async () => {
   try {
@@ -27,7 +28,7 @@ const _reissueAccessToken = async () => {
     setGrabAccessToken(accessToken);
     return accessToken;
   } catch (error) {
-    console.error("Failed to reissue access token:", error.message);
+    logger.error("Failed to reissue access token:", error.message);
     return null;
   }
 };

@@ -1,3 +1,4 @@
+const logger = require("../logger");
 const User = require("../models/user.model");
 
 const updateFcmToken = async (req, res) => {
@@ -23,7 +24,7 @@ const updateFcmToken = async (req, res) => {
 
     return res.status(200).json({ message: "FCM token updated successfully." });
   } catch (error) {
-    console.error(error);
+    logger.error(error);
     return res.status(500).json({ message: "An error occurred." });
   }
 };

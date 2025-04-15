@@ -1,5 +1,6 @@
 const JWT = require("jsonwebtoken");
 const User = require("../models/user.model");
+const logger = require("../logger");
 const { setAuthResponse, generateTokens } = require("../services/auth.service");
 
 const refreshToken = async (req, res) => {
@@ -24,7 +25,7 @@ const refreshToken = async (req, res) => {
         await existingUser.save();
       }, 0);
 
-      console.log(`Token refresh successfully: ${existingUser.email}`);
+      logger.info(`Token refresh successfully: ${existingUser.email}`);
       return setAuthResponse(res, existingUser, tokens);
     }
   );

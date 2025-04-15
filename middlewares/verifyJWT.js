@@ -1,8 +1,9 @@
+const logger = require("../logger");
 const jwt = require("jsonwebtoken");
 
 const verifyJWT = (publicView = false) => {
   return (req, res, next) => {
-    console.log("Recieved request. Verifying JWT");
+    logger.info("Recieved request. Verifying JWT");
     // extracing token from header
     const authHeader =
       req.headers["authorization"] || req.headers["Authorization"]; // 'Authorization': Bearer token
@@ -18,7 +19,7 @@ const verifyJWT = (publicView = false) => {
       process.env.ACCESS_TOKEN_SECRET,
       (err, decoded) => {
         if (err) {
-          console.log(err);
+          logger.info(err);
           if (!publicView) return res.status(403).send("Error verifying JWTs");
           next();
         }

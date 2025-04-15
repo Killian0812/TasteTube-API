@@ -2,12 +2,12 @@ const express = require("express");
 const mongoose = require("mongoose");
 const axios = require("axios");
 const cors = require("cors");
-const fs = require("fs");
 const cookieParser = require("cookie-parser");
 require("dotenv").config();
 const { staticFolderPath } = require("./utils/path");
 const { app, server } = require("./socket");
 const version = require("./package.json").version;
+const logger = require("./logger");
 
 // middlewares
 app.use(express.json());
@@ -26,10 +26,10 @@ const databaseConnect = () => {
   mongoose
     .connect(uri, { dbName: "tastetube", autoIndex: true })
     .then(() => {
-      console.log("MongoDB Cloud connection established successfully");
+      logger.info("MongoDB Cloud connection established successfully");
     })
     .catch((err) => {
-      console.error("MongoDB connection error:", err);
+      logger.error("MongoDB connection error:", err);
       setTimeout(databaseConnect, 3000); // Retry connection after 3 seconds
     });
 };
@@ -157,7 +157,7 @@ const port = process.env.PORT;
 const ip = process.env.IP;
 
 server.listen(port, ip, () => {
-  console.log(`Server is running at http://${ip}:${port}`);
+  logger.info(`Server is running at http://${ip}:${port}`);
 });
 
 const cronjobs = require("./cronjob");

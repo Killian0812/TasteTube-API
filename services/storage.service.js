@@ -2,6 +2,7 @@ const { v4: uuidv4 } = require("uuid");
 const { FirebaseStorage } = require("../firebase");
 const fs = require("fs");
 const bucket = FirebaseStorage.bucket();
+const logger = require("../logger");
 
 const uploadToFirebaseStorage = async (file) => {
   try {
@@ -26,10 +27,10 @@ const uploadToFirebaseStorage = async (file) => {
       expires: "01-01-3000",
     });
 
-    console.log("File uploaded to Firebase");
+    logger.info("File uploaded to Firebase");
     return { url: downloadUrl, filename: uuid };
   } catch (err) {
-    console.error("Error uploading to Firebase:", err);
+    logger.error("Error uploading to Firebase:", err);
     throw new Error("Firebase upload failed");
   }
 };
@@ -38,9 +39,9 @@ const deleteFromFirebaseStorage = async (filename) => {
   try {
     const fileRef = bucket.file(filename);
     await fileRef.delete();
-    console.log(`File ${filename} deleted successfully from Firebase`);
+    logger.info(`File ${filename} deleted successfully from Firebase`);
   } catch (error) {
-    console.error("Error deleting file from Firebase:", error);
+    logger.error("Error deleting file from Firebase:", error);
   }
 };
 

@@ -3,6 +3,7 @@ const {
   deleteFromFirebaseStorage,
 } = require("../services/storage.service");
 const User = require("../models/user.model");
+const logger = require("../logger");
 
 const getUserInfo = async (req, res) => {
   const userId = req.params.userId;
@@ -188,19 +189,19 @@ const updateUserInfo = async (req, res) => {
       followings: followings,
     });
   } catch (error) {
-    console.error("Error handling profile update:", error);
+    logger.error("Error handling profile update:", error);
     return res.status(500).json({ message: "Internal Server Error" });
   }
 };
 
 const changePassword = async (req, res) => {
-  console.log(`${req.username} changing password`);
+  logger.info(`${req.username} changing password`);
   try {
     const user = await User.findById(req.userId);
     if (user) {
       const { oldPassword, newPassword, matchPassword } = req.body;
       if (newPassword !== matchPassword) {
-        // console.log(newPassword, matchPassword);
+        // logger.info(newPassword, matchPassword);
         return res
           .status(401)
           .json({ message: "Confirm password does not match" });
@@ -218,7 +219,7 @@ const changePassword = async (req, res) => {
       return res.status(500).json({ message: "Internal Server Error" });
     }
   } catch (error) {
-    console.log(error);
+    logger.info(error);
     return res.status(500).json({ message: "Internal Server Error" });
   }
 };

@@ -1,5 +1,6 @@
 const { getMessaging } = require("firebase-admin/messaging");
 const User = require("../models/user.model");
+const logger = require("../logger");
 
 const sendFcmNotification = async ({ userId, title, body, data }) => {
   const user = await User.findById(userId);
@@ -17,9 +18,9 @@ const sendFcmNotification = async ({ userId, title, body, data }) => {
 
   try {
     const response = await getMessaging().sendEachForMulticast(message);
-    console.log("Successfully sent message:", response);
+    logger.info("Successfully sent message:", response);
   } catch (error) {
-    console.error("Error sending message:", error);
+    logger.error("Error sending message:", error);
   }
 };
 

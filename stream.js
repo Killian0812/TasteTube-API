@@ -5,22 +5,23 @@ const { StreamChat } = require("stream-chat");
 const StreamServer = StreamChat.getInstance(apiKey, apiSecret, {
   timeout: 10000,
 });
+const logger = require("./logger");
 
 const getUsers = async () => {
   try {
     const response = await StreamServer.queryUsers({});
-    console.log("Stream users:", response.users.length);
+    logger.info("Stream users:", response.users.length);
   } catch (error) {
-    console.error("Error fetching users:", error);
+    logger.error("Error fetching users:", error);
   }
 };
 
 const getChannels = async () => {
   try {
     const response = await StreamServer.queryChannels({});
-    console.log("Stream channels:", response);
+    logger.info("Stream channels:", response);
   } catch (error) {
-    console.error("Error fetching users:", error);
+    logger.error("Error fetching users:", error);
   }
 };
 // getChannels();
@@ -28,9 +29,9 @@ const getChannels = async () => {
 const deleteChannelById = async (channelId) => {
   try {
     const response = await StreamServer.deleteChannels([channelId]);
-    console.log("Deleted channel:", channelId);
+    logger.info("Deleted channel:", channelId);
   } catch (error) {
-    console.error("Error deleting channel:", error);
+    logger.error("Error deleting channel:", error);
   }
 };
 // deleteChannelById(
@@ -51,9 +52,11 @@ const setupStreamAppConfig = async () => {
         ),
       },
     });
-    console.log("Stream app config updated successfully");
+    logger.info("Stream app config updated successfully");
   } catch (error) {
-    console.error("Error setting up Stream app config:", error.message);
+    logger.error("Error setting up Stream app config:", {
+      message: error.message,
+    });
   }
 };
 

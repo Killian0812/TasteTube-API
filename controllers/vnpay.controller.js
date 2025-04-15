@@ -1,10 +1,11 @@
+const logger = require("../logger");
 const Payment = require("../models/payment.model");
 const { notifyPayment } = require("../socket.js");
 
 const ipn = async (req, res) => {
   try {
     const pid = req.query.vnp_TxnRef;
-    console.log(`Recieved VNPAY IPN: ${pid}`);
+    logger.info(`Recieved VNPAY IPN: ${pid}`);
     const payment = await Payment.findById(pid);
 
     if (!payment) {

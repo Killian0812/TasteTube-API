@@ -1,5 +1,6 @@
 const nodemailer = require("nodemailer");
 const { FirebaseAuth } = require("../firebase");
+const logger = require("../logger");
 
 const logoUrl =
   "https://firebasestorage.googleapis.com/v0/b/taste-tube.appspot.com/o/tastetube_inverted.png?alt=media&token=3616ee3f-f0fa-4109-9951-9d91b1991d94";
@@ -38,7 +39,7 @@ const sendVerificationLink = async (email) => {
   };
 
   await transporter.sendMail(mailOptions);
-  console.log(`Verification link sent to ${email}`);
+  logger.info(`Verification link sent to ${email}`);
 };
 
 const sendRecoverLink = async (email, username) => {
@@ -75,7 +76,7 @@ const sendRecoverLink = async (email, username) => {
   };
 
   await transporter.sendMail(mailOptions);
-  console.log(`Recovery link sent to ${email}`);
+  logger.info(`Recovery link sent to ${email}`);
 };
 
 const sendNewRegisteredPassword = async (email, username, password) => {
@@ -127,9 +128,9 @@ const sendNewRegisteredPassword = async (email, username, password) => {
 
   try {
     await transporter.sendMail(mailOptions);
-    console.log(`Default password sent to ${email}`);
+    logger.info(`Default password sent to ${email}`);
   } catch (error) {
-    console.error(`Failed to send email to ${email}:`, error);
+    logger.error(`Failed to send email to ${email}:`, error);
   }
 };
 

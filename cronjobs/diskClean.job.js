@@ -2,13 +2,14 @@ const cron = require("node-cron");
 const fs = require("fs");
 const path = require("path");
 const { uploadPath } = require("../utils/path");
+const logger = require("../logger");
 
 function _cleanupUploads() {
-  console.log("Start disk cleaning");
+  logger.info("Start disk cleaning");
 
   fs.readdir(uploadPath, (err, files) => {
     if (err) {
-      console.error("Error reading directory:", err);
+      logger.error("Error reading directory:", err);
       return;
     }
 
@@ -16,7 +17,7 @@ function _cleanupUploads() {
       const filePath = path.join(uploadPath, file);
       fs.unlink(filePath, (err) => {
         if (err) {
-          console.error("Error deleting file:", err);
+          logger.error("Error deleting file:", err);
         }
       });
     });
@@ -25,7 +26,7 @@ function _cleanupUploads() {
 
 const diskCleanJob = cron.schedule("*/30 * * * *", () => {
   _cleanupUploads();
-  console.log("Upload directory cleanup executed.");
+  logger.info("Upload directory cleanup executed.");
 });
 
 module.exports = diskCleanJob;

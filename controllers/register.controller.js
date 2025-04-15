@@ -3,6 +3,7 @@ const User = require("../models/user.model");
 const { sendVerificationLink } = require("../services/gmail.service");
 const { defaultAvatar } = require("../utils/constant");
 const { FirebaseAuth } = require("../firebase");
+const logger = require("../logger");
 
 const register = async (req, res) => {
   const { email, password } = req.body;
@@ -64,7 +65,7 @@ const setAccountType = async (req, res) => {
       role: existingUser.role,
     });
   } catch (error) {
-    console.error("Error updating account type:", error);
+    logger.error("Error updating account type:", error);
     return res.status(500).json({
       message: "Internal server error. Please try again later.",
     });

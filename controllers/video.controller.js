@@ -1,3 +1,4 @@
+const logger = require("../logger");
 const Video = require("../models/video.model");
 const Product = require("../models/product.model");
 const User = require("../models/user.model");
@@ -88,7 +89,7 @@ const getVideo = async (req, res) => {
         return res.status(200).json(totalInteractions);
     }
   } catch (error) {
-    console.log(error);
+    logger.info(error);
     return res.status(500).json({ message: error });
   }
 };
@@ -106,10 +107,10 @@ const _incrementVideoView = (video, userId) => {
       video.save(),
     ])
       .then((_) => {
-        console.log(`Views incremented ${video.id}`);
+        logger.info(`Views incremented ${video.id}`);
       })
       .catch((error) => {
-        console.error(
+        logger.error(
           `Error updating interaction or saving video ${video.id}`,
           error
         );

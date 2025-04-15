@@ -1,6 +1,7 @@
 const JWT = require("jsonwebtoken");
 const User = require("../models/user.model");
 const { FirebaseAuth } = require("../firebase");
+const logger = require("../logger");
 const { EMAIL_REGEX } = require("../utils/regex");
 const {
   setAuthResponse,
@@ -37,7 +38,7 @@ const login = async (req, res) => {
     user.refreshToken = tokens.refreshToken;
     await user.save();
 
-    console.log(`Login successful: ${email}`);
+    logger.info(`Login successful: ${email}`);
     return setAuthResponse(res, user, tokens);
   } catch (error) {
     return res.status(error.code === "auth/user-not-found" ? 400 : 500).json({
@@ -62,7 +63,7 @@ const verifyToken = async (req, res) => {
       process.env.ACCESS_TOKEN_SECRET,
       async (err, decoded) => {
         if (err) {
-          console.log(err);
+          logger.info(err);
           return res.status(403).json({ message: "Token expired" });
         }
         const user = await User.findOne({ email: decoded.email });
@@ -74,12 +75,12 @@ const verifyToken = async (req, res) => {
 
         const tokens = generateTokens(user);
 
-        console.log(`Login persisted successful: ${user.email}`);
+        logger.info(`Login persisted successful: ${user.email}`);
         return setAuthResponse(res, user, tokens);
       }
     );
   } catch (error) {
-    console.error("Error verifying refresh token:", error);
+    logger.error("Error verifying refresh token:", error);
     return res.status(500).json({ message: "Internal server error" });
   }
 };
@@ -98,10 +99,10 @@ const socialAuth = async (req, res, source) => {
     user.refreshToken = tokens.refreshToken;
     await user.save();
 
-    console.log(`Login with ${source} successful: ${name}`);
+    logger.info(`Login with ${source} successful: ${name}`);
     return setAuthResponse(res, user, tokens);
   } catch (error) {
-    console.error(`Error login with ${source}:`, error);
+    logger.error(`Error login with ${source}:`, error);
     return res
       .status(500)
       .json({ message: error.message ?? `Error login with ${source}` });

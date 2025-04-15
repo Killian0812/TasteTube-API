@@ -1,4 +1,5 @@
 const admin = require("firebase-admin");
+const logger = require("./logger");
 
 const setupFirebase = () => {
   try {
@@ -12,9 +13,9 @@ const setupFirebase = () => {
       storageBucket: process.env.STORAGE_BUCKET,
       databaseURL: process.env.RTDB_URL,
     });
-    console.log("Firebase initialization successfully");
+    logger.info("Firebase initialization successfully");
   } catch (error) {
-    console.error("Firebase initialization failed:", error);
+    logger.error("Firebase initialization failed:", error);
   }
 };
 
