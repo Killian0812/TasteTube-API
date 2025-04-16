@@ -249,9 +249,57 @@ const updateOrderStatus = async (req, res) => {
   }
 };
 
+const updateOrderFeedback = async (req, res) => {
+  const id = req.params.id;
+  const { feedback, ratings } = req.body;
+
+  try {
+    const order = await Order.findById(id).populate([
+      {
+        path: "items",
+        populate: [
+          {
+            path: "product",
+            populate: [
+              {
+                path: "category",
+              },
+              {
+                path: "userId",
+              },
+            ],
+          },
+        ],
+      },
+      {
+        path: "address",
+      },
+      {
+        path: "userId",
+        select: "_id phone email username image",
+      },
+    ]);
+
+    order.feedback = feedback;
+
+    // Update ratings for CartItems
+    if (ratings) {
+      for (var i = 0; i < order.items.length; i++)
+        order.items[i].rating = ratings[order.items[i].product.id];
+    }
+
+    await order.save();
+
+    return res.status(200).json(order);
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
+  }
+};
+
 module.exports = {
   createOrder,
   getCustomerOrder,
   getShopOrder,
   updateOrderStatus,
+  updateOrderFeedback,
 };
