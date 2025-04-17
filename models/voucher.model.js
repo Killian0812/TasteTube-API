@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
 const voucherSchema = new mongoose.Schema({
   code: {
@@ -8,7 +8,7 @@ const voucherSchema = new mongoose.Schema({
   },
   type: {
     type: String,
-    enum: ['fixed', 'percentage'],
+    enum: ["fixed", "percentage"],
     required: true,
   },
   value: {
@@ -20,11 +20,9 @@ const voucherSchema = new mongoose.Schema({
   },
   startDate: {
     type: Date,
-    required: true,
   },
   endDate: {
     type: Date,
-    required: true,
   },
   maxUses: {
     type: Number,
@@ -32,17 +30,27 @@ const voucherSchema = new mongoose.Schema({
   usesPerUser: {
     type: Number,
   },
-  productIds: [{
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Product'
-  }],
-  userUsedIds: [{
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User'
-  }],
+  productIds: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Product",
+    },
+  ],
+  userUsages: [
+    {
+      userId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
+      count: {
+        type: Number,
+        default: 0,
+      },
+    },
+  ],
   shopId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
+    ref: "User",
   },
   minOrderAmount: {
     type: Number,
@@ -53,6 +61,6 @@ const voucherSchema = new mongoose.Schema({
   },
 });
 
-const Voucher = mongoose.model('Voucher', voucherSchema);
+const Voucher = mongoose.model("Voucher", voucherSchema);
 
 module.exports = Voucher;

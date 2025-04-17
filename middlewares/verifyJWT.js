@@ -3,7 +3,6 @@ const jwt = require("jsonwebtoken");
 
 const verifyJWT = (publicView = false) => {
   return (req, res, next) => {
-    logger.info("Recieved request. Verifying JWT");
     // extracing token from header
     const authHeader =
       req.headers["authorization"] || req.headers["Authorization"]; // 'Authorization': Bearer token
