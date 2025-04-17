@@ -7,8 +7,6 @@ const discountSchema = new mongoose.Schema({
   },
   code: {
     type: String,
-    unique: true,
-    sparse: true, // Allows multiple documents with null code
   },
   type: {
     type: String,
@@ -60,6 +58,7 @@ const discountSchema = new mongoose.Schema({
   shopId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",
+    index: true,
   },
   minOrderAmount: {
     type: Number,
@@ -72,7 +71,7 @@ const discountSchema = new mongoose.Schema({
 });
 
 // Validation: Ensure code is provided for coupon discounts and check expiration
-discountSchema.pre("validate", function (next) {
+discountSchema.pre("validate", async function (next) {
   if (this.type === "coupon" && !this.code) {
     next(new Error("Code is required for coupon discounts"));
   }
@@ -83,6 +82,26 @@ discountSchema.pre("validate", function (next) {
   // Set status to expired if endDate is in the past
   if (this.endDate && this.endDate < new Date() && this.status !== "inactive") {
     this.status = "expired";
+  }
+  // Check for existing coupon code with same shopId
+  if (this.code) {
+    try {
+      const existingDiscount = await this.constructor.findOne({
+        shopId: this.shopId,
+        code: this.code,
+        _id: { $ne: this._id }, // Exclude the current document
+      });
+
+      if (existingDiscount) {
+        return next(
+          new Error(
+            `A discount with code "${this.code}" already exists for this shop`
+          )
+        );
+      }
+    } catch (error) {
+      return next(error);
+    }
   }
   next();
 });
