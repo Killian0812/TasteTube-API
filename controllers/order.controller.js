@@ -22,7 +22,7 @@ const createOrder = async (req, res) => {
   if (!addressId) {
     return res.status(400).json({ message: "Invalid delivery address" });
   }
-  if (paymentMethod !== "COD" && !pid) {
+  if (paymentMethod !== "COD" && paymentMethod !== "CARD" && !pid) {
     return res.status(400).json({ message: "Payment invalid" });
   }
 
@@ -99,6 +99,9 @@ const createOrder = async (req, res) => {
       if (payment) {
         order.paid = payment.status === "paid";
         order.paymentId = payment._id;
+      }
+      if (paymentMethod === "CARD") {
+        order.paid = true;
       }
 
       await order.save();

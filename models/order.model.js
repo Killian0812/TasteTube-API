@@ -66,7 +66,7 @@ const orderSchema = new Schema(
     },
     paymentMethod: {
       type: String,
-      enum: ["COD", "VNPAY", "ZALOPAY"],
+      enum: ["COD", "VNPAY", "ZALOPAY", "CARD"],
     },
     paid: {
       type: Boolean,
