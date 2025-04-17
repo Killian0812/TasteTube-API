@@ -54,6 +54,7 @@ const paymentOptionRouter = require("./routes/paymentOption.router");
 const deliveryRouter = require("./routes/delivery.router");
 const orderDeliveryRouter = require("./routes/orderDelivery.router");
 const fcmRouter = require("./routes/fcm.router");
+const voucherRouter = require("./routes/voucher.router");
 
 const verifyJWT = require("./middlewares/verifyJWT");
 
@@ -152,6 +153,7 @@ app.use("/api/payment-option", verifyJWT(), paymentOptionRouter);
 app.use("/api/delivery", verifyJWT(), deliveryRouter);
 app.use("/api/order-delivery", verifyJWT(), orderDeliveryRouter);
 app.use("/api/fcm", verifyJWT(), fcmRouter);
+app.use("/api/voucher", verifyJWT(), voucherRouter);
 
 const port = process.env.PORT;
 const ip = process.env.IP;
