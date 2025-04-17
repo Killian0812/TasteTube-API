@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
 
-const voucherSchema = new mongoose.Schema({
+const discountSchema = new mongoose.Schema({
   code: {
     type: String,
     required: true,
@@ -61,6 +61,6 @@ const voucherSchema = new mongoose.Schema({
   },
 });
 
-const Voucher = mongoose.model("Voucher", voucherSchema);
+const Discount = mongoose.model("Discount", discountSchema);
 
-module.exports = Voucher;
+module.exports = Discount;
