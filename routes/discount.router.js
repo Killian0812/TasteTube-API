@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 const {
   createDiscount,
-  getDiscountByCode,
+  getShopDiscountByCode,
   getAllDiscounts,
   getShopDiscounts,
   validateDiscount,
@@ -12,7 +12,7 @@ const {
 
 router.post("/", createDiscount);
 router.get("/", getAllDiscounts);
-router.get("/:code", getDiscountByCode);
+router.get("/code/:code", getShopDiscountByCode);
 router.get("/shop/:shopId", getShopDiscounts);
 router.post("/validate", validateDiscount);
 router.delete("/:id", deleteDiscount);

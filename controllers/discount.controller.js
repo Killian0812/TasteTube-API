@@ -9,9 +9,12 @@ const createDiscount = async (req, res) => {
   }
 };
 
-const getDiscountByCode = async (req, res) => {
+const getShopDiscountByCode = async (req, res) => {
   try {
-    const discount = await discountService.getDiscountByCode(req.params.code);
+    const discount = await discountService.getShopDiscountByCode(
+      req.params.code,
+      req.query.shopId
+    );
     if (!discount) {
       return res.status(404).json({ message: "Discount not found" });
     }
@@ -87,7 +90,7 @@ const updateDiscount = async (req, res) => {
 
 module.exports = {
   createDiscount,
-  getDiscountByCode,
+  getShopDiscountByCode,
   getAllDiscounts,
   getShopDiscounts,
   validateDiscount,

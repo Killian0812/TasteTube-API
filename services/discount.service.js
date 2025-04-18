@@ -5,8 +5,8 @@ const createDiscount = async (discountData) => {
   return await discount.save();
 };
 
-const getDiscountByCode = async (code) => {
-  return await Discount.findOne({ code });
+const getShopDiscountByCode = async (code, shopId) => {
+  return await Discount.findOne({ code, shopId });
 };
 
 const getAllDiscounts = async () => {
@@ -142,7 +142,7 @@ const updateDiscount = async (discountId, discountData) => {
 
 module.exports = {
   createDiscount,
-  getDiscountByCode,
+  getShopDiscountByCode,
   getAllDiscounts,
   getShopDiscounts,
   validateDiscount,
