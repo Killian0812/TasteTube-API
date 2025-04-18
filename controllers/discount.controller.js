@@ -31,8 +31,14 @@ const getAllDiscounts = async (req, res) => {
 };
 
 const getShopDiscounts = async (req, res) => {
+  const customer = req.query.customer;
   try {
-    const discounts = await discountService.getShopDiscounts(req.params.shopId);
+    const discounts = customer
+      ? await discountService.getShopAvailableDiscounts(
+          req.params.shopId,
+          req.userId
+        )
+      : await discountService.getShopDiscounts(req.params.shopId);
     res.status(200).json(discounts);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -69,7 +75,10 @@ const deleteDiscount = async (req, res) => {
 
 const updateDiscount = async (req, res) => {
   try {
-    const discount = await discountService.updateDiscount(req.params.id, req.body);
+    const discount = await discountService.updateDiscount(
+      req.params.id,
+      req.body
+    );
     res.status(200).json(discount);
   } catch (error) {
     res.status(500).json({ message: error.message });
