@@ -102,6 +102,15 @@ const orderSchema = new Schema(
     deliveryId: {
       type: String,
     },
+    deliveryFee: {
+      type: Number,
+    },
+    discounts: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: "Discount",
+      },
+    ],
   },
   {
     timestamps: true,

@@ -1,10 +1,13 @@
+const mongoose = require("mongoose");
+const ObjectId = mongoose.Types.ObjectId;
 const { Cart } = require("../models/cart.model");
 const Order = require("../models/order.model");
 const Payment = require("../models/payment.model");
+const Discount = require("../models/discount.model");
 const { sendFcmNotification } = require("../services/fcm.service");
+const logger = require("../logger");
 
 // Create by Customer, modify by Shop
-// May send voucher, discount, etc. in the future
 const createOrder = async (req, res) => {
   const userId = req.userId;
   const {
@@ -14,6 +17,7 @@ const createOrder = async (req, res) => {
     notes,
     pid,
     orderSummary,
+    discounts,
   } = req.body;
 
   if (!paymentMethod) {
@@ -75,13 +79,30 @@ const createOrder = async (req, res) => {
       groupedItems[shopId].push(item);
     });
 
+    const selectedDiscounts = await Discount.find({
+      _id: { $in: discounts },
+    });
+
+    const groupedDiscounts = selectedDiscounts.reduce((acc, discount) => {
+      const shopId = discount.shopId.toString();
+      if (!acc[shopId]) {
+        acc[shopId] = [];
+      }
+      acc[shopId].push(discount);
+      return acc;
+    }, {});
+
     // Create orders for each shop
     const orders = [];
     for (const [shopId, items] of Object.entries(groupedItems)) {
       // Get total price for current shop from orderSummary
-      const total = orderSummary.find((summary) => summary.shopId === shopId)[
-        "totalAmount"
-      ];
+      const currentShopOrderSummary = orderSummary.find(
+        (summary) => summary.shopId === shopId
+      );
+
+      const total = currentShopOrderSummary["totalAmount"];
+      const deliveryFee = currentShopOrderSummary["deliveryFee"];
+      const shopDiscounts = groupedDiscounts[shopId] || [];
 
       // Create single order
       const order = new Order({
@@ -95,6 +116,8 @@ const createOrder = async (req, res) => {
         })),
         notes,
         paymentMethod,
+        deliveryFee,
+        discounts: shopDiscounts,
       });
       if (payment) {
         order.paid = payment.status === "paid";
@@ -105,6 +128,7 @@ const createOrder = async (req, res) => {
       }
 
       await order.save();
+
       setTimeout(async () => {
         await sendFcmNotification({
           userId: shopId,
@@ -117,6 +141,27 @@ const createOrder = async (req, res) => {
           },
         });
       }, 1);
+
+      // Update discount user usages
+      setTimeout(async () => {
+        try {
+          for (const discount of shopDiscounts) {
+            const userUsage = discount.userUsages.find(
+              (usage) => usage.userId.toString() === userId
+            );
+            if (userUsage) {
+              userUsage.count += 1;
+            } else {
+              discount.userUsages.push({ userId, count: 1 });
+            }
+            await discount.save();
+            logger.info(`Discount usages ${discount.id} updated successfully.`);
+          }
+        } catch (error) {
+          logger.error("Error updating discount usages:", error);
+        }
+      }, 1);
+
       orders.push(order);
     }
 

@@ -1,6 +1,7 @@
 const mongoose = require("mongoose");
+const { Schema } = mongoose;
 
-const discountSchema = new mongoose.Schema({
+const discountSchema = new Schema({
   name: {
     type: String,
     required: [true, "Discount name is required"],
@@ -114,6 +115,4 @@ discountSchema.pre("validate", async function (next) {
   next();
 });
 
-const Discount = mongoose.model("Discount", discountSchema);
-
-module.exports = Discount;
+module.exports = mongoose.model("Discount", discountSchema);

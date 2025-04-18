@@ -47,7 +47,8 @@ async function getShopAvailableDiscounts(shopId, userId) {
       : null;
     const hasRemainingUserUses =
       discount.usesPerUser === null ||
-      (userUsage && userUsage.count < discount.usesPerUser);
+      !userUsage ||
+      userUsage.count < discount.usesPerUser;
 
     return hasRemainingUserUses;
   });
@@ -121,15 +122,6 @@ const validateDiscount = async (
   return null;
 };
 
-const updateDiscountUsage = async (discountCode, userId) => {
-  const discount = await Discount.findOne({ code: discountCode });
-  if (!discount) {
-    throw new Error("Discount not found");
-  }
-  discount.userUsedIds.push(userId);
-  return await discount.save();
-};
-
 const deleteDiscount = async (discountId) => {
   return await Discount.findByIdAndDelete(discountId);
 };
@@ -146,7 +138,6 @@ module.exports = {
   getAllDiscounts,
   getShopDiscounts,
   validateDiscount,
-  updateDiscountUsage,
   deleteDiscount,
   updateDiscount,
   getShopAvailableDiscounts,
