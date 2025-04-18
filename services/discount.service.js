@@ -14,58 +14,45 @@ const getAllDiscounts = async () => {
 };
 
 const getShopDiscounts = async (shopId) => {
+  await _updateExpiredDiscounts(shopId);
   return await Discount.find({ shopId });
 };
 
 async function getShopAvailableDiscounts(shopId, userId) {
   await _updateExpiredDiscounts(shopId);
 
-  return await Discount.find({
+  const nonExpiredDiscounts = await Discount.find({
     shopId,
-    type: "voucher", // Only "voucher" type
-    status: "active", // Status must be "active"
+    type: "voucher",
+    status: "active",
     $or: [
-      { endDate: { $exists: false } }, // No endDate or
-      { endDate: { $gte: now } }, // endDate is in the future
+      { endDate: { $eq: null } }, // No endDate or
+      { endDate: { $gte: new Date() } }, // endDate is in the future
     ],
-    $expr: {
-      $and: [
-        // Sum of userUsages.count must not exceed maxUses (if maxUses exists)
-        {
-          $or: [
-            { maxUses: { $exists: false } },
-            {
-              $lte: [{ $sum: "$userUsages.count" }, "$maxUses"],
-            },
-          ],
-        },
-        // Current user's usage count must not exceed usesPerUser (if usesPerUser exists)
-        {
-          $or: [
-            { usesPerUser: { $exists: false } },
-            {
-              $lte: [
-                {
-                  $ifNull: [
-                    {
-                      $arrayElemAt: [
-                        "$userUsages.count",
-                        {
-                          $indexOfArray: ["$userUsages.userId", userId],
-                        },
-                      ],
-                    },
-                    0,
-                  ],
-                },
-                "$usesPerUser",
-              ],
-            },
-          ],
-        },
-      ],
-    },
   });
+
+  const availableDiscounts = nonExpiredDiscounts.filter((discount) => {
+    // Check if the discount has not exceeded maxUses
+    const hasRemainingUses =
+      discount.maxUses === null ||
+      (discount.userUsages &&
+        discount.userUsages.reduce((sum, usage) => sum + usage.count, 0) <
+          discount.maxUses);
+
+    if (!hasRemainingUses) return false;
+
+    // Check if the discount has not exceeded usesPerUser for the given user
+    const userUsage = discount.userUsages
+      ? discount.userUsages.find((usage) => usage.userId.toString() === userId)
+      : null;
+    const hasRemainingUserUses =
+      discount.usesPerUser === null ||
+      (userUsage && userUsage.count < discount.usesPerUser);
+
+    return hasRemainingUserUses;
+  });
+
+  return availableDiscounts;
 }
 
 const _updateExpiredDiscounts = async (shopId) => {
@@ -75,7 +62,7 @@ const _updateExpiredDiscounts = async (shopId) => {
     {
       shopId,
       status: "active",
-      endDate: { $exists: true, $lt: now },
+      endDate: { $ne: null, $lt: now },
     },
     { $set: { status: "expired" } }
   );

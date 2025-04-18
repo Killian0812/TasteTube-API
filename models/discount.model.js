@@ -83,6 +83,14 @@ discountSchema.pre("validate", async function (next) {
   if (this.endDate && this.endDate < new Date() && this.status !== "inactive") {
     this.status = "expired";
   }
+  // Ensure maxUses is greater than or equal to usesPerUser
+  if (this.maxUses && this.usesPerUser) {
+    if (this.maxUses < this.usesPerUser) {
+      next(
+        new Error("Max Uses must be greater than or equal to Uses per User")
+      );
+    }
+  }
   // Check for existing coupon code with same shopId
   if (this.code) {
     try {
