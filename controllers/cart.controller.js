@@ -242,6 +242,7 @@ const getOrderSummary = async (req, res) => {
       return acc;
     }, {});
 
+    let valid = true;
     const orderSummaryPromises = Object.entries(groupedItems).map(
       async ([shopId, items]) => {
         const deliveryOption = await DeliveryOption.findOne({
@@ -276,6 +277,7 @@ const getOrderSummary = async (req, res) => {
                 discount.productIds.includes(item.product._id.toString())
               );
               if (!hasValidProduct) {
+                valid = false;
                 return res.status(400).json({
                   message: `Order doesn't contain any product eligible for the discount "${discount.name}"`,
                 });
@@ -286,6 +288,7 @@ const getOrderSummary = async (req, res) => {
               discount.minOrderAmount &&
               totalItemCost < discount.minOrderAmount
             ) {
+              valid = false;
               return res
                 .status(400)
                 .json({ message: "Order doesn't meet minimum amount" });
@@ -314,6 +317,7 @@ const getOrderSummary = async (req, res) => {
     );
 
     const orderSummary = await Promise.all(orderSummaryPromises);
+    if (!valid) return;
     return res.status(200).json({ orderSummary });
   } catch (error) {
     return res.status(500).json({ message: error.message });
