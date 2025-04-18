@@ -2,7 +2,7 @@ const logger = require("../logger");
 const { Cart, CartItem } = require("../models/cart.model");
 const DeliveryOption = require("../models/deliveryOption.model");
 const Product = require("../models/product.model");
-const User = require("../models/user.model");
+const Discount = require("../models/discount.model");
 const { getSelfDeliveryFee } = require("../services/orderDelivery.service");
 
 const addToCart = async (req, res) => {
@@ -200,7 +200,7 @@ const getCart = async (req, res) => {
 
 const getOrderSummary = async (req, res) => {
   const userId = req.userId;
-  const { selectedItems, address } = req.body;
+  const { selectedItems, address, discounts } = req.body;
 
   try {
     const cart = await Cart.findOne({ userId }).populate({
@@ -226,6 +226,22 @@ const getOrderSummary = async (req, res) => {
       return acc;
     }, {});
 
+    const selectedDiscounts = await Discount.find({
+      _id: { $in: discounts },
+    });
+    if (selectedDiscounts.length !== discounts.length) {
+      return res.status(404).json({ message: "Discount not found" });
+    }
+
+    const groupedDiscounts = selectedDiscounts.reduce((acc, discount) => {
+      const shopId = discount.shopId.toString();
+      if (!acc[shopId]) {
+        acc[shopId] = [];
+      }
+      acc[shopId].push(discount);
+      return acc;
+    }, {});
+
     const orderSummaryPromises = Object.entries(groupedItems).map(
       async ([shopId, items]) => {
         const deliveryOption = await DeliveryOption.findOne({
@@ -235,7 +251,7 @@ const getOrderSummary = async (req, res) => {
         if (!deliveryOption) {
           return {
             shopId,
-            message: `Shop haven't setup delivery`,
+            message: `Shop hasn't set up delivery`,
           };
         }
 
@@ -247,11 +263,46 @@ const getOrderSummary = async (req, res) => {
           };
         }
 
-        const discountAmount = 0;
-        const totalAmount =
-          items.reduce((sum, item) => sum + item.cost, 0) +
-          deliveryFee -
-          discountAmount;
+        // Calculate total item cost
+        const totalItemCost = items.reduce((sum, item) => sum + item.cost, 0);
+
+        // Calculate discount amount
+        let discountAmount = 0;
+        if (groupedDiscounts[shopId]) {
+          for (const discount of groupedDiscounts[shopId]) {
+            // Validate that the order contains at least one product from discount.productIds
+            if (discount.productIds.length > 0) {
+              const hasValidProduct = items.some((item) =>
+                discount.productIds.includes(item.product._id.toString())
+              );
+              if (!hasValidProduct) {
+                return res.status(400).json({
+                  message: `Order doesn't contain any product eligible for the discount "${discount.name}"`,
+                });
+              }
+            }
+
+            if (
+              discount.minOrderAmount &&
+              totalItemCost < discount.minOrderAmount
+            ) {
+              return res
+                .status(400)
+                .json({ message: "Order doesn't meet minimum amount" });
+            }
+
+            if (discount.valueType === "fixed") {
+              discountAmount += discount.value;
+            } else if (discount.valueType === "percentage") {
+              discountAmount += (totalItemCost * discount.value) / 100;
+            }
+
+            // Ensure discountAmount does not exceed totalItemCost
+            discountAmount = Math.min(discountAmount, totalItemCost);
+          }
+        }
+
+        const totalAmount = totalItemCost + deliveryFee - discountAmount;
 
         return {
           shopId,
