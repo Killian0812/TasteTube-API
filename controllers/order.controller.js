@@ -141,7 +141,7 @@ const createOrder = async (req, res) => {
           title: "You have a new order from TasteTube Shop.",
           body: `Total order cost: ${total} ${
             items[0].currency
-          }. Payment status: ${order.paid ? "Paid" : "Unpaid"}`,
+          }. Payment status: ${order.paid ? "Paid" : "Unpaid"}.`,
           data: {
             type: "order.new",
           },
@@ -211,6 +211,9 @@ const getCustomerOrder = async (req, res) => {
         path: "userId",
         select: "_id phone email username image",
       },
+      {
+        path: "discounts.discountId",
+      },
     ]);
 
     return res.status(200).json(orders);
@@ -246,6 +249,9 @@ const getShopOrder = async (req, res) => {
       {
         path: "userId",
         select: "_id phone email username image",
+      },
+      {
+        path: "discounts.discountId",
       },
     ]);
 
@@ -287,6 +293,9 @@ const updateOrderStatus = async (req, res) => {
       {
         path: "userId",
         select: "_id phone email username image",
+      },
+      {
+        path: "discounts.discountId",
       },
     ]);
 
@@ -331,6 +340,9 @@ const updateOrderFeedback = async (req, res) => {
       {
         path: "userId",
         select: "_id phone email username image",
+      },
+      {
+        path: "discounts.discountId",
       },
     ]);
 
