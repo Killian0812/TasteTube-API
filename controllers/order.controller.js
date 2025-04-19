@@ -1,5 +1,3 @@
-const mongoose = require("mongoose");
-const ObjectId = mongoose.Types.ObjectId;
 const { Cart } = require("../models/cart.model");
 const Order = require("../models/order.model");
 const Payment = require("../models/payment.model");
@@ -18,6 +16,7 @@ const createOrder = async (req, res) => {
     pid,
     orderSummary,
     discounts,
+    appliedDiscountDetails,
   } = req.body;
 
   if (!paymentMethod) {
@@ -103,6 +102,13 @@ const createOrder = async (req, res) => {
       const total = currentShopOrderSummary["totalAmount"];
       const deliveryFee = currentShopOrderSummary["deliveryFee"];
       const shopDiscounts = groupedDiscounts[shopId] || [];
+      const shopDiscountsWithAmount = shopDiscounts.map((discount) => {
+        const discountAmount = appliedDiscountDetails[discount._id.toString()];
+        return {
+          discountId: discount._id,
+          amount: discountAmount || 0,
+        };
+      });
 
       // Create single order
       const order = new Order({
@@ -117,7 +123,7 @@ const createOrder = async (req, res) => {
         notes,
         paymentMethod,
         deliveryFee,
-        discounts: shopDiscounts,
+        discounts: shopDiscountsWithAmount,
       });
       if (payment) {
         order.paid = payment.status === "paid";

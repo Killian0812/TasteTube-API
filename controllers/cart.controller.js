@@ -267,8 +267,10 @@ const getOrderSummary = async (req, res) => {
         // Calculate total item cost
         const totalItemCost = items.reduce((sum, item) => sum + item.cost, 0);
 
-        // Calculate discount amount
-        let discountAmount = 0;
+        // Calculate discount amounts
+        const discountDetails = {};
+        let totalDiscountAmount = 0;
+
         if (groupedDiscounts[shopId]) {
           for (const discount of groupedDiscounts[shopId]) {
             // Validate that the order contains at least one product from discount.productIds
@@ -294,23 +296,32 @@ const getOrderSummary = async (req, res) => {
                 .json({ message: "Order doesn't meet minimum amount" });
             }
 
+            let discountValue = 0;
             if (discount.valueType === "fixed") {
-              discountAmount += discount.value;
+              discountValue = discount.value;
             } else if (discount.valueType === "percentage") {
-              discountAmount += (totalItemCost * discount.value) / 100;
+              discountValue = (totalItemCost * discount.value) / 100;
             }
 
-            // Ensure discountAmount does not exceed totalItemCost
-            discountAmount = Math.min(discountAmount, totalItemCost);
+            // Ensure discountValue does not exceed totalItemCost
+            discountValue = Math.min(
+              discountValue,
+              totalItemCost - totalDiscountAmount
+            );
+
+            // Add to discountDetails and totalDiscountAmount
+            discountDetails[discount._id.toString()] = discountValue;
+            totalDiscountAmount += discountValue;
           }
         }
 
-        const totalAmount = totalItemCost + deliveryFee - discountAmount;
+        const totalAmount = totalItemCost + deliveryFee - totalDiscountAmount;
 
         return {
           shopId,
           deliveryFee,
-          discountAmount,
+          discountDetails,
+          totalDiscountAmount,
           totalAmount,
         };
       }

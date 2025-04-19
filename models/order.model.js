@@ -107,8 +107,13 @@ const orderSchema = new Schema(
     },
     discounts: [
       {
-        type: Schema.Types.ObjectId,
-        ref: "Discount",
+        discountId: {
+          type: Schema.Types.ObjectId,
+          ref: "Discount",
+        },
+        amount: {
+          type: Number,
+        },
       },
     ],
   },
