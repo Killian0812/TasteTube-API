@@ -35,6 +35,6 @@ const interactionSchema = new Schema(
   }
 );
 
-interactionSchema.index({ user_id: 1, video_id: 1 }, { unique: true });
+interactionSchema.index({ user_id: 1, video_id: 1 });
 
 module.exports = mongoose.model("Interaction", interactionSchema);
