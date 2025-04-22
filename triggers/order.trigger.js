@@ -1,3 +1,5 @@
+// Database Trigger: AUTO_INCREMENT_ORDER_NUM
+// Trigger on insert to the orders collection
 exports = async function (changeEvent) {
   var doc = changeEvent.fullDocument;
 
