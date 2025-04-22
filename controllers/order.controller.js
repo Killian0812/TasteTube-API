@@ -304,6 +304,9 @@ const updateOrderStatus = async (req, res) => {
     }
 
     order.status = newStatus;
+    if (newStatus === 'COMPLETED' && order.paymentMethod === 'COD') {
+      order.paid = true;
+    }
     await order.save();
 
     return res.status(200).json(order);
