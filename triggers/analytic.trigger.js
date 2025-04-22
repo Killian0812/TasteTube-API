@@ -8,8 +8,6 @@ exports = async function () {
   const db = context.services.get("KillianCluster").db("tastetube");
   const analyticsCollection = db.collection("analytics");
   const ordersCollection = db.collection("orders");
-  // const productsCollection = db.collection("products");
-  // const categoriesCollection = db.collection("categories");
   const videosCollection = db.collection("videos");
   const usersCollection = db.collection("users");
 
@@ -68,9 +66,7 @@ exports = async function () {
           ])
           .toArray();
         console.log(
-          `[${new Date().toISOString()}] Orders aggregated: ${
-            ordersAgg.length
-          } days`
+          `[${new Date().toISOString()}] Orders aggregated: ${ordersAgg.length}`
         );
 
         // Process daily sales
@@ -109,7 +105,7 @@ exports = async function () {
               $match: {
                 shopId: restaurantId,
                 createdAt: { $gte: startDate, $lte: endDate },
-                "items.rating": { $exists: true },
+                "items.rating": { $ne: null },
               },
             },
             { $unwind: "$items" },
@@ -181,13 +177,53 @@ exports = async function () {
                 createdAt: { $gte: startDate, $lte: endDate },
               },
             },
+            {
+              $unwind: "$items",
+            },
+            {
+              $group: {
+                _id: null,
+                itemCount: { $sum: 1 },
+              },
+            },
+            {
+              $project: {
+                itemCount: 1,
+              },
+            },
+          ])
+          .toArray();
+        console.log(
+          `[${new Date().toISOString()}] Items after unwind: ${
+            productSalesAgg[0]?.itemCount || 0
+          }`
+        );
+
+        const productSalesAggPipeline = await ordersCollection
+          .aggregate([
+            {
+              $match: {
+                shopId: restaurantId,
+                createdAt: { $gte: startDate, $lte: endDate },
+              },
+            },
             { $unwind: "$items" },
             {
               $lookup: {
-                from: "Product",
+                from: "products",
                 localField: "items.product",
                 foreignField: "_id",
                 as: "productInfo",
+              },
+            },
+            {
+              $addFields: {
+                productInfoCount: { $size: "$productInfo" },
+              },
+            },
+            {
+              $match: {
+                productInfoCount: { $gt: 0 },
               },
             },
             { $unwind: "$productInfo" },
@@ -206,24 +242,29 @@ exports = async function () {
             { $limit: 4 },
           ])
           .toArray();
+        console.log(
+          `[${new Date().toISOString()}] Product lookup results: ${JSON.stringify(
+            productSalesAggPipeline.slice(0, 2)
+          )}`
+        );
+        console.log(
+          `[${new Date().toISOString()}] Top products aggregated: ${
+            productSalesAggPipeline.length
+          }`
+        );
 
-        const topProducts = productSalesAgg.map((p) => ({
+        const topProducts = productSalesAggPipeline.map((p) => ({
           name: p.name,
           sales: p.sales,
           revenue: p.revenue,
           rating: p.rating || 0,
         }));
-        console.log(
-          `[${new Date().toISOString()}] Top products aggregated: ${
-            topProducts.length
-          }`
-        );
 
         // Aggregate top categories
         console.log(
           `[${new Date().toISOString()}] Aggregating top categories for restaurant ${restaurantId}`
         );
-        const categorySalesAgg = await ordersCollection
+        const categorySalesAggPipeline = await ordersCollection
           .aggregate([
             {
               $match: {
@@ -234,19 +275,39 @@ exports = async function () {
             { $unwind: "$items" },
             {
               $lookup: {
-                from: "Product",
+                from: "products",
                 localField: "items.product",
                 foreignField: "_id",
                 as: "productInfo",
               },
             },
+            {
+              $addFields: {
+                productInfoCount: { $size: "$productInfo" },
+              },
+            },
+            {
+              $match: {
+                productInfoCount: { $gt: 0 },
+              },
+            },
             { $unwind: "$productInfo" },
             {
               $lookup: {
-                from: "Category",
+                from: "categories",
                 localField: "productInfo.category",
                 foreignField: "_id",
                 as: "categoryInfo",
+              },
+            },
+            {
+              $addFields: {
+                categoryInfoCount: { $size: "$categoryInfo" },
+              },
+            },
+            {
+              $match: {
+                categoryInfoCount: { $gt: 0 },
               },
             },
             { $unwind: "$categoryInfo" },
@@ -264,6 +325,16 @@ exports = async function () {
             { $limit: 3 },
           ])
           .toArray();
+        console.log(
+          `[${new Date().toISOString()}] Category lookup results: ${JSON.stringify(
+            categorySalesAggPipeline.slice(0, 2)
+          )}`
+        );
+        console.log(
+          `[${new Date().toISOString()}] Top categories aggregated: ${
+            categorySalesAggPipeline.length
+          }`
+        );
 
         // Calculate growth for categories
         console.log(
@@ -282,10 +353,20 @@ exports = async function () {
             { $unwind: "$items" },
             {
               $lookup: {
-                from: "Product",
+                from: "products",
                 localField: "items.product",
                 foreignField: "_id",
                 as: "productInfo",
+              },
+            },
+            {
+              $addFields: {
+                productInfoCount: { $size: "$productInfo" },
+              },
+            },
+            {
+              $match: {
+                productInfoCount: { $gt: 0 },
               },
             },
             { $unwind: "$productInfo" },
@@ -299,11 +380,16 @@ exports = async function () {
             },
           ])
           .toArray();
+        console.log(
+          `[${new Date().toISOString()}] Previous category sales: ${
+            prevCategorySales.length
+          }`
+        );
 
-        const topCategories = categorySalesAgg.map((cat) => {
+        const topCategories = categorySalesAggPipeline.map((cat) => {
           const prevRev =
             prevCategorySales.find(
-              (p) => p._id.toString() === cat._id.toString()
+              (p) => p._id?.toString() === cat._id?.toString()
             )?.revenue || 0;
           const growth =
             prevRev > 0 ? ((cat.revenue - prevRev) / prevRev) * 100 : 0;
@@ -314,11 +400,6 @@ exports = async function () {
             growth,
           };
         });
-        console.log(
-          `[${new Date().toISOString()}] Top categories aggregated: ${
-            topCategories.length
-          }`
-        );
 
         // Calculate conversion rate
         const conversionRate =
@@ -380,6 +461,7 @@ exports = async function () {
               $match: {
                 shopId: restaurantId,
                 createdAt: { $gte: startDate, $lte: endDate },
+                status: { $in: ["COMPLETED", "DELIVERY"] },
               },
             },
             {
@@ -407,7 +489,7 @@ exports = async function () {
           `[${new Date().toISOString()}] Fetching currency for restaurant ${restaurantId}`
         );
         const restaurant = await usersCollection.findOne({ _id: restaurantId });
-        const currency = restaurant.currency || "VND";
+        const currency = restaurant?.currency || "VND";
 
         // Construct AnalyticsData document
         const analyticsData = {
