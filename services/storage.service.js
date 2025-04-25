@@ -2,7 +2,30 @@ const { v4: uuidv4 } = require("uuid");
 const { FirebaseStorage } = require("../firebase");
 const fs = require("fs");
 const bucket = FirebaseStorage.bucket();
+const { TranscoderServiceClient } =
+  require("@google-cloud/video-transcoder").v1;
 const logger = require("../logger");
+const transcoderServiceClient = new TranscoderServiceClient();
+
+const createVideoTranscoderJob = async (video) => {
+  const remoteFile = bucket.file(video.filename);
+  const inputUri = remoteFile.cloudStorageURI.href;
+  const outputUri =
+    process.env.STORAGE_BUCKET + "/transcoded/" + video.filename + "/";
+  const request = {
+    parent: transcoderServiceClient.locationPath(
+      process.env.GC_PROJECT_ID,
+      process.env.LOCATION
+    ),
+    job: {
+      inputUri: inputUri,
+      outputUri: outputUri,
+      templateId: "preset/web-hd",
+    },
+  };
+  const [response] = await transcoderServiceClient.createJob(request);
+  console.log(`Video transcode job: ${response.name}`);
+};
 
 const uploadToFirebaseStorage = async (file) => {
   try {
@@ -45,4 +68,8 @@ const deleteFromFirebaseStorage = async (filename) => {
   }
 };
 
-module.exports = { deleteFromFirebaseStorage, uploadToFirebaseStorage };
+module.exports = {
+  deleteFromFirebaseStorage,
+  uploadToFirebaseStorage,
+  createVideoTranscoderJob,
+};

@@ -1,5 +1,6 @@
 /node_modules
-uploads/
+uploads/*
+!uploads/upload.txt
 service-account-key.json
 .env
 error.log

@@ -47,6 +47,10 @@ const videoSchema = new Schema(
       type: Number,
       default: 0,
     },
+    jobId: {
+      type: Number,
+      default: 0,
+    },
   },
   {
     timestamps: true,

@@ -23,6 +23,7 @@
   },
   "homepage": "https://github.com/Killian0812/TasteTube-API#readme",
   "dependencies": {
+    "@google-cloud/video-transcoder": "^4.0.1",
     "bcrypt": "^5.1.1",
     "cookie-parser": "^1.4.6",
     "cors": "^2.8.5",
