@@ -403,7 +403,7 @@ exports = async function () {
 
         // Calculate conversion rate
         const conversionRate =
-          videoViews > 0 ? (totalOrders / videoViews) * 100 : 0;
+          videoViews > 0 ? Math.min(totalOrders / videoViews, 1) * 100 : 0;
         console.log(
           `[${new Date().toISOString()}] Conversion rate: ${conversionRate}%`
         );
