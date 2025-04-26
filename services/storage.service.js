@@ -2,6 +2,7 @@ const { v4: uuidv4 } = require("uuid");
 const { FirebaseStorage } = require("../firebase");
 const fs = require("fs");
 const bucket = FirebaseStorage.bucket();
+const Video = require("../models/video.model");
 const { TranscoderServiceClient } =
   require("@google-cloud/video-transcoder").v1;
 const logger = require("../logger");
@@ -24,7 +25,10 @@ const createVideoTranscoderJob = async (video) => {
     },
   };
   const [response] = await transcoderServiceClient.createJob(request);
-  console.log(`Video transcode job: ${response.name}`);
+  await Video.findByIdAndUpdate(video._id, {
+    jobId: response.jobId,
+  });
+  logger.info(`Video transcode job`, response);
 };
 
 const uploadToFirebaseStorage = async (file) => {

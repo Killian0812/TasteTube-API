@@ -7,6 +7,7 @@ const Interaction = require("../models/interaction.model");
 const {
   uploadToFirebaseStorage,
   deleteFromFirebaseStorage,
+  createVideoTranscoderJob,
 } = require("../services/storage.service");
 
 const getVideo = async (req, res) => {
@@ -283,7 +284,7 @@ const uploadVideo = async (req, res) => {
       return res.status(400).json({ message: "Invalid product IDs" });
     }
 
-    const video = new Video({
+    const video = await Video.create({
       userId: req.userId,
       url: url,
       filename: filename,
@@ -301,20 +302,19 @@ const uploadVideo = async (req, res) => {
       if (targetUser) video.targetUserId = targetUser._id;
     }
 
-    video
-      .save()
-      .then(async (video) => {
+    try {
+      setImmediate(async () => {
         user.videos.push(video._id);
         await user.save();
-        return res.status(200).json({
-          message: "Uploaded",
-        });
-      })
-      .catch((e) => {
-        return res.status(500).json({
-          message: e,
-        });
+        await createVideoTranscoderJob(video);
       });
+    } catch (error) {
+      logger.error("Error creating transcode job", error);
+    }
+
+    return res.status(200).json({
+      message: "Uploaded",
+    });
   } catch (error) {
     return res.status(500).json({ message: error });
   }
