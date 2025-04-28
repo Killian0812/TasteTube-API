@@ -23,23 +23,27 @@ async function listJobs() {
 }
 
 async function getVideoTranscoderJob(video) {
-  if (video.manifestUrl || !video.jobId) return;
-  const request = {
-    name: transcoderServiceClient.jobPath(projectId, location, video.jobId),
-  };
-  const [response] = await transcoderServiceClient.getJob(request);
-  if (response.state === "SUCCEEDED") {
-    const remoteFile = bucket.file(
-      "transcoded/" + video.filename + "/manifest.m3u8"
-    );
-    const [manifestUrl] = await remoteFile.getSignedUrl({
-      action: "read",
-      expires: "01-01-3000",
-    });
-    await Video.findByIdAndUpdate(video._id, {
-      manifestUrl: manifestUrl,
-    });
-    logger.info(`Video transcoder job succeeded`, response);
+  try {
+    if (video.manifestUrl || !video.jobId) return;
+    const request = {
+      name: transcoderServiceClient.jobPath(projectId, location, video.jobId),
+    };
+    const [response] = await transcoderServiceClient.getJob(request);
+    if (response.state === "SUCCEEDED") {
+      const remoteFile = bucket.file(
+        "transcoded/" + video.filename + "/manifest.m3u8"
+      );
+      const [manifestUrl] = await remoteFile.getSignedUrl({
+        action: "read",
+        expires: "01-01-3000",
+      });
+      await Video.findByIdAndUpdate(video._id, {
+        manifestUrl: manifestUrl,
+      });
+      logger.info(`Video transcoder job succeeded`, response);
+    }
+  } catch (error) {
+    logger.error("Error getting transcode job", error);
   }
 }
 

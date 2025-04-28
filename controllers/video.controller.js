@@ -131,7 +131,10 @@ const getUserLikedVideos = async (req, res) => {
   }
 
   try {
-    const userInteracts = await Interaction.find({ userId: userId }).populate({
+    const userInteracts = await Interaction.find({
+      userId: userId,
+      likes: { $gt: 0 },
+    }).populate({
       path: "videoId",
       populate: [
         {
@@ -158,7 +161,9 @@ const getUserLikedVideos = async (req, res) => {
       ],
     });
 
-    const videos = userInteracts.map((e) => e.videoId);
+    const videos = userInteracts
+      .map((e) => e.videoId)
+      .filter((video, index, self) => video && self.indexOf(video) === index);
 
     return res.status(200).json({
       videos,
