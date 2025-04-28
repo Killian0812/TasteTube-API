@@ -48,8 +48,11 @@ const videoSchema = new Schema(
       default: 0,
     },
     jobId: {
-      type: Number,
+      type: String,
       default: 0,
+    },
+    manifestUrl: {
+      type: String,
     },
   },
   {

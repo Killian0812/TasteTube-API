@@ -8,6 +8,7 @@ const {
   uploadToFirebaseStorage,
   deleteFromFirebaseStorage,
   createVideoTranscoderJob,
+  getVideoTranscoderJob,
 } = require("../services/storage.service");
 
 const getVideo = async (req, res) => {
@@ -41,6 +42,10 @@ const getVideo = async (req, res) => {
 
     if (!video)
       return res.status(404).json({ message: "Can't find requested video" });
+
+    setImmediate(async () => {
+      await getVideoTranscoderJob(video);
+    });
 
     const interactions = await Interaction.find({ videoId: videoId });
     const totalInteractions = interactions.reduce(
@@ -302,15 +307,11 @@ const uploadVideo = async (req, res) => {
       if (targetUser) video.targetUserId = targetUser._id;
     }
 
-    try {
-      setImmediate(async () => {
-        user.videos.push(video._id);
-        await user.save();
-        await createVideoTranscoderJob(video);
-      });
-    } catch (error) {
-      logger.error("Error creating transcode job", error);
-    }
+    setImmediate(async () => {
+      user.videos.push(video._id);
+      await user.save();
+      await createVideoTranscoderJob(video);
+    });
 
     return res.status(200).json({
       message: "Uploaded",
