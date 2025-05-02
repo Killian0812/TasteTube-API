@@ -55,6 +55,7 @@ const deliveryRouter = require("./routes/delivery.router");
 const orderDeliveryRouter = require("./routes/orderDelivery.router");
 const fcmRouter = require("./routes/fcm.router");
 const discountRouter = require("./routes/discount.router");
+const feedbackRouter = require("./routes/feedback.router");
 const analyticRouter = require("./routes/analytic.router");
 
 const verifyJWT = require("./middlewares/verifyJWT");
@@ -155,6 +156,7 @@ app.use("/api/delivery", verifyJWT(), deliveryRouter);
 app.use("/api/order-delivery", verifyJWT(), orderDeliveryRouter);
 app.use("/api/fcm", verifyJWT(), fcmRouter);
 app.use("/api/discount", verifyJWT(), discountRouter);
+app.use("/api/feedback", verifyJWT(), feedbackRouter);
 app.use("/api/analytic", verifyJWT(), analyticRouter);
 
 const port = process.env.PORT;
