@@ -19,11 +19,16 @@ const updateProductFeedback = async (req, res) => {
     }
 
     // Upsert rating (update if exists, otherwise create)
-    const feedbackDoc = await Feedback.findOneAndUpdate(
+    let feedbackDoc = await Feedback.findOneAndUpdate(
       { orderId, productId, userId },
       { feedback, rating },
       { new: true, upsert: true, setDefaultsOnInsert: true }
     );
+
+    feedbackDoc = await feedbackDoc.populate({
+      path: "userId",
+      select: "_id image username phone",
+    });
 
     return res.status(200).json(feedbackDoc);
   } catch (error) {
@@ -34,7 +39,7 @@ const updateProductFeedback = async (req, res) => {
 // Get all ratings for a product with pagination
 const getProductFeedbacks = async (req, res) => {
   const { productId } = req.params;
-  const { page = 1, limit = 10 } = req.query;
+  const { page = 1, limit = 5 } = req.query;
 
   try {
     const options = {
@@ -43,7 +48,17 @@ const getProductFeedbacks = async (req, res) => {
       sort: { createdAt: -1 },
     };
 
-    const result = await Feedback.paginate({ productId }, options);
+    const result = await Feedback.paginate(
+      { productId },
+      {
+        ...options,
+        populate: {
+          path: "userId",
+          select: "_id image username phone",
+        },
+      }
+    );
+
     return res.status(200).json(result);
   } catch (error) {
     return res.status(500).json({ message: error.message });
@@ -54,7 +69,10 @@ const getProductFeedbacks = async (req, res) => {
 const getUserFeedbacks = async (req, res) => {
   const userId = req.userId;
   try {
-    const feedbacks = await Feedback.find({ userId });
+    const feedbacks = await Feedback.find({ userId }).populate({
+      path: "userId",
+      select: "_id image username phone",
+    });
     return res.status(200).json(feedbacks);
   } catch (error) {
     return res.status(500).json({ message: error.message });
@@ -65,7 +83,10 @@ const getUserFeedbacks = async (req, res) => {
 const getOrderFeedbacks = async (req, res) => {
   const { orderId } = req.params;
   try {
-    const feedbacks = await Feedback.find({ orderId });
+    const feedbacks = await Feedback.find({ orderId }).populate({
+      path: "userId",
+      select: "_id image username phone",
+    });
     return res.status(200).json(feedbacks);
   } catch (error) {
     return res.status(500).json({ message: error.message });
