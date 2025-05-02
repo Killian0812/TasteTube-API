@@ -53,17 +53,8 @@ const orderSchema = new Schema(
           required: true,
           min: 1,
         },
-        rating: {
-          type: Number,
-          min: 0,
-          max: 5,
-          default: null,
-        },
       },
     ],
-    feedback: {
-      type: String,
-    },
     paymentMethod: {
       type: String,
       enum: ["COD", "VNPAY", "ZALOPAY", "CARD"],

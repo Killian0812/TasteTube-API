@@ -27,10 +27,10 @@ exports = async function () {
           `[${new Date().toISOString()}] Processing restaurant ID: ${restaurantId}`
         );
 
-        // Define date range for the last 7 days
+        // Define date range for the last 30 days
         const endDate = new Date();
         const startDate = new Date(endDate);
-        startDate.setDate(endDate.getDate() - 7);
+        startDate.setDate(endDate.getDate() - 30);
 
         // Aggregate orders data
         console.log(
@@ -95,32 +95,35 @@ exports = async function () {
           `[${new Date().toISOString()}] Calculated: totalRevenue=${totalRevenue}, orderCount=${totalOrders}, avgOrderValue=${averageOrderValue}`
         );
 
-        // Aggregate reviews
+        // Aggregate feedbacks
+        const orderIds = await ordersCollection
+          .find({
+            shopId: restaurantId,
+            createdAt: { $gte: startDate, $lte: endDate },
+            status: { $in: ["COMPLETED", "DELIVERY"] },
+          })
+          .toArray();
+        const orderIdList = orderIds.map((o) => o._id);
         console.log(
-          `[${new Date().toISOString()}] Aggregating reviews for restaurant ${restaurantId}`
+          `[${new Date().toISOString()}] Aggregating feedbacks for restaurant ${restaurantId}`
         );
-        const reviewsAgg = await ordersCollection
+        const feedbackCollection = db.collection("feedbacks");
+        const feedbackAgg = await feedbackCollection
           .aggregate([
             {
               $match: {
-                shopId: restaurantId,
+                orderId: { $in: orderIdList },
                 createdAt: { $gte: startDate, $lte: endDate },
-                "items.rating": { $ne: null },
               },
             },
-            { $unwind: "$items" },
             {
               $group: {
                 _id: {
                   $cond: [
-                    { $gte: ["$items.rating", 4] },
+                    { $gte: ["$rating", 4] },
                     "positive",
                     {
-                      $cond: [
-                        { $eq: ["$items.rating", 3] },
-                        "neutral",
-                        "negative",
-                      ],
+                      $cond: [{ $eq: ["$rating", 3] }, "neutral", "negative"],
                     },
                   ],
                 },
@@ -133,7 +136,7 @@ exports = async function () {
         let positiveReviews = 0;
         let neutralReviews = 0;
         let negativeReviews = 0;
-        reviewsAgg.forEach((review) => {
+        feedbackAgg.forEach((review) => {
           if (review._id === "positive") positiveReviews += review.count;
           else if (review._id === "neutral") neutralReviews += review.count;
           else negativeReviews += review.count;
@@ -228,6 +231,42 @@ exports = async function () {
             },
             { $unwind: "$productInfo" },
             {
+              $lookup: {
+                from: "feedbacks",
+                let: { productId: "$items.product" },
+                pipeline: [
+                  {
+                    $match: {
+                      $expr: {
+                        $and: [
+                          { $eq: ["$productId", "$$productId"] },
+                          { $gte: ["$createdAt", startDate] },
+                          { $lte: ["$createdAt", endDate] },
+                        ],
+                      },
+                    },
+                  },
+                  {
+                    $group: {
+                      _id: null,
+                      avgRating: { $avg: "$rating" },
+                    },
+                  },
+                ],
+                as: "feedbackInfo",
+              },
+            },
+            {
+              $addFields: {
+                avgRating: {
+                  $ifNull: [
+                    { $arrayElemAt: ["$feedbackInfo.avgRating", 0] },
+                    0,
+                  ],
+                },
+              },
+            },
+            {
               $group: {
                 _id: "$items.product",
                 name: { $first: "$productInfo.name" },
@@ -235,7 +274,7 @@ exports = async function () {
                 revenue: {
                   $sum: { $multiply: ["$items.quantity", "$productInfo.cost"] },
                 },
-                rating: { $avg: "$items.rating" },
+                rating: { $avg: "$avgRating" }, // Use the average from feedback
               },
             },
             { $sort: { revenue: -1 } },
