@@ -16,7 +16,7 @@ const userSchema = new Schema(
     refreshToken: String,
     role: {
       type: String,
-      enum: ["CUSTOMER", "RESTAURANT"],
+      enum: ["CUSTOMER", "RESTAURANT", "ADMIN"],
     },
     bio: String,
     followers: [

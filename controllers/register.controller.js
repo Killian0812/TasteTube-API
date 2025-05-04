@@ -26,7 +26,9 @@ const register = async (req, res) => {
         currency: "VND",
       });
       await newUser.save();
-      sendVerificationLink(email);
+      setImmediate(async () => {
+        await sendVerificationLink(email);
+      });
       return res.status(200).json({
         userId: newUser.id,
       });
