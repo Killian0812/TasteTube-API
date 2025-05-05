@@ -42,6 +42,15 @@ const autoAIResponse = async (req, res) => {
     }
 
     setImmediate(async () => {
+      await chatService.sendEventToChannel(
+        channel_type,
+        channel_id,
+        "typing.start",
+        process.env.STREAM_BOT_ID
+      );
+    });
+
+    setTimeout(async () => {
       try {
         // Process the message and get AI response
         const aiResponse = await aiService.getAIResponse(message.text);
@@ -57,7 +66,7 @@ const autoAIResponse = async (req, res) => {
       } catch (error) {
         logger.error("Error AI response processing:", error);
       }
-    });
+    }, 1);
     return res.status(200).send("Webhook processed");
   } catch (error) {
     logger.error("Error processing webhook:", error);

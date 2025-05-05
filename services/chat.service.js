@@ -10,10 +10,29 @@ async function sendMessageToChannel(channelType, channelId, messageText) {
         username: "TasteTube Bot",
       },
     });
+    await sendEventToChannel(
+      channelType,
+      channelId,
+      "typing.stop",
+      process.env.STREAM_BOT_ID
+    );
   } catch (error) {
     console.error("Error sending message to channel:", error);
     throw error;
   }
 }
 
-module.exports = { sendMessageToChannel };
+async function sendEventToChannel(channelType, channelId, type, userId) {
+  try {
+    const channel = StreamServer.channel(channelType, channelId);
+    await channel.sendEvent({
+      type: type,
+      user_id: userId,
+    });
+  } catch (error) {
+    console.error("Error sending message to channel:", error);
+    throw error;
+  }
+}
+
+module.exports = { sendMessageToChannel, sendEventToChannel };
