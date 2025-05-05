@@ -7,15 +7,16 @@ const { adminUsers } = require("../utils/constant");
 const autoAIResponse = async (req, res) => {
   try {
     const { type, message, user, channel_id, channel_type, members } = req.body;
+    const attempt = req.headers["x-webhook-attempt"];
 
     // Handle only new messages
     if (type !== "message.new") {
       return res.status(200).send("Ignored non-message event");
     }
 
-    logger.info(
-      `${req.headers["x-webhook-id"]} ${req.headers["x-webhook-attempt"]}`
-    );
+    if (attempt > 1) {
+      return res.status(200).send("Ignored retries");
+    }
 
     const channel = await Channel.findOne({ channelId: channel_id });
     if (channel?.autoResponse == false) {
@@ -48,27 +49,22 @@ const autoAIResponse = async (req, res) => {
       process.env.STREAM_BOT_ID
     );
 
-    setImmediate(async () => {
-      try {
-        // Process the message and get AI response
-        const aiResponse = await aiService.getAIResponse(message.text);
+    // Process the message and get AI response
+    const aiResponse = await aiService.getAIResponse(message.text);
 
-        // Send the AI response back to the channel
-        await chatService.sendMessageToChannel(
-          channel_type,
-          channel_id,
-          aiResponse
-        );
+    // Send the AI response back to the channel
+    await chatService.sendMessageToChannel(
+      channel_type,
+      channel_id,
+      aiResponse
+    );
 
-        logger.info("Auto-message generated");
-      } catch (error) {
-        logger.error("Error AI response processing:", error);
-      }
-    });
+    logger.info("Auto-message generated");
+
     return res.status(200).send("Webhook processed");
   } catch (error) {
-    logger.error("Error processing webhook:", error);
-    res.status(500).send("Internal server error");
+    logger.error("Error processing AI response:", error);
+    return res.status(500).send("Internal server error");
   }
 };
 
