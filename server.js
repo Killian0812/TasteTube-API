@@ -14,7 +14,11 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true, limit: "16mb" }));
 app.use(cookieParser());
 const corsOptions = {
-  origin: ["https://taste-tube.web.app", "http://localhost:5555"],
+  origin: [
+    "https://taste-tube.web.app",
+    "https://admin-taste-tube.web.app/",
+    "http://localhost:5555",
+  ],
   credentials: true,
   exposedHeaders: ["x-auth-token"], // exposed since set-cookie can't be used through ngrok
 };
