@@ -1,11 +1,18 @@
 const chatService = require("../services/chat.service");
-const User = require("../models/user.model");
 const Channel = require("../models/channel.model");
 const logger = require("../logger");
+const { adminUsers } = require("../utils/constant");
 
 const autoAIResponse = async (req, res) => {
   try {
-    const { type, message, user, channel_id, channel_type } = req.body;
+    const {
+      type,
+      message,
+      user,
+      channel_id,
+      channel_type,
+      members,
+    } = req.body;
 
     // Handle only new messages
     if (type !== "message.new") {
@@ -22,9 +29,18 @@ const autoAIResponse = async (req, res) => {
       return res.status(200).send("Ignored bot message");
     }
 
-    const sender = await User.findById(user.id);
-    if (sender.role === "ADMIN") {
+    if (adminUsers.includes(user.id)) {
       return res.status(200).send("Ignored admin message");
+    }
+
+    // Check if any user in the members list is an admin
+    const isAdminInMembers = members.some((member) =>
+      adminUsers.includes(member.user_id)
+    );
+    if (!isAdminInMembers) {
+      return res
+        .status(200)
+        .send("Ignored message from a channel with no admin members");
     }
 
     // Process the message and get AI response
