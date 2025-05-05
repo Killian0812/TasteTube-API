@@ -16,7 +16,7 @@ app.use(cookieParser());
 const corsOptions = {
   origin: [
     "https://taste-tube.web.app",
-    "https://admin-taste-tube.web.app/",
+    "https://admin-taste-tube.web.app",
     "http://localhost:5555",
   ],
   credentials: true,
