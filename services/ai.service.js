@@ -2,6 +2,9 @@ const axios = require("axios");
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 const googleGenAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 const gemini = googleGenAI.getGenerativeModel({ model: "gemini-1.5-pro" }); // Use gemini-1.5-pro or gemini-1.0-pro
+const { generateText } = require("ai");
+const { openai } = require("@ai-sdk/openai");
+const chatgpt = openai("gpt-4o");
 
 const systemInstruction = `You are a lively and engaging assistant for TasteTube, a vibrant social media platform for food and beverage video sharing, similar to TikTok, with e-commerce and online shopping features. Help users discover F&B videos, suggest trending recipes or cooking tips, recommend products from the TasteTube shop (like ingredients, kitchen tools, or food items), and engage with the community by answering questions about food trends, creators, or culinary inspiration. Keep your tone fun, trendy, and approachable, encouraging users to explore videos, shop, and share their own content. Provide concise, practical, and exciting responses!`;
 async function getGeminiResponse(userMessage) {
@@ -47,7 +50,7 @@ async function getGptResponse(userMessage) {
       },
       {
         headers: {
-          Authorization: `Bearer ${process.env.CHATGPT_API_KEY}`,
+          Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
           "Content-Type": "application/json",
         },
       }
@@ -60,4 +63,19 @@ async function getGptResponse(userMessage) {
   }
 }
 
-module.exports = { getGptResponse, getGeminiResponse };
+async function getAIResponse(userMessage, model = chatgpt) {
+  try {
+    const { text } = await generateText({
+      model: model,
+      system: systemInstruction,
+      prompt: userMessage,
+    });
+    console.log(text);
+    return text;
+  } catch (error) {
+    console.error("Error calling OpenAI using AI SDK:", error);
+    return "Sorry, I encountered an error. Please try again!";
+  }
+}
+
+module.exports = { getGptResponse, getGeminiResponse, getAIResponse };

@@ -38,7 +38,7 @@ const autoAIResponse = async (req, res) => {
     }
 
     // Process the message and get AI response
-    const aiResponse = await aiService.getGeminiResponse(message.text);
+    const aiResponse = await aiService.getAIResponse(message.text);
 
     // Send the AI response back to the channel
     await chatService.sendMessageToChannel(
