@@ -21,6 +21,7 @@ async function getAIResponse(userMessage) {
         headers: {
           Authorization: `Bearer ${process.env.CHATGPT_API_KEY}`,
           "Content-Type": "application/json",
+          "User-Agent": "TasteTubeBot/1.0",
         },
       }
     );
