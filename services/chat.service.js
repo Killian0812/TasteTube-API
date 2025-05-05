@@ -1,3 +1,4 @@
+const logger = require("../logger");
 const StreamServer = require("../stream");
 
 async function sendMessageToChannel(channelType, channelId, messageText) {
@@ -30,8 +31,7 @@ async function sendEventToChannel(channelType, channelId, type, userId) {
       user_id: userId,
     });
   } catch (error) {
-    console.error("Error sending message to channel:", error);
-    throw error;
+    logger.error("Error sending message to channel:", error);
   }
 }
 

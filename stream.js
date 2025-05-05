@@ -3,7 +3,7 @@ const apiSecret = process.env.STREAM_API_SECRET;
 const fs = require("fs");
 const { StreamChat } = require("stream-chat");
 const StreamServer = StreamChat.getInstance(apiKey, apiSecret, {
-  timeout: 10000,
+  timeout: 20000,
 });
 const logger = require("./logger");
 
@@ -39,6 +39,7 @@ const deleteChannelById = async (channelId) => {
 // );
 
 const setupStreamAppConfig = async () => {
+  if (process.env.VERCEL) return;
   try {
     await StreamServer.updateAppSettings({
       push_config: {

@@ -41,16 +41,14 @@ const autoAIResponse = async (req, res) => {
         .send("Ignored message from a channel with no admin members");
     }
 
-    setImmediate(async () => {
-      await chatService.sendEventToChannel(
-        channel_type,
-        channel_id,
-        "typing.start",
-        process.env.STREAM_BOT_ID
-      );
-    });
+    await chatService.sendEventToChannel(
+      channel_type,
+      channel_id,
+      "typing.start",
+      process.env.STREAM_BOT_ID
+    );
 
-    setTimeout(async () => {
+    setImmediate(async () => {
       try {
         // Process the message and get AI response
         const aiResponse = await aiService.getAIResponse(message.text);
@@ -66,7 +64,7 @@ const autoAIResponse = async (req, res) => {
       } catch (error) {
         logger.error("Error AI response processing:", error);
       }
-    }, 1);
+    });
     return res.status(200).send("Webhook processed");
   } catch (error) {
     logger.error("Error processing webhook:", error);
