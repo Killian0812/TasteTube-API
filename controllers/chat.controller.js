@@ -1,18 +1,12 @@
 const chatService = require("../services/chat.service");
+const aiService = require("../services/ai.service");
 const Channel = require("../models/channel.model");
 const logger = require("../logger");
 const { adminUsers } = require("../utils/constant");
 
 const autoAIResponse = async (req, res) => {
   try {
-    const {
-      type,
-      message,
-      user,
-      channel_id,
-      channel_type,
-      members,
-    } = req.body;
+    const { type, message, user, channel_id, channel_type, members } = req.body;
 
     // Handle only new messages
     if (type !== "message.new") {
@@ -44,7 +38,7 @@ const autoAIResponse = async (req, res) => {
     }
 
     // Process the message and get AI response
-    const aiResponse = await chatService.getAIResponse(message.text);
+    const aiResponse = await aiService.getGeminiResponse(message.text);
 
     // Send the AI response back to the channel
     await chatService.sendMessageToChannel(
