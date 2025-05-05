@@ -17,4 +17,6 @@ const channelSchema = new Schema(
   }
 );
 
+channelSchema.index({ channelId: 1 });
+
 module.exports = mongoose.model("Channel", channelSchema);

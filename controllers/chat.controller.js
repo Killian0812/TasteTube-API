@@ -13,6 +13,10 @@ const autoAIResponse = async (req, res) => {
       return res.status(200).send("Ignored non-message event");
     }
 
+    logger.info(
+      `${req.headers["x-webhook-id"]} ${req.headers["x-webhook-attempt"]}`
+    );
+
     const channel = await Channel.findOne({ channelId: channel_id });
     if (channel?.autoResponse == false) {
       return res.status(200).send("Ignored non-auto channel");
@@ -37,20 +41,26 @@ const autoAIResponse = async (req, res) => {
         .send("Ignored message from a channel with no admin members");
     }
 
-    // Process the message and get AI response
-    const aiResponse = await aiService.getAIResponse(message.text);
+    setImmediate(async () => {
+      try {
+        // Process the message and get AI response
+        const aiResponse = await aiService.getAIResponse(message.text);
 
-    // Send the AI response back to the channel
-    await chatService.sendMessageToChannel(
-      channel_type,
-      channel_id,
-      aiResponse
-    );
+        // Send the AI response back to the channel
+        await chatService.sendMessageToChannel(
+          channel_type,
+          channel_id,
+          aiResponse
+        );
 
-    logger.info("Auto-message generated");
+        logger.info("Auto-message generated");
+      } catch (error) {
+        logger.error("Error AI response processing:", error);
+      }
+    });
     return res.status(200).send("Webhook processed");
   } catch (error) {
-    console.error("Error processing webhook:", error);
+    logger.error("Error processing webhook:", error);
     res.status(500).send("Internal server error");
   }
 };

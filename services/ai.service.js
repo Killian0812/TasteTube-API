@@ -70,7 +70,6 @@ async function getAIResponse(userMessage, model = chatgpt) {
       system: systemInstruction,
       prompt: userMessage,
     });
-    console.log(text);
     return text;
   } catch (error) {
     console.error("Error calling OpenAI using AI SDK:", error);
