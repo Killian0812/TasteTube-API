@@ -1,401 +1,138 @@
+const videoService = require("../services/video.service");
 const logger = require("../logger");
-const Video = require("../models/video.model");
-const Product = require("../models/product.model");
-const User = require("../models/user.model");
-const Comment = require("../models/comment.model");
-const Interaction = require("../models/interaction.model");
-const {
-  uploadToFirebaseStorage,
-  deleteFromFirebaseStorage,
-  createVideoTranscoderJob,
-  getVideoTranscoderJob,
-} = require("../services/storage.service");
 
 const getVideo = async (req, res) => {
   try {
-    const videoId = req.params.videoId;
-    if (!videoId)
-      return res.status(401).json({ message: "Please specify a video" });
-
-    const video = await Video.findById(videoId)
-      .populate({
-        path: "userId",
-        select: "_id username image", // Get id, username and image of owner
-      })
-      .populate({
-        path: "targetUserId",
-        select: "_id username image", // Get id, username and image of target user
-      })
-      .populate({
-        path: "products",
-        populate: [
-          {
-            path: "category",
-            select: "_id name",
-          },
-          {
-            path: "userId",
-            select: "_id image username phone",
-          },
-        ],
-      });
-
-    if (!video)
-      return res.status(404).json({ message: "Can't find requested video" });
-
-    setImmediate(async () => {
-      await getVideoTranscoderJob(video);
-    });
-
-    const interactions = await Interaction.find({ videoId: videoId });
-    const totalInteractions = interactions.reduce(
-      (acc, interaction) => {
-        if (interaction.likes > 0) acc.totalLikes += 1;
-
-        acc.totalViews += interaction.views;
-
-        if (interaction.shared) acc.totalShares += 1;
-
-        if (interaction.bookmarked) acc.totalBookmarked += 1;
-
-        if (interaction.userId.equals(req.userId) && interaction.likes > 0)
-          acc.userLiked = true;
-
-        return acc;
-      },
-      {
-        videoId: videoId,
-        totalLikes: 0,
-        totalViews: 0,
-        totalShares: 0,
-        totalBookmarked: 0,
-        userLiked: false,
-      }
+    const totalInteractions = await videoService.getVideo(
+      req.params.videoId,
+      req.userId
     );
-
-    const isOwner = video.userId.equals(req.userId);
-    switch (video.visibility) {
-      case "PRIVATE":
-        if (!isOwner)
-          return res.status(403).json({ message: "Private content" });
-      case "FOLLOWERS_ONLY": {
-        if (isOwner) {
-          _incrementVideoView(video, req.userId);
-          return res.status(200).json(totalInteractions);
-        }
-        const ownerFollowers = (await User.findById(video.userId)).followers;
-        if (ownerFollowers.some((follower) => follower.equals(req.userId))) {
-          _incrementVideoView(video, req.userId);
-          return res.status(200).json(totalInteractions);
-        }
-        return res.status(403).json({ message: "Content for followers only" });
-      }
-      case "PUBLIC":
-        _incrementVideoView(video, req.userId);
-        return res.status(200).json(totalInteractions);
-    }
+    return res.status(200).json(totalInteractions);
   } catch (error) {
     logger.info(error);
-    return res.status(500).json({ message: error });
+    if (error.message === "Please specify a video") {
+      return res.status(401).json({ message: error.message });
+    }
+    if (error.message === "Can't find requested video") {
+      return res.status(404).json({ message: error.message });
+    }
+    if (
+      error.message.includes("Private content") ||
+      error.message.includes("Content for followers only")
+    ) {
+      return res.status(403).json({ message: error.message });
+    }
+    return res.status(500).json({ message: error.message });
   }
-};
-
-// TODO: Maybe only increment on minimum watchtime
-const _incrementVideoView = (video, userId) => {
-  video.views++;
-  Promise.resolve().then(() => {
-    Promise.all([
-      Interaction.findOneAndUpdate(
-        { userId: userId, videoId: video.id },
-        { $inc: { views: 1 } },
-        { upsert: true, new: true }
-      ),
-      video.save(),
-    ])
-      .then((_) => {
-        logger.info(`Views incremented ${video.id}`);
-      })
-      .catch((error) => {
-        logger.error(
-          `Error updating interaction or saving video ${video.id}`,
-          error
-        );
-      });
-  });
 };
 
 const getUserLikedVideos = async (req, res) => {
-  const userId = req.userId;
-  if (!userId) {
-    return res.status(400).json({ message: "No user found" });
-  }
-
   try {
-    const userInteracts = await Interaction.find({
-      userId: userId,
-      likes: { $gt: 0 },
-    }).populate({
-      path: "videoId",
-      populate: [
-        {
-          path: "userId",
-          select: "_id username image", // Populate userId with id, username, and image
-        },
-        {
-          path: "targetUserId",
-          select: "_id username image", // Populate targetUserId with id, username, and image
-        },
-        {
-          path: "products",
-          populate: [
-            {
-              path: "category",
-              select: "_id name",
-            },
-            {
-              path: "userId",
-              select: "_id image username phone",
-            },
-          ],
-        },
-      ],
-    });
-
-    const videos = userInteracts
-      .map((e) => e.videoId)
-      .filter((video, index, self) => video && self.indexOf(video) === index);
-
-    return res.status(200).json({
-      videos,
-    });
+    const result = await videoService.getUserLikedVideos(req.userId);
+    return res.status(200).json(result);
   } catch (e) {
+    if (e.message === "No user found") {
+      return res.status(400).json({ message: e.message });
+    }
     return res.status(500).json({ message: e.message });
   }
 };
 
 const getUserTargetedReviews = async (req, res) => {
-  const targetUserId = req.query.targetUserId;
-  if (!targetUserId) {
-    return res.status(400).json({ message: "No target user found" });
-  }
-
   try {
-    const userTargetedReviews = await Video.find({
-      targetUserId: targetUserId,
-    })
-      .populate({
-        path: "userId",
-        select: "_id username image", // Get id, username and image of owner
-      })
-      .populate({
-        path: "targetUserId",
-        select: "_id username image", // Get id, username and image of target user
-      })
-      .populate({
-        path: "products",
-        populate: [
-          {
-            path: "category",
-            select: "_id name",
-          },
-          {
-            path: "userId",
-            select: "_id image username phone",
-          },
-        ],
-      });
-
-    return res.status(200).json({
-      videos: userTargetedReviews,
-    });
+    const result = await videoService.getUserTargetedReviews(
+      req.query.targetUserId
+    );
+    return res.status(200).json(result);
   } catch (e) {
+    if (e.message === "No target user found") {
+      return res.status(400).json({ message: e.message });
+    }
     return res.status(500).json({ message: e.message });
   }
 };
 
 const getVideoComments = async (req, res) => {
   try {
-    const videoId = req.params.videoId;
-    if (!videoId)
-      return res.status(401).json({ message: "Please specify a video" });
-
-    const video = await Video.findById(videoId);
-
-    if (!video)
-      return res.status(404).json({ message: "Can't find requested video" });
-
-    const isOwner = video.userId.equals(req.userId);
-
-    const comments = await Comment.find({
-      videoId: videoId,
-      parentCommentId: null,
-    }).populate([
-      {
-        path: "userId",
-        select: "_id username image", // Get id, username and image of commenter
-      },
-      {
-        path: "replies", // Populate replies
-        populate: {
-          path: "userId",
-          select: "_id username image",
-        },
-      },
-    ]);
-
-    switch (video.visibility) {
-      case "PRIVATE":
-        if (!isOwner)
-          return res.status(403).json({ message: "Private content" });
-      case "FOLLOWERS_ONLY": {
-        if (isOwner) return res.status(200).json(comments);
-        const ownerFollowers = (await User.findById(video.userId)).followers;
-        if (ownerFollowers.some((follower) => follower.equals(req.userId)))
-          return res.status(200).json(comments);
-        return res.status(403).json({ message: "Content for followers only" });
-      }
-      case "PUBLIC":
-        return res.status(200).json(comments);
-    }
+    const comments = await videoService.getVideoComments(
+      req.params.videoId,
+      req.userId
+    );
+    return res.status(200).json(comments);
   } catch (error) {
+    if (error.message === "Please specify a video") {
+      return res.status(401).json({ message: error.message });
+    }
+    if (error.message === "Can't find requested video") {
+      return res.status(404).json({ message: error.message });
+    }
+    if (
+      error.message.includes("Private content") ||
+      error.message.includes("Content for followers only")
+    ) {
+      return res.status(403).json({ message: error.message });
+    }
     return res.status(500).json({ message: "Internal Server Error" });
   }
 };
 
 const uploadVideo = async (req, res) => {
   try {
-    const user = await User.findById(req.userId);
-    const {
-      title,
-      description,
-      productIds,
-      hashtags,
-      direction,
-      thumbnail,
-      visibility,
-      targetUserId,
-    } = req.body;
-
-    if (!user) {
-      return res.status(500).json({ message: "Internal Server Error" });
-    }
-
-    const file = req.file;
-    if (!file) {
-      return res.status(500).json({ message: "Internal Server Error" });
-    }
-
-    const { url, filename } = await uploadToFirebaseStorage(file);
-
-    const productIdList = JSON.parse(productIds);
-    const validProducts = await Product.find().where("_id").in(productIdList);
-
-    if (validProducts.length !== productIdList.length) {
-      return res.status(400).json({ message: "Invalid product IDs" });
-    }
-
-    const video = await Video.create({
-      userId: req.userId,
-      url: url,
-      filename: filename,
-      direction: direction,
-      title: title,
-      description: description,
-      hashtags: JSON.parse(hashtags),
-      thumbnail: thumbnail,
-      products: validProducts.map((p) => p._id),
-      visibility: visibility,
-    });
-
-    if (targetUserId) {
-      const targetUser = await User.findById(targetUserId);
-      if (targetUser) video.targetUserId = targetUser._id;
-    }
-
-    setImmediate(async () => {
-      user.videos.push(video._id);
-      await user.save();
-      await createVideoTranscoderJob(video);
-    });
-
-    return res.status(200).json({
-      message: "Uploaded",
-    });
+    const result = await videoService.uploadVideo(
+      req.userId,
+      req.file,
+      req.body
+    );
+    return res.status(200).json(result);
   } catch (error) {
-    return res.status(500).json({ message: error });
+    if (error.message === "Invalid product IDs") {
+      return res.status(400).json({ message: error.message });
+    }
+    if (error.message.includes("Internal Server Error")) {
+      return res.status(500).json({ message: error.message });
+    }
+    return res.status(500).json({ message: error.message });
   }
 };
 
 const deleteVideo = async (req, res) => {
   try {
-    const videoId = req.params.videoId;
-    if (!videoId)
-      return res.status(401).json({ message: "Please specify a video" });
-
-    const video = await Video.findById(videoId);
-    if (!video)
-      return res.status(404).json({ message: "Can't find requested video" });
-
-    if (!video.userId.equals(req.userId))
-      return res
-        .status(403)
-        .json({ message: "You're not the owner of the video" });
-
-    await deleteFromFirebaseStorage(video.filename);
-
-    await Video.deleteOne({ _id: videoId });
-
-    const user = await User.findById(req.userId);
-    const updatedVideos = user.videos.filter((e) => !e._id.equals(videoId));
-    user.videos = updatedVideos;
-    await user.save();
-
-    await Interaction.deleteMany({ videoId });
-    await Comment.deleteMany({ videoId });
-
-    return res.status(200).json({
-      message: "Video deleted successfully",
-    });
+    const result = await videoService.deleteVideo(
+      req.params.videoId,
+      req.userId
+    );
+    return res.status(200).json(result);
   } catch (error) {
+    if (error.message === "Please specify a video") {
+      return res.status(401).json({ message: error.message });
+    }
+    if (error.message === "Can't find requested video") {
+      return res.status(404).json({ message: error.message });
+    }
+    if (error.message === "You're not the owner of the video") {
+      return res.status(403).json({ message: error.message });
+    }
     return res.status(500).json({ message: error.message });
   }
 };
 
 const commentVideo = async (req, res) => {
   try {
-    const { videoId } = req.params;
     const { text, parentCommentId } = req.body;
-
-    if (!text)
-      return res.status(400).json({ message: "Comment text is required" });
-
-    const video = await Video.findById(videoId);
-    if (!video) return res.status(404).json({ message: "Video not found" });
-
-    const comment = new Comment({
-      userId: req.userId,
-      videoId,
+    const comment = await videoService.commentVideo(
+      req.params.videoId,
+      req.userId,
       text,
-      parentCommentId: parentCommentId ?? null,
-    });
-
-    await comment.save();
-
-    if (parentCommentId) {
-      const parentComment = await Comment.findById(parentCommentId);
-      parentComment.replies.push(comment._id);
-      await parentComment.save();
-    }
-
-    const commentJSON = (
-      await comment.populate({
-        path: "userId",
-        select: "_id username image", // Get id, username and image of owner
-      })
-    ).toObject();
-
-    return res.status(201).json(commentJSON);
+      parentCommentId
+    );
+    return res.status(201).json(comment);
   } catch (error) {
+    if (
+      error.message === "Comment text is required" ||
+      error.message === "Video not found"
+    ) {
+      return res.status(400).json({ message: error.message });
+    }
     return res.status(500).json({ message: "Internal Server Error", error });
   }
 };
@@ -403,104 +140,57 @@ const commentVideo = async (req, res) => {
 const deleteComment = async (req, res) => {
   try {
     const { commentId } = req.body;
-
-    if (!commentId)
-      return res.status(400).json({ message: "Comment ID is required" });
-
-    const comment = await Comment.findById(commentId);
-
-    if (!comment) return res.status(200).json({ message: "Comment not found" });
-
-    if (!comment.userId.equals(req.userId)) {
-      return res
-        .status(403)
-        .json({ message: "Unauthorized to delete comment" });
-    }
-
-    if (comment.parentCommentId)
-      await Comment.updateOne(
-        { _id: comment.parentCommentId },
-        { $pull: { replies: comment._id } }
-      );
-
-    await Comment.deleteMany({
-      _id: { $in: comment.replies },
-    });
-
-    await Comment.deleteOne({ _id: commentId });
-
-    return res.status(200).json({
-      message: "Comment deleted successfully",
-    });
+    const result = await videoService.deleteComment(commentId, req.userId);
+    return res.status(200).json(result);
   } catch (error) {
+    if (error.message === "Comment ID is required") {
+      return res.status(400).json({ message: error.message });
+    }
+    if (error.message === "Unauthorized to delete comment") {
+      return res.status(403).json({ message: error.message });
+    }
     return res.status(500).json({ message: "Internal Server Error", error });
   }
 };
 
 const likeVideo = async (req, res) => {
   try {
-    const { videoId } = req.params;
-
-    const video = await Video.findById(videoId);
-    if (!video) return res.status(404).json({ message: "Video not found" });
-
-    await Interaction.findOneAndUpdate(
-      { userId: req.userId, videoId },
-      { $inc: { likes: 1 } },
-      { upsert: true, new: true }
-    );
-
-    return res.status(200).json({ message: "Video liked successfully" });
+    const result = await videoService.likeVideo(req.params.videoId, req.userId);
+    return res.status(200).json(result);
   } catch (error) {
+    if (error.message === "Video not found") {
+      return res.status(404).json({ message: error.message });
+    }
     return res.status(500).json({ message: "Internal Server Error", error });
   }
 };
 
 const unlikeVideo = async (req, res) => {
   try {
-    const { videoId } = req.params;
-
-    const video = await Video.findById(videoId);
-    if (!video) return res.status(404).json({ message: "Video not found" });
-
-    const existingInteract = await Interaction.findOne({
-      userId: req.userId,
-      videoId,
-    });
-
-    if (!existingInteract)
-      return res
-        .status(200)
-        .json({ message: "You haven't liked this video yet" });
-
-    existingInteract.likes = 0;
-    await existingInteract.save();
-
-    return res.status(200).json({
-      message: "Video unliked successfully",
-    });
+    const result = await videoService.unlikeVideo(
+      req.params.videoId,
+      req.userId
+    );
+    return res.status(200).json(result);
   } catch (error) {
+    if (error.message === "Video not found") {
+      return res.status(404).json({ message: error.message });
+    }
     return res.status(500).json({ message: "Internal Server Error", error });
   }
 };
 
 const shareVideo = async (req, res) => {
   try {
-    const { videoId } = req.params;
-
-    const video = await Video.findById(videoId);
-    if (!video) return res.status(404).json({ message: "Video not found" });
-
-    await Interaction.findOneAndUpdate(
-      { userId: req.userId, videoId },
-      { $set: { shared: true } },
-      { upsert: true, new: true }
+    const result = await videoService.shareVideo(
+      req.params.videoId,
+      req.userId
     );
-
-    return res.status(200).json({
-      message: "Video shared successfully",
-    });
+    return res.status(200).json(result);
   } catch (error) {
+    if (error.message === "Video not found") {
+      return res.status(404).json({ message: error.message });
+    }
     return res.status(500).json({ message: "Internal Server Error", error });
   }
 };
