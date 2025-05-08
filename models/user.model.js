@@ -1,6 +1,7 @@
 const mongoose = require("mongoose");
 const { Schema } = mongoose;
 const { currencies } = require("../utils/constant");
+const mongoosePaginate = require("mongoose-paginate-v2");
 
 const userSchema = new Schema(
   {
@@ -17,6 +18,11 @@ const userSchema = new Schema(
     role: {
       type: String,
       enum: ["CUSTOMER", "RESTAURANT", "ADMIN"],
+    },
+    status: {
+      type: String,
+      enum: ["ACTIVE", "SUSPENDED", "LOCKED"],
+      default: "ACTIVE",
     },
     bio: String,
     followers: [
@@ -57,5 +63,7 @@ const userSchema = new Schema(
     timestamps: true,
   }
 );
+
+userSchema.plugin(mongoosePaginate);
 
 module.exports = mongoose.model("User", userSchema);
