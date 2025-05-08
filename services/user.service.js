@@ -155,18 +155,19 @@ const updateUserInfo = async (
     user.bio = bio.trim();
   }
 
-  const oldFilename = user.filename;
   if (newImage) {
     const { url, filename } = await uploadToFirebaseStorage(newImage);
     user.image = url;
     user.filename = filename;
+    const oldFilename = user.filename;
+    if (oldFilename) {
+      setImmediate(async () => {
+        await deleteFromFirebaseStorage(oldFilename);
+      });
+    }
   }
 
   await user.save();
-
-  if (oldFilename) {
-    await deleteFromFirebaseStorage(oldFilename);
-  }
 
   return {
     _id: userId,
