@@ -3,6 +3,7 @@ const {
   uploadToFirebaseStorage,
   deleteFromFirebaseStorage,
 } = require("../services/storage.service");
+const { kickoutUser } = require("../socket");
 
 const getUserInfo = async (userId, requestingUserId) => {
   if (!userId) {
@@ -158,8 +159,8 @@ const updateUserInfo = async (
   if (newImage) {
     const { url, filename } = await uploadToFirebaseStorage(newImage);
     user.image = url;
-    user.filename = filename;
     const oldFilename = user.filename;
+    user.filename = filename;
     if (oldFilename) {
       setImmediate(async () => {
         await deleteFromFirebaseStorage(oldFilename);
@@ -247,10 +248,80 @@ const unfollowUser = async (userId, followerId) => {
   return { code: 1 };
 };
 
+const getUsers = async ({ page, limit, role, status, search }) => {
+  const options = {
+    page: parseInt(page, 10) || 1,
+    limit: parseInt(limit, 10) || 10,
+    select: "-videos -password", // Exclude
+    sort: { createdAt: -1 },
+  };
+
+  const query = {
+    role: { $ne: "ADMIN" }, // Exclude users with role ADMIN
+  };
+  if (role) {
+    query.role = role;
+  }
+  if (status) {
+    query.status = status;
+  }
+  if (search) {
+    query.$or = [
+      { username: { $regex: search, $options: "i" } },
+      { email: { $regex: search, $options: "i" } },
+      { phone: { $regex: search, $options: "i" } },
+    ];
+  }
+
+  const result = await User.paginate(query, options);
+
+  // Transform docs to include videos: []
+  const users = result.docs.map((doc) => ({
+    ...doc.toObject(),
+    videos: [],
+  }));
+
+  return {
+    users,
+    totalDocs: result.totalDocs,
+    limit: result.limit,
+    hasPrevPage: result.hasPrevPage,
+    hasNextPage: result.hasNextPage,
+    page: result.page,
+    totalPages: result.totalPages,
+    prevPage: result.prevPage,
+    nextPage: result.nextPage,
+  };
+};
+
+const updateUserStatus = async (userId, newStatus) => {
+  if (!userId) {
+    throw new Error("No user found");
+  }
+
+  const user = await User.findById(userId);
+  if (!user) {
+    throw new Error("User not found");
+  }
+
+  user.status = newStatus;
+  await Promise.all([
+    newStatus === "BANNED" ? kickoutUser(userId) : Promise.resolve(),
+    user.save(),
+  ]);
+
+  delete user.password;
+  user.videos = [];
+
+  return user;
+};
+
 module.exports = {
   getUserInfo,
   updateUserInfo,
   changePassword,
   followUser,
   unfollowUser,
+  getUsers,
+  updateUserStatus,
 };

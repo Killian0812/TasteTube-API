@@ -8,6 +8,7 @@ const upload = multer({
 const verifyJWT = require("../middlewares/verifyJWT");
 const userController = require("../controllers/user.controller");
 
+router.get("/", verifyJWT(), userController.getUsers);
 router.get("/:userId", verifyJWT(true), userController.getUserInfo);
 router.post(
   "/:userId",
@@ -22,5 +23,6 @@ router.put(
 );
 router.put("/:userId/follow", verifyJWT(), userController.followUser);
 router.put("/:userId/unfollow", verifyJWT(), userController.unfollowUser);
+router.put("/:userId/status", verifyJWT(), userController.updateUserStatus);
 
 module.exports = router;

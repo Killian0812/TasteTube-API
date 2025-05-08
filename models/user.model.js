@@ -21,7 +21,7 @@ const userSchema = new Schema(
     },
     status: {
       type: String,
-      enum: ["ACTIVE", "SUSPENDED", "LOCKED"],
+      enum: ["ACTIVE", "SUSPENDED", "BANNED"],
       default: "ACTIVE",
     },
     bio: String,

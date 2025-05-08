@@ -46,4 +46,12 @@ const notifyPayment = async (userId, status, pid) => {
   logger.info(`(Socket) Notified ${userId}; payment ${pid}`);
 };
 
-module.exports = { app, io, server, notifyPayment };
+const kickoutUser = async (userId) => {
+  await FirebaseRealtimeDatabase.ref(`users/${userId}/status`).set({
+    status: "BANNED",
+    createdAt: new Date().toISOString(),
+  });
+  logger.info(`(Firebase RTDB) Kicked ${userId}`);
+};
+
+module.exports = { app, io, server, notifyPayment, kickoutUser };

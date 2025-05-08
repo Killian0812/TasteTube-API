@@ -94,10 +94,56 @@ const unfollowUser = async (req, res) => {
   }
 };
 
+const getUsers = async (req, res) => {
+  try {
+    const { page, limit, role, status, search } = req.query;
+    const result = await userService.getUsers({
+      page,
+      limit,
+      role,
+      status,
+      search,
+    });
+    return res.status(200).json(result);
+  } catch (e) {
+    logger.error("Error fetching users:", e);
+    return res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
+const updateUserStatus = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { status } = req.body;
+    const result = await userService.updateUserStatus(userId, status, req.user);
+    return res.status(200).json(result);
+  } catch (e) {
+    logger.error("Error updating user status:", e);
+    if (
+      e.message.includes("No user found") ||
+      e.message.includes("User not found")
+    ) {
+      return res.status(404).json({ message: e.message });
+    }
+    if (
+      e.message.includes("Unauthorized") ||
+      e.message.includes("own status")
+    ) {
+      return res.status(403).json({ message: e.message });
+    }
+    if (e.message.includes("Invalid status")) {
+      return res.status(400).json({ message: e.message });
+    }
+    return res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
 module.exports = {
   getUserInfo,
   updateUserInfo,
   changePassword,
   followUser,
   unfollowUser,
+  getUsers,
+  updateUserStatus,
 };

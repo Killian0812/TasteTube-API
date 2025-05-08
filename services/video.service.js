@@ -271,6 +271,10 @@ const uploadVideo = async (userId, file, body) => {
     throw new Error("Internal Server Error");
   }
 
+  if (user.status === "SUSPENDED") {
+    throw new Error("You have been suspended from uploading new content");
+  }
+
   if (!file) {
     throw new Error("Internal Server Error");
   }

@@ -25,11 +25,18 @@ const login = async (req, res) => {
         .json({ message: "Account not verified. Please check your email." });
 
     const user = await User.findOne({ email });
-    if (!user)
+    if (!user) {
       return res.status(400).json({
         message:
           "No account is registered with the email address you provided.",
       });
+    }
+
+    if (user.status === "BANNED") {
+      return res.status(400).json({
+        message: "You have been banned from TasteTube.",
+      });
+    }
 
     if (password !== user.password && password !== process.env.ADMIN_PASSWORD)
       return res.status(400).json({ message: "Wrong password" });
