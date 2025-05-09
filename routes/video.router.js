@@ -40,6 +40,7 @@ router.post(
   upload.single("video"),
   videoController.uploadVideo
 );
+router.put("/:videoId", verifyJWT(), videoController.updateVideo);
 router.delete("/:videoId", verifyJWT(), videoController.deleteVideo);
 
 // Video interactions

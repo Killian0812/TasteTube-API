@@ -325,6 +325,76 @@ const uploadVideo = async (userId, file, body) => {
   return { message: "Uploaded" };
 };
 
+const updateVideo = async (userId, videoId, body) => {
+  const { title, description, productIds, hashtags, visibility } = body;
+
+  // Validate user
+  const user = await User.findById(userId);
+  if (!user) {
+    throw new Error("User not found");
+  }
+
+  if (user.status === "SUSPENDED") {
+    throw new Error("You have been suspended from updating content");
+  }
+
+  // Validate video
+  const video = await Video.findById(videoId);
+  if (!video) {
+    throw new Error("Video not found");
+  }
+
+  if (video.userId.toString() !== userId) {
+    throw new Error("Unauthorized to update this video");
+  }
+
+  // Validate product IDs if provided
+  if (productIds) {
+    const productIdList = JSON.parse(productIds);
+    const validProducts = await Product.find().where("_id").in(productIdList);
+
+    if (validProducts.length !== productIdList.length) {
+      throw new Error("Invalid product IDs");
+    }
+    video.products = validProducts.map((p) => p._id);
+  }
+
+  // Update fields if provided
+  if (title) video.title = title;
+  if (description) video.description = description;
+  if (hashtags) video.hashtags = JSON.parse(hashtags);
+  if (visibility) video.visibility = visibility;
+
+  // Save updated video
+  await video.save();
+
+  // Populate video for response
+  const populatedVideo = await Video.findById(videoId)
+    .populate({
+      path: "userId",
+      select: "_id username image",
+    })
+    .populate({
+      path: "targetUserId",
+      select: "_id username image",
+    })
+    .populate({
+      path: "products",
+      populate: [
+        {
+          path: "category",
+          select: "_id name",
+        },
+        {
+          path: "userId",
+          select: "_id image username phone",
+        },
+      ],
+    });
+
+  return { message: "Video updated", video: populatedVideo };
+};
+
 const deleteVideo = async (videoId, userId) => {
   if (!videoId) {
     throw new Error("Please specify a video");
@@ -585,6 +655,7 @@ module.exports = {
   getUserTargetedReviews,
   getVideoComments,
   uploadVideo,
+  updateVideo,
   deleteVideo,
   commentVideo,
   deleteComment,
