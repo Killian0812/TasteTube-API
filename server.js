@@ -14,13 +14,25 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true, limit: "16mb" }));
 app.use(cookieParser());
 const corsOptions = {
-  origin: [
-    "https://taste-tube.web.app",
-    "https://admin-taste-tube.web.app",
-    "http://localhost:5555",
-  ],
+  origin: function (origin, callback) {
+    if (!origin) return callback(null, true); // Allow requests with no origin (e.g., Postman)
+
+    const allowedPatterns = [
+      /^https:\/\/taste-tube.*\.web\.app$/,
+      /^https:\/\/admin-taste-tube.*\.web\.app$/,
+      /^http:\/\/localhost:5555$/,
+    ];
+
+    const isAllowed = allowedPatterns.some(pattern => pattern.test(origin));
+
+    if (isAllowed) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
   credentials: true,
-  exposedHeaders: ["x-auth-token"], // exposed since set-cookie can't be used through ngrok
+  exposedHeaders: ["x-auth-token"],
 };
 app.use(cors(corsOptions));
 
