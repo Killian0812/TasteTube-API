@@ -25,10 +25,15 @@ const upload = multer({
 const videoController = require("../controllers/video.controller");
 const verifyJWT = require("../middlewares/verifyJWT");
 
+router.get("/", verifyJWT(), videoController.getVideos);
 router.get("/liked", verifyJWT(), videoController.getUserLikedVideos);
 router.get("/review", verifyJWT(true), videoController.getUserTargetedReviews);
 router.get("/:videoId", verifyJWT(true), videoController.getVideo);
-router.get("/:videoId/interaction", verifyJWT(), videoController.getVideoInteraction);
+router.get(
+  "/:videoId/interaction",
+  verifyJWT(),
+  videoController.getVideoInteraction
+);
 router.post(
   "/",
   verifyJWT(),
@@ -44,5 +49,6 @@ router.delete("/:videoId/comment", verifyJWT(), videoController.deleteComment);
 router.post("/:videoId/like", verifyJWT(), videoController.likeVideo);
 router.delete("/:videoId/unlike", verifyJWT(), videoController.unlikeVideo);
 router.post("/:videoId/share", verifyJWT(), videoController.shareVideo);
+router.put("/:videoId/status", verifyJWT(), videoController.updateVideoStatus);
 
 module.exports = router;

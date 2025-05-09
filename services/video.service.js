@@ -468,6 +468,115 @@ const shareVideo = async (videoId, userId) => {
   return { message: "Video shared successfully" };
 };
 
+const getVideos = async ({
+  page,
+  limit,
+  userId,
+  status,
+  visibility,
+  search,
+}) => {
+  const options = {
+    page: parseInt(page, 10) || 1,
+    limit: parseInt(limit, 10) || 10,
+    select: "-__v", // Exclude version key
+    sort: { createdAt: -1 }, // Sort by newest first
+    populate: [
+      {
+        path: "userId",
+        select: "_id username image",
+      },
+      {
+        path: "targetUserId",
+        select: "_id username image",
+      },
+      {
+        path: "products",
+        populate: [
+          {
+            path: "category",
+            select: "_id name",
+          },
+          {
+            path: "userId",
+            select: "_id image username phone",
+          },
+        ],
+      },
+    ],
+  };
+
+  const query = {};
+
+  // Apply filters
+  if (userId) {
+    query.userId = userId;
+  }
+  if (status) {
+    query.status = status;
+  }
+  if (visibility) {
+    query.visibility = visibility;
+  }
+  if (search) {
+    query.$or = [
+      { title: { $regex: search, $options: "i" } },
+      { description: { $regex: search, $options: "i" } },
+    ];
+  }
+
+  const result = await Video.paginate(query, options);
+
+  return {
+    videos: result.docs,
+    totalDocs: result.totalDocs,
+    limit: result.limit,
+    hasPrevPage: result.hasPrevPage,
+    hasNextPage: result.hasNextPage,
+    page: result.page,
+    totalPages: result.totalPages,
+    prevPage: result.prevPage,
+    nextPage: result.nextPage,
+  };
+};
+
+const updateVideoStatus = async (videoId, newStatus) => {
+  if (!videoId) {
+    throw new Error("No video found");
+  }
+
+  const video = await Video.findById(videoId)
+    .populate({
+      path: "userId",
+      select: "_id username image",
+    })
+    .populate({
+      path: "targetUserId",
+      select: "_id username image",
+    })
+    .populate({
+      path: "products",
+      populate: [
+        {
+          path: "category",
+          select: "_id name",
+        },
+        {
+          path: "userId",
+          select: "_id image username phone",
+        },
+      ],
+    });
+  if (!video) {
+    throw new Error("Video not found");
+  }
+
+  video.status = newStatus;
+  await video.save();
+
+  return video;
+};
+
 module.exports = {
   getVideo,
   getVideoInteraction,
@@ -482,4 +591,6 @@ module.exports = {
   likeVideo,
   unlikeVideo,
   shareVideo,
+  getVideos,
+  updateVideoStatus,
 };

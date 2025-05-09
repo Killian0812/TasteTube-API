@@ -53,6 +53,11 @@ const videoSchema = new Schema(
     manifestUrl: {
       type: String,
     },
+    status: {
+      type: String,
+      enum: ["ACTIVE", "REMOVED"],
+      default: "ACTIVE",
+    },
   },
   {
     timestamps: true,

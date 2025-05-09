@@ -3,10 +3,7 @@ const logger = require("../logger");
 
 const getVideo = async (req, res) => {
   try {
-    const video = await videoService.getVideo(
-      req.params.videoId,
-      req.userId
-    );
+    const video = await videoService.getVideo(req.params.videoId, req.userId);
     return res.status(200).json(video);
   } catch (error) {
     logger.info(error);
@@ -214,6 +211,52 @@ const shareVideo = async (req, res) => {
   }
 };
 
+const getVideos = async (req, res) => {
+  try {
+    const { page, limit, userId, status, visibility, search } = req.query;
+
+    const result = await videoService.getVideos({
+      page,
+      limit,
+      userId,
+      status,
+      visibility,
+      search,
+    });
+
+    return res.status(200).json(result);
+  } catch (error) {
+    return res.status(500).json({
+      message: error.message || "Failed to retrieve videos",
+    });
+  }
+};
+
+const updateVideoStatus = async (req, res) => {
+  try {
+    const { videoId } = req.params;
+    const { status } = req.body;
+
+    if (!status) {
+      return res.status(400).json({
+        message: "Status is required",
+      });
+    }
+
+    const video = await updateVideoStatus(videoId, status);
+
+    return res.status(200).json(video);
+  } catch (error) {
+    const statusCode =
+      error.message === "Video not found" || error.message === "Invalid status"
+        ? 400
+        : 500;
+    return res.status(statusCode).json({
+      message: error.message || "Failed to update video status",
+    });
+  }
+};
+
 module.exports = {
   getVideo,
   getVideoInteraction,
@@ -227,4 +270,6 @@ module.exports = {
   likeVideo,
   unlikeVideo,
   shareVideo,
+  getVideos,
+  updateVideoStatus,
 };

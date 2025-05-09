@@ -37,7 +37,7 @@ const userSchema = new Schema(
         ref: "User",
       },
     ],
-    videos: [
+    videos: [ // Future remove
       {
         type: Schema.Types.ObjectId,
         ref: "Video",
