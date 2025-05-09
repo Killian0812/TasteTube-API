@@ -47,27 +47,6 @@ const getVideo = async (videoId, userId) => {
     await getVideoTranscoderJob(video);
   });
 
-  const interactions = await Interaction.find({ videoId: videoId });
-  const totalInteractions = interactions.reduce(
-    (acc, interaction) => {
-      if (interaction.likes > 0) acc.totalLikes += 1;
-      acc.totalViews += interaction.views;
-      if (interaction.shared) acc.totalShares += 1;
-      if (interaction.bookmarked) acc.totalBookmarked += 1;
-      if (interaction.userId.equals(userId) && interaction.likes > 0)
-        acc.userLiked = true;
-      return acc;
-    },
-    {
-      videoId: videoId,
-      totalLikes: 0,
-      totalViews: 0,
-      totalShares: 0,
-      totalBookmarked: 0,
-      userLiked: false,
-    }
-  );
-
   const isOwner = video.userId.equals(userId);
   let canView = false;
 
@@ -97,6 +76,35 @@ const getVideo = async (videoId, userId) => {
   }
 
   await incrementVideoView(video, userId);
+  return video;
+};
+
+const getVideoInteraction = async (videoId, userId) => {
+  if (!videoId) {
+    throw new Error("Please specify a video");
+  }
+
+  const interactions = await Interaction.find({ videoId: videoId });
+  const totalInteractions = interactions.reduce(
+    (acc, interaction) => {
+      if (interaction.likes > 0) acc.totalLikes += 1;
+      acc.totalViews += interaction.views;
+      if (interaction.shared) acc.totalShares += 1;
+      if (interaction.bookmarked) acc.totalBookmarked += 1;
+      if (interaction.userId.equals(userId) && interaction.likes > 0)
+        acc.userLiked = true;
+      return acc;
+    },
+    {
+      videoId: videoId,
+      totalLikes: 0,
+      totalViews: 0,
+      totalShares: 0,
+      totalBookmarked: 0,
+      userLiked: false,
+    }
+  );
+
   return totalInteractions;
 };
 
@@ -462,6 +470,7 @@ const shareVideo = async (videoId, userId) => {
 
 module.exports = {
   getVideo,
+  getVideoInteraction,
   incrementVideoView,
   getUserLikedVideos,
   getUserTargetedReviews,

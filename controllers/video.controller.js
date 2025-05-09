@@ -3,11 +3,11 @@ const logger = require("../logger");
 
 const getVideo = async (req, res) => {
   try {
-    const totalInteractions = await videoService.getVideo(
+    const video = await videoService.getVideo(
       req.params.videoId,
       req.userId
     );
-    return res.status(200).json(totalInteractions);
+    return res.status(200).json(video);
   } catch (error) {
     logger.info(error);
     if (error.message === "Please specify a video") {
@@ -21,6 +21,25 @@ const getVideo = async (req, res) => {
       error.message.includes("Content for followers only")
     ) {
       return res.status(403).json({ message: error.message });
+    }
+    return res.status(500).json({ message: error.message });
+  }
+};
+
+const getVideoInteraction = async (req, res) => {
+  try {
+    const totalInteractions = await videoService.getVideoInteraction(
+      req.params.videoId,
+      req.userId
+    );
+    return res.status(200).json(totalInteractions);
+  } catch (error) {
+    logger.info(error);
+    if (error.message === "Please specify a video") {
+      return res.status(401).json({ message: error.message });
+    }
+    if (error.message === "Can't find requested video") {
+      return res.status(404).json({ message: error.message });
     }
     return res.status(500).json({ message: error.message });
   }
@@ -197,6 +216,7 @@ const shareVideo = async (req, res) => {
 
 module.exports = {
   getVideo,
+  getVideoInteraction,
   uploadVideo,
   deleteVideo,
   commentVideo,

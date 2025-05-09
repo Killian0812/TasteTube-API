@@ -28,6 +28,7 @@ const verifyJWT = require("../middlewares/verifyJWT");
 router.get("/liked", verifyJWT(), videoController.getUserLikedVideos);
 router.get("/review", verifyJWT(true), videoController.getUserTargetedReviews);
 router.get("/:videoId", verifyJWT(true), videoController.getVideo);
+router.get("/:videoId/interaction", verifyJWT(), videoController.getVideoInteraction);
 router.post(
   "/",
   verifyJWT(),
