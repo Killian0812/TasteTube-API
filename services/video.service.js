@@ -75,7 +75,9 @@ const getVideo = async (videoId, userId) => {
     );
   }
 
-  await incrementVideoView(video, userId);
+  setImmediate(async () => {
+    await incrementVideoView(video, userId);
+  });
   return video;
 };
 
@@ -109,6 +111,7 @@ const getVideoInteraction = async (videoId, userId) => {
 };
 
 const incrementVideoView = async (video, userId) => {
+  if (!userId) return;
   video.views++;
   try {
     await Promise.all([
