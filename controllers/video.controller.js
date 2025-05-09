@@ -96,7 +96,7 @@ const uploadVideo = async (req, res) => {
   try {
     const result = await videoService.uploadVideo(
       req.userId,
-      req.params.videoId,
+      req.file,
       req.body
     );
     return res.status(200).json(result);
@@ -115,7 +115,7 @@ const updateVideo = async (req, res) => {
   try {
     const result = await videoService.updateVideo(
       req.userId,
-      req.file,
+      req.params.videoId,
       req.body
     );
     return res.status(200).json(result);
