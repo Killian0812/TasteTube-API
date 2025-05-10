@@ -55,7 +55,7 @@ const videoSchema = new Schema(
     },
     status: {
       type: String,
-      enum: ["ACTIVE", "REMOVED"],
+      enum: ["PENDING", "ACTIVE", "REMOVED"],
       default: "ACTIVE",
     },
   },
