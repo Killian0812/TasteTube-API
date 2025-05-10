@@ -262,7 +262,7 @@ const updateVideoStatus = async (req, res) => {
       });
     }
 
-    const video = await updateVideoStatus(videoId, status);
+    const video = await videoService.updateVideoStatus(videoId, status);
 
     return res.status(200).json(video);
   } catch (error) {
