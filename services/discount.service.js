@@ -15,7 +15,7 @@ const getAllDiscounts = async () => {
 
 const getShopDiscounts = async (shopId) => {
   await _updateExpiredDiscounts(shopId);
-  return await Discount.find({ shopId });
+  return await Discount.find({ shopId, status: { $ne: "deleted" } });
 };
 
 async function getShopAvailableDiscounts(shopId, userId) {
@@ -123,7 +123,9 @@ const validateDiscount = async (
 };
 
 const deleteDiscount = async (discountId) => {
-  return await Discount.findByIdAndDelete(discountId);
+  return await Discount.findByIdAndUpdate(discountId, {
+    status: "deleted",
+  });
 };
 
 const updateDiscount = async (discountId, discountData) => {
