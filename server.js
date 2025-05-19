@@ -3,10 +3,11 @@ const mongoose = require("mongoose");
 const axios = require("axios");
 const cors = require("cors");
 const cookieParser = require("cookie-parser");
-const yaml = require("yaml");
+const yaml = require("js-yaml");
+const path = require("path");
 const fs = require("fs");
 require("dotenv").config();
-const { staticFolderPath } = require("./utils/path");
+const { staticFolderPath, rootDir } = require("./utils/path");
 const { app, server } = require("./socket");
 const version = require("./package.json").version;
 const logger = require("./logger");
@@ -81,7 +82,7 @@ const verifyJWT = require("./middlewares/verifyJWT");
 
 // Swagger API Docs
 const swaggerUi = require("swagger-ui-express");
-const swaggerDocument = yaml.parse(fs.readFileSync("./swagger.yaml", "utf8"));
+const swaggerDocument = require("./swagger.json");
 app.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 // serve static files
