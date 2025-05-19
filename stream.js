@@ -2,14 +2,14 @@ const apiKey = process.env.STREAM_API_KEY;
 const apiSecret = process.env.STREAM_API_SECRET;
 const fs = require("fs");
 const { StreamChat } = require("stream-chat");
-const StreamServer = StreamChat.getInstance(apiKey, apiSecret, {
+const streamClient = StreamChat.getInstance(apiKey, apiSecret, {
   timeout: 20000,
 });
 const logger = require("./logger");
 
 const getUsers = async () => {
   try {
-    const response = await StreamServer.queryUsers({});
+    const response = await streamClient.queryUsers({});
     logger.info("Stream users:", response.users.length);
   } catch (error) {
     logger.error("Error fetching users:", error);
@@ -18,7 +18,7 @@ const getUsers = async () => {
 
 const getChannels = async () => {
   try {
-    const response = await StreamServer.queryChannels({});
+    const response = await streamClient.queryChannels({});
     logger.info("Stream channels:", response);
   } catch (error) {
     logger.error("Error fetching users:", error);
@@ -28,7 +28,7 @@ const getChannels = async () => {
 
 const deleteChannelById = async (channelId) => {
   try {
-    const response = await StreamServer.deleteChannels([channelId]);
+    const response = await streamClient.deleteChannels([channelId]);
     logger.info("Deleted channel:", channelId);
   } catch (error) {
     logger.error("Error deleting channel:", error);
@@ -41,7 +41,7 @@ const deleteChannelById = async (channelId) => {
 const setupStreamAppConfig = async () => {
   if (process.env.VERCEL) return;
   try {
-    await StreamServer.updateAppSettings({
+    await streamClient.updateAppSettings({
       push_config: {
         version: "v2",
       },
@@ -63,4 +63,4 @@ const setupStreamAppConfig = async () => {
 
 setupStreamAppConfig();
 
-module.exports = StreamServer;
+module.exports = streamClient;

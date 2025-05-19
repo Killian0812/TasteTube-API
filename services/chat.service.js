@@ -1,9 +1,9 @@
 const logger = require("../logger");
-const StreamServer = require("../stream");
+const streamClient = require("../stream");
 
 async function sendMessageToChannel(channelType, channelId, messageText) {
   try {
-    const channel = StreamServer.channel(channelType, channelId);
+    const channel = streamClient.channel(channelType, channelId);
     await channel.sendMessage({
       text: messageText,
       user: {
@@ -25,7 +25,7 @@ async function sendMessageToChannel(channelType, channelId, messageText) {
 
 async function sendEventToChannel(channelType, channelId, type, userId) {
   try {
-    const channel = StreamServer.channel(channelType, channelId);
+    const channel = streamClient.channel(channelType, channelId);
     await channel.sendEvent({
       type: type,
       user_id: userId,

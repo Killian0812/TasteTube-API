@@ -5,7 +5,7 @@ const { sendNewRegisteredPassword } = require("../services/gmail.service");
 const User = require("../models/user.model");
 const { FirebaseAuth } = require("../firebase");
 const { defaultAvatar } = require("../utils/constant");
-const StreamServer = require("../stream");
+const streamClient = require("../stream");
 
 const generateTokens = (user) => ({
   accessToken: JWT.sign(
@@ -30,7 +30,7 @@ const generateTokens = (user) => ({
     process.env.REFRESH_TOKEN_SECRET,
     { expiresIn: "7d" }
   ),
-  streamToken: StreamServer.createToken(user.id),
+  streamToken: streamClient.createToken(user.id),
 });
 
 const setAuthResponse = async (res, user, tokens) => {
@@ -43,7 +43,7 @@ const setAuthResponse = async (res, user, tokens) => {
   res.set("x-auth-token", tokens.refreshToken);
 
   // update or create Stream user
-  const _streamUser = await StreamServer.upsertUser({
+  const _streamUser = await streamClient.upsertUser({
     id: user.id,
     name: user.username,
     image: user.image,
