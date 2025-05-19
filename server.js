@@ -3,6 +3,8 @@ const mongoose = require("mongoose");
 const axios = require("axios");
 const cors = require("cors");
 const cookieParser = require("cookie-parser");
+const yaml = require("yaml");
+const fs = require("fs");
 require("dotenv").config();
 const { staticFolderPath } = require("./utils/path");
 const { app, server } = require("./socket");
@@ -23,7 +25,7 @@ const corsOptions = {
       /^http:\/\/localhost:5555$/,
     ];
 
-    const isAllowed = allowedPatterns.some(pattern => pattern.test(origin));
+    const isAllowed = allowedPatterns.some((pattern) => pattern.test(origin));
 
     if (isAllowed) {
       callback(null, true);
@@ -76,6 +78,11 @@ const chatRouter = require("./routes/chat.router");
 const analyticRouter = require("./routes/analytic.router");
 
 const verifyJWT = require("./middlewares/verifyJWT");
+
+// Swagger API Docs
+const swaggerUi = require("swagger-ui-express");
+const swaggerDocument = yaml.parse(fs.readFileSync("./swagger.yaml", "utf8"));
+app.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 // serve static files
 app.use(express.static(staticFolderPath));
