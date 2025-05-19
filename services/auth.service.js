@@ -1,5 +1,6 @@
 const JWT = require("jsonwebtoken");
 const { v4: uuidv4 } = require("uuid");
+const { generateUsername } = require("unique-username-generator");
 const { sendNewRegisteredPassword } = require("../services/gmail.service");
 const User = require("../models/user.model");
 const { FirebaseAuth } = require("../firebase");
@@ -82,4 +83,32 @@ const createSocialOAuthUser = async (email, name, picture) => {
   return user;
 };
 
-module.exports = { generateTokens, setAuthResponse, createSocialOAuthUser };
+const createPhoneUser = async (phone) => {
+  const password = uuidv4().substring(0, 6);
+  const username = generateUsername();
+  const user = new User({
+    phone,
+    username: username,
+    password,
+    image: defaultAvatar,
+    currency: "VND",
+  });
+
+  await FirebaseAuth.createUser({
+    phoneNumber: phone,
+    password,
+    displayName: username,
+    photoURL: defaultAvatar,
+    emailVerified: true,
+    disabled: false,
+  });
+
+  return user;
+};
+
+module.exports = {
+  generateTokens,
+  setAuthResponse,
+  createSocialOAuthUser,
+  createPhoneUser,
+};

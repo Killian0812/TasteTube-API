@@ -7,7 +7,9 @@ const {
   setAuthResponse,
   generateTokens,
   createSocialOAuthUser,
+  createPhoneUser,
 } = require("../services/auth.service");
+const { sendOtp, verifyOtp } = require("../services/sms.service");
 
 const login = async (req, res) => {
   const { email, password } = req.body;
@@ -92,6 +94,88 @@ const verifyToken = async (req, res) => {
   }
 };
 
+const phoneAuth = async (req, res) => {
+  const { phone } = req.body;
+
+  try {
+    let user = await User.findOne({ phone });
+    if (!user) {
+      user = await createPhoneUser(phone);
+    }
+
+    const { _, otp } = await sendOtp(phone, user);
+    user.otp = otp;
+    await user.save();
+
+    return res.status(200).json({
+      message: "OTP sent successfully",
+      activatedAt: otp.activatedAt,
+    });
+  } catch (error) {
+    return res
+      .status(500)
+      .json({ message: error.message ?? `Error phone auth` });
+  }
+};
+
+const phoneOtpVerify = async (req, res) => {
+  const { phone, otp } = req.body;
+
+  try {
+    const user = await User.findOne({ phone });
+
+    if (!user) {
+      return res.status(400).json({
+        message: "No account is registered with the phone number you provided.",
+      });
+    }
+
+    const response = await verifyOtp(phone, otp);
+    switch (response.status) {
+      case "approved":
+        const tokens = generateTokens(user);
+        user.refreshToken = tokens.refreshToken;
+        await user.save();
+
+        logger.info(`Login with phone successful: ${phone}`);
+        return setAuthResponse(res, user, tokens);
+      case "pending":
+        return res.status(400).json({
+          message: "OTP verification is still pending. Please try again.",
+        });
+      case "canceled":
+        return res.status(400).json({
+          message: "OTP verification was canceled. Please request a new OTP.",
+        });
+      case "max_attempts_reached":
+        return res.status(400).json({
+          message: "Maximum OTP attempts reached. Please request a new OTP.",
+        });
+      case "deleted":
+        return res.status(400).json({
+          message: "OTP session was deleted. Please request a new OTP.",
+        });
+      case "failed":
+        return res.status(400).json({
+          message:
+            "OTP verification failed. Please check the OTP and try again.",
+        });
+      case "expired":
+        return res.status(400).json({
+          message: "OTP has expired. Please request a new OTP.",
+        });
+      default:
+        return res.status(400).json({
+          message: "OTP is not valid. Please check again.",
+        });
+    }
+  } catch (error) {
+    return res
+      .status(500)
+      .json({ message: error.message ?? `Error phone auth` });
+  }
+};
+
 const socialAuth = async (req, res, source) => {
   const { name, email, picture } = req.body;
   const image = source === "facebook" ? picture.data.url : picture;
@@ -119,6 +203,8 @@ const socialAuth = async (req, res, source) => {
 module.exports = {
   login,
   verifyToken,
+  phoneAuth,
+  phoneOtpVerify,
   googleAuth: (req, res) => socialAuth(req, res, "google"),
   facebookAuth: (req, res) => socialAuth(req, res, "facebook"),
 };

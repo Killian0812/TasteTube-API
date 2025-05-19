@@ -9,7 +9,7 @@ const userSchema = new Schema(
     email: String,
     username: String,
     password: {
-      type: String,
+      type: String, // bcrypt needed
       required: true,
     },
     filename: String, // filename in storage
@@ -37,7 +37,8 @@ const userSchema = new Schema(
         ref: "User",
       },
     ],
-    videos: [ // Future remove
+    videos: [
+      // Future remove
       {
         type: Schema.Types.ObjectId,
         ref: "Video",
@@ -58,6 +59,10 @@ const userSchema = new Schema(
         },
       },
     ],
+    otp: {
+      code: String, // bcrypt needed
+      activatedAt: Date,
+    },
   },
   {
     timestamps: true,
