@@ -12,12 +12,11 @@ const {
 
 const getOrderDeliveryStatus = async (req, res) => {
   const orderId = req.params.orderId;
-  const userId = req.userId;
 
   try {
     const order = await Order.findById(orderId).populate("address");
     const deliveryOption = await DeliveryOption.findOne({
-      shopId: userId,
+      shopId: order.shopId,
     }).populate("address");
 
     if (!order) {
