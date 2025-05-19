@@ -71,6 +71,13 @@ const orderSchema = new Schema(
       enum: ["PENDING", "CONFIRMED", "DELIVERY", "COMPLETED", "CANCELED"],
       default: "PENDING",
     },
+    cancelReason: {
+      type: String,
+    },
+    cancelBy: {
+      type: String,
+      enum: ["CUSTOMER", "RESTAURANT"],
+    },
     notes: {
       type: String,
       // Optional note from customer

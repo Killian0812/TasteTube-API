@@ -262,7 +262,7 @@ const getShopOrder = async (req, res) => {
 };
 
 const updateOrderStatus = async (req, res) => {
-  const newStatus = req.body.newStatus;
+  const { newStatus, cancelReason } = req.body;
   const id = req.params.id;
 
   if (!newStatus) {
@@ -303,10 +303,42 @@ const updateOrderStatus = async (req, res) => {
       return res.status(404).json({ message: "Order not found" });
     }
 
-    order.status = newStatus;
-    if (newStatus === 'COMPLETED' && order.paymentMethod === 'COD') {
+    if (newStatus === "COMPLETED" && order.paymentMethod === "COD") {
       order.paid = true;
     }
+
+    // Not allowed to cancel if order is in delivery
+    if (newStatus === "CANCELED") {
+      // Check if last deliveryStatus is "FAILED" or "RETURNED"
+      if (order.deliveryStatusLog.length > 0) {
+        const lastStatus =
+          order.deliveryStatusLog[order.deliveryStatusLog.length - 1];
+        if (lastStatus.deliveryStatus === "COMPLETED") {
+          return res
+            .status(400)
+            .json({ message: "Cannot cancel completed order" });
+        }
+        if (
+          lastStatus.deliveryStatus !== "FAILED" &&
+          lastStatus.deliveryStatus !== "RETURNED"
+        ) {
+          return res
+            .status(400)
+            .json({ message: "Cannot cancel order in delivery" });
+        }
+      }
+
+      order.cancelBy =
+        order.shopId.toString() === req.userId ? "RESTAURANT" : "CUSTOMER";
+      order.cancelReason = cancelReason ?? "No reason provided";
+    }
+
+    // Clear cancelReason and cancelBy if order is resumed
+    if (order.status === "CANCELED" && newStatus !== "CANCELED") {
+      order.cancelReason = undefined;
+      order.cancelBy = undefined;
+    }
+    order.status = newStatus;
     await order.save();
 
     return res.status(200).json(order);
