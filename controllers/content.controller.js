@@ -89,18 +89,18 @@ const getFeeds = async (req, res) => {
   }
 };
 
-const getReviewFeeds = async (req, res) => {
+const getFollowingFeeds = async (req, res) => {
   try {
     const { page = 1, limit = 10 } = req.query;
 
+    const user = await User.findById(req.userId);
     const feeds = await Video.paginate(
       {
         $or: [
           { visibility: "PUBLIC" },
           { visibility: "PRIVATE", userId: req.userId },
         ],
-        targetUserId: { $ne: null }, // Only videos with targetUserId
-        userId: { $ne: req.userId }, // Exclude owned videos
+        userId: { $in: user.followings }, // Get videos from following users
       },
       {
         page,
@@ -151,5 +151,5 @@ const getReviewFeeds = async (req, res) => {
 module.exports = {
   search,
   getFeeds,
-  getReviewFeeds,
+  getFollowingFeeds,
 };
