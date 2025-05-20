@@ -3,7 +3,7 @@ const Address = require("../models/address.model");
 const getAddresses = async (req, res) => {
   const userId = req.userId;
   try {
-    const addresses = await Address.find({ userId: userId });
+    const addresses = await Address.find({ userId: userId, active: true });
     res.status(200).json(addresses);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -48,7 +48,7 @@ const upsertAddress = async (req, res) => {
 const deleteAddress = async (req, res) => {
   const { addressId } = req.params;
   try {
-    await Address.findByIdAndDelete(addressId);
+    await Address.findByIdAndUpdate(addressId, { active: false });
     return res.status(200).json({
       message: "Address deleted successfully",
     });

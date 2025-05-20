@@ -32,6 +32,10 @@ const addressSchema = new Schema(
       required: true,
       alias: "lng",
     },
+    active: {
+      type: Boolean,
+      default: true,
+    },
   },
   {
     timestamps: true,
