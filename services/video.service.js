@@ -310,14 +310,8 @@ const uploadVideo = async (userId, file, body) => {
     thumbnail: thumbnail,
     products: validProducts.map((p) => p._id),
     visibility: visibility,
+    targetUserId,
   });
-
-  if (targetUserId) {
-    const targetUser = await User.findById(targetUserId);
-    if (targetUser) {
-      video.targetUserId = targetUser._id;
-    }
-  }
 
   setImmediate(async () => {
     user.videos.push(video._id);
