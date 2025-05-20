@@ -89,7 +89,67 @@ const getFeeds = async (req, res) => {
   }
 };
 
+const getReviewFeeds = async (req, res) => {
+  try {
+    const { page = 1, limit = 10 } = req.query;
+
+    const feeds = await Video.paginate(
+      {
+        $or: [
+          { visibility: "PUBLIC" },
+          { visibility: "PRIVATE", userId: req.userId },
+        ],
+        targetUserId: { $ne: null }, // Only videos with targetUserId
+        userId: { $ne: req.userId }, // Exclude owned videos
+      },
+      {
+        page,
+        limit,
+        populate: [
+          {
+            path: "userId",
+            select: "_id username image", // Get id, username and image of owner
+          },
+          {
+            path: "targetUserId",
+            select: "_id username image", // Get id, username and image of target user
+          },
+          {
+            path: "products",
+            populate: [
+              {
+                path: "category",
+                select: "_id name",
+              },
+              {
+                path: "userId",
+                select: "_id image username phone",
+              },
+            ],
+          },
+        ],
+      }
+    );
+
+    const feedsVideo = feeds.docs.map((video) => video.toObject());
+
+    return res.status(200).json({
+      feeds: feedsVideo,
+      totalDocs: feeds.totalDocs, // Total number of videos
+      totalPages: feeds.totalPages, // Total number of pages
+      currentPage: feeds.page, // Current page number
+      hasNextPage: feeds.hasNextPage, // If there is a next page
+      hasPrevPage: feeds.hasPrevPage, // If there is a previous page
+      nextPage: feeds.nextPage, // Next page number (if exists)
+      prevPage: feeds.prevPage, // Previous page number (if exists)
+    });
+  } catch (error) {
+    return res.status(500).json({ message: error });
+  }
+};
+
 module.exports = {
   search,
   getFeeds,
+  getReviewFeeds,
 };
