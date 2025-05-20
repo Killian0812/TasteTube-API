@@ -25,12 +25,14 @@ const register = async (req, res) => {
         image: defaultAvatar,
         currency: "VND",
       });
+      logger.info("New user created", newUser.email);
       await sendVerificationLink(email);
       return res.status(200).json({
         userId: newUser.id,
       });
     })
     .catch((error) => {
+      logger.error("Error registering new user:", error);
       return res.status(400).json({ message: error.message ?? error });
     });
 };

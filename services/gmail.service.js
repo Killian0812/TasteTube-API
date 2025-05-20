@@ -5,15 +5,15 @@ const logger = require("../logger");
 const logoUrl =
   "https://firebasestorage.googleapis.com/v0/b/taste-tube.appspot.com/o/tastetube_inverted.png?alt=media&token=3616ee3f-f0fa-4109-9951-9d91b1991d94";
 
-const sendVerificationLink = async (email) => {
-  const transporter = nodemailer.createTransport({
-    service: "gmail",
-    auth: {
-      user: process.env.GMAIL_ADDRESS,
-      pass: process.env.APP_PASSWORD,
-    },
-  });
+const gmailTransporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+    user: process.env.GMAIL_ADDRESS,
+    pass: process.env.APP_PASSWORD,
+  },
+});
 
+const sendVerificationLink = async (email) => {
   const verificationLink = await FirebaseAuth.generateEmailVerificationLink(
     email
   );
@@ -38,19 +38,11 @@ const sendVerificationLink = async (email) => {
     html: htmlContent,
   };
 
-  await transporter.sendMail(mailOptions);
+  await gmailTransporter.sendMail(mailOptions);
   logger.info(`Verification link sent to ${email}`);
 };
 
 const sendRecoverLink = async (email, username) => {
-  const transporter = nodemailer.createTransport({
-    service: "gmail",
-    auth: {
-      user: process.env.GMAIL_ADDRESS,
-      pass: process.env.APP_PASSWORD,
-    },
-  });
-
   const recoverLink = await FirebaseAuth.generatePasswordResetLink(email);
 
   const htmlContent = `
@@ -75,19 +67,11 @@ const sendRecoverLink = async (email, username) => {
     html: htmlContent,
   };
 
-  await transporter.sendMail(mailOptions);
+  await gmailTransporter.sendMail(mailOptions);
   logger.info(`Recovery link sent to ${email}`);
 };
 
 const sendNewRegisteredPassword = async (email, username, password) => {
-  const transporter = nodemailer.createTransport({
-    service: "gmail",
-    auth: {
-      user: process.env.GMAIL_ADDRESS,
-      pass: process.env.APP_PASSWORD,
-    },
-  });
-
   const htmlContent = `
         <div style="background-color: #f4f4f4; padding: 20px;">
             <img src="${logoUrl}" alt="TasteTube Logo" style="display: block; margin: 0 auto; width: 150px; height: auto;">
@@ -127,7 +111,7 @@ const sendNewRegisteredPassword = async (email, username, password) => {
   };
 
   try {
-    await transporter.sendMail(mailOptions);
+    await gmailTransporter.sendMail(mailOptions);
     logger.info(`Default password sent to ${email}`);
   } catch (error) {
     logger.error(`Failed to send email to ${email}:`, error);
