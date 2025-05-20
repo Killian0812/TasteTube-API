@@ -17,7 +17,7 @@ const register = async (req, res) => {
     disabled: false,
   }) // TODO: Use secret encryption for password
     .then(async (userRecord) => {
-      const newUser = new User({
+      const newUser = await User.create({
         email,
         password,
         username: userRecord.displayName,
@@ -25,10 +25,7 @@ const register = async (req, res) => {
         image: defaultAvatar,
         currency: "VND",
       });
-      await newUser.save();
-      setImmediate(async () => {
-        await sendVerificationLink(email);
-      });
+      await sendVerificationLink(email);
       return res.status(200).json({
         userId: newUser.id,
       });
