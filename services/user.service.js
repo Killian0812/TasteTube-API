@@ -214,7 +214,9 @@ const followUser = async (userId, followerId) => {
   }
 
   const user = await User.findById(userId);
-  if (!user) {
+  const follower = await User.findById(followerId);
+
+  if (!user || !follower) {
     throw new Error("User not found");
   }
 
@@ -224,6 +226,10 @@ const followUser = async (userId, followerId) => {
 
   user.followers.push(followerId);
   await user.save();
+  if (!follower.followings.includes(userId)) {
+    follower.followings.push(userId);
+    await follower.save();
+  }
   return { code: 0 };
 };
 
@@ -233,19 +239,21 @@ const unfollowUser = async (userId, followerId) => {
   }
 
   const user = await User.findById(userId);
-  if (!user) {
+  const follower = await User.findById(followerId);
+
+  if (!user || !follower) {
     throw new Error("User not found");
   }
 
-  if (user.followers.some((follower) => follower.equals(followerId))) {
-    user.followers = user.followers.filter(
-      (follower) => !follower.equals(followerId)
-    );
-    await user.save();
-    return { code: 0 };
-  }
-
-  return { code: 1 };
+  user.followers = user.followers.filter(
+    (follower) => !follower.equals(followerId)
+  );
+  await user.save();
+  follower.followings = follower.followings.filter(
+    (following) => !following.equals(userId)
+  );
+  await follower.save();
+  return { code: 0 };
 };
 
 const getUsers = async ({ page, limit, role, status, search }) => {
