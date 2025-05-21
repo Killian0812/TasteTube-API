@@ -20,10 +20,8 @@ const refreshToken = async (req, res) => {
 
       const tokens = generateTokens(existingUser);
 
-      setTimeout(async () => {
-        existingUser.refreshToken = tokens.refreshToken;
-        await existingUser.save();
-      }, 0);
+      existingUser.refreshToken = tokens.refreshToken;
+      await existingUser.save();
 
       logger.info(`Token refresh successfully: ${existingUser.email}`);
       return setAuthResponse(res, existingUser, tokens);

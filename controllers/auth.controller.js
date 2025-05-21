@@ -69,7 +69,7 @@ const verifyToken = async (req, res) => {
 
     JWT.verify(
       refreshToken,
-      process.env.ACCESS_TOKEN_SECRET,
+      process.env.REFRESH_TOKEN_SECRET,
       async (err, decoded) => {
         if (err) {
           logger.info(err);
