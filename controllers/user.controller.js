@@ -54,10 +54,7 @@ const changePassword = async (req, res) => {
     return res.status(200).json(result);
   } catch (error) {
     logger.info(error);
-    if (error.message.includes("password")) {
-      return res.status(401).json({ message: error.message });
-    }
-    return res.status(500).json({ message: "Internal Server Error" });
+    return res.status(500).json({ message: error.message });
   }
 };
 

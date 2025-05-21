@@ -7,12 +7,6 @@ const getVideo = async (req, res) => {
     return res.status(200).json(video);
   } catch (error) {
     logger.info(error);
-    if (error.message === "Please specify a video") {
-      return res.status(401).json({ message: error.message });
-    }
-    if (error.message === "Can't find requested video") {
-      return res.status(404).json({ message: error.message });
-    }
     if (
       error.message.includes("Private content") ||
       error.message.includes("Content for followers only")
@@ -32,9 +26,6 @@ const getVideoInteraction = async (req, res) => {
     return res.status(200).json(totalInteractions);
   } catch (error) {
     logger.info(error);
-    if (error.message === "Please specify a video") {
-      return res.status(401).json({ message: error.message });
-    }
     if (error.message === "Can't find requested video") {
       return res.status(404).json({ message: error.message });
     }
@@ -76,9 +67,6 @@ const getVideoComments = async (req, res) => {
     );
     return res.status(200).json(comments);
   } catch (error) {
-    if (error.message === "Please specify a video") {
-      return res.status(401).json({ message: error.message });
-    }
     if (error.message === "Can't find requested video") {
       return res.status(404).json({ message: error.message });
     }
@@ -138,9 +126,6 @@ const deleteVideo = async (req, res) => {
     );
     return res.status(200).json(result);
   } catch (error) {
-    if (error.message === "Please specify a video") {
-      return res.status(401).json({ message: error.message });
-    }
     if (error.message === "Can't find requested video") {
       return res.status(404).json({ message: error.message });
     }

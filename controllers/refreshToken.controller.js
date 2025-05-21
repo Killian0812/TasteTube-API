@@ -6,7 +6,7 @@ const { setAuthResponse, generateTokens } = require("../services/auth.service");
 const refreshToken = async (req, res) => {
   const refreshToken = req.body.refreshToken;
   if (!refreshToken) {
-    return res.status(401).json({ message: "No JWT" });
+    return res.status(403).json({ message: "No JWT" });
   }
 
   // evaluate jwt

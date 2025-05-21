@@ -10,11 +10,11 @@ const verifyJWT = (publicView = false) => {
     const tokenInBearerHeader = req.headers["bearer"];
     const accessToken = tokenInAuthHeader || tokenInBearerHeader;
 
-    // If no token and not a public view, return 401
+    // If no token and not a public view
     if (!accessToken) {
       if (!publicView) {
         return res
-          .status(401)
+          .status(403)
           .json({ error: "No authorization token provided" });
       }
       return next(); // Continue for public views
