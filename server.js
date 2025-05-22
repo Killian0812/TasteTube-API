@@ -3,9 +3,6 @@ const mongoose = require("mongoose");
 const axios = require("axios");
 const cors = require("cors");
 const cookieParser = require("cookie-parser");
-const yaml = require("js-yaml");
-const path = require("path");
-const fs = require("fs");
 require("dotenv").config();
 const { staticFolderPath, rootDir } = require("./utils/path");
 const { app, server } = require("./socket");
@@ -22,7 +19,9 @@ const corsOptions = {
 
     const allowedPatterns = [
       /^https:\/\/taste-tube.*\.web\.app$/,
+      /^https:\/\/taste-tube.*\.firebaseapp\.com$/,
       /^https:\/\/admin-taste-tube.*\.web\.app$/,
+      /^https:\/\/admin-taste-tube.*\.firebaseapp\.app$/,
       /^http:\/\/localhost:5555$/,
     ];
 
