@@ -25,7 +25,7 @@ const getVideoInteraction = async (req, res) => {
     );
     return res.status(200).json(totalInteractions);
   } catch (error) {
-    logger.info(error);
+    logger.error(error);
     if (error.message === "Can't find requested video") {
       return res.status(404).json({ message: error.message });
     }
@@ -47,8 +47,10 @@ const getUserLikedVideos = async (req, res) => {
 
 const getUserTargetedReviews = async (req, res) => {
   try {
+    const { targetUserId, productId } = req.query;
     const result = await videoService.getUserTargetedReviews(
-      req.query.targetUserId
+      targetUserId,
+      productId
     );
     return res.status(200).json(result);
   } catch (e) {

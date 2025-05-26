@@ -174,13 +174,15 @@ const getUserLikedVideos = async (userId) => {
   return { videos };
 };
 
-const getUserTargetedReviews = async (targetUserId) => {
+const getUserTargetedReviews = async (targetUserId, productId) => {
   if (!targetUserId) {
     throw new Error("No target user found");
   }
 
+  // Products must contain the productId if provided
   const userTargetedReviews = await Video.find({
     targetUserId: targetUserId,
+    ...(productId ? { products: productId } : {}),
   })
     .populate({
       path: "userId",
