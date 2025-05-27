@@ -1,31 +1,19 @@
 const Video = require("../models/video.model");
 const User = require("../models/user.model");
+const { searchUsers, searchVideos } = require("../services/content.service");
 
 const search = async (req, res) => {
   try {
-    const keyword = req.body.keyword;
-
-    if (!keyword || keyword.trim() === "") {
-      return res.status(200).json([]);
+    const { keyword, type } = req.query;
+    if (type === "user") {
+      const users = await searchUsers(keyword);
+      return res.status(200).json(users);
     }
-
-    const regex = new RegExp(keyword, "i");
-
-    const users = await User.find({
-      $or: [
-        { username: { $regex: regex } },
-        { email: { $regex: regex } },
-        { phone: { $regex: regex } },
-      ],
-      _id: { $ne: req.userId }, // Exclude current user
-    }).select("username email phone image followers followings");
-
-    const usersWithNoVideo = users.map((user) => ({
-      ...user.toObject(),
-      videos: [],
-    }));
-
-    return res.status(200).json(usersWithNoVideo);
+    if (type === "video") {
+      const videos = await searchVideos(keyword, req.userId);
+      return res.status(200).json(videos);
+    }
+    return res.status(400).json({ message: "Invalid search" });
   } catch (error) {
     return res.status(500).json({ message: error.message });
   }
