@@ -3,7 +3,7 @@ const Video = require("../models/video.model");
 const { getEmbedding } = require("../services/ai.service");
 
 // Text search for users based on username, email, or phone
-const searchUsers = async (keyword) => {
+const searchUsers = async (keyword, userId = null) => {
   if (!keyword || keyword.trim() === "") {
     return [];
   }
@@ -16,7 +16,7 @@ const searchUsers = async (keyword) => {
       { email: { $regex: regex } },
       { phone: { $regex: regex } },
     ],
-    _id: { $ne: req.userId }, // Exclude current user
+    _id: { $ne: userId }, // Exclude current user
   }).select("username email phone image followers followings");
 
   const usersWithNoVideo = users.map((user) => ({

@@ -6,7 +6,7 @@ const search = async (req, res) => {
   try {
     const { keyword, type } = req.query;
     if (type === "user") {
-      const users = await searchUsers(keyword);
+      const users = await searchUsers(keyword, req.userId);
       return res.status(200).json(users);
     }
     if (type === "video") {
