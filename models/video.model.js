@@ -58,6 +58,10 @@ const videoSchema = new Schema(
       enum: ["PENDING", "ACTIVE", "REMOVED"],
       default: "ACTIVE",
     },
+    embedding: {
+      type: [Number],
+      default: null,
+    },
   },
   {
     timestamps: true,

@@ -9,6 +9,7 @@ const {
   createVideoTranscoderJob,
   getVideoTranscoderJob,
 } = require("../services/storage.service");
+const { getEmbedding } = require("../services/ai.service");
 const logger = require("../logger");
 
 const getVideo = async (videoId, userId) => {
@@ -267,6 +268,35 @@ const getVideoComments = async (videoId, userId) => {
   return comments;
 };
 
+const _generateVideoEmbedding = async (videoId) => {
+  try {
+    const video = await Video.findById(videoId);
+    if (!video) {
+      logger.warn("No video found for embedding:", videoId);
+      return;
+    }
+
+    // Combine relevant text fields for embedding
+    const text = [video.title || "", video.description || ""]
+      .filter((t) => t.trim() !== "")
+      .join(" ");
+
+    if (!text) {
+      logger.warn(
+        "No text content to generate embedding for video:",
+        video._id
+      );
+      return;
+    }
+
+    const embedding = await getEmbedding(text);
+    video.embedding = embedding;
+    await video.save();
+  } catch (error) {
+    console.error("Error generating video embedding:", error);
+  }
+};
+
 const uploadVideo = async (userId, file, body) => {
   const {
     title,
@@ -317,8 +347,11 @@ const uploadVideo = async (userId, file, body) => {
 
   setImmediate(async () => {
     user.videos.push(video._id);
-    await user.save();
-    await createVideoTranscoderJob(video);
+    await Promise.all([
+      user.save(),
+      createVideoTranscoderJob(video),
+      _generateVideoEmbedding(video._id),
+    ]);
   });
 
   return { message: "Uploaded" };
@@ -390,6 +423,10 @@ const updateVideo = async (userId, videoId, body) => {
         },
       ],
     });
+
+  setImmediate(async () => {
+    await _generateVideoEmbedding(video._id);
+  });
 
   return { message: "Video updated", video: populatedVideo };
 };
