@@ -15,7 +15,7 @@ const verifyJWT = (publicView = false) => {
       if (!publicView) {
         return res
           .status(403)
-          .json({ error: "No authorization token provided" });
+          .json({ message: "No authorization token provided" });
       }
       return next(); // Continue for public views
     }
@@ -29,9 +29,9 @@ const verifyJWT = (publicView = false) => {
           if (err.name === "TokenExpiredError") {
             return res
               .status(401)
-              .json({ error: "Token expired", expiredAt: err.expiredAt });
+              .json({ message: "Token expired", expiredAt: err.expiredAt });
           }
-          return res.status(403).json({ error: "Invalid or malformed token" });
+          return res.status(403).json({ message: "Invalid or malformed token" });
         }
         return next(); // Continue for public views even if token is invalid
       }
@@ -43,7 +43,7 @@ const verifyJWT = (publicView = false) => {
       // Validate that required user info is present
       if (!publicView && (!req.username || !req.userId)) {
         logger.error("Missing user info in decoded JWT");
-        return res.status(403).json({ error: "Invalid token payload" });
+        return res.status(403).json({ message: "Invalid token payload" });
       }
 
       next();

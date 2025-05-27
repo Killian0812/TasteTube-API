@@ -122,7 +122,7 @@ app.all("/api/maps/*", async (req, res) => {
 
     const apiKey = process.env.GOOGLE_MAPS_APIKEY || req.query.key;
     if (!apiKey) {
-      return res.status(400).json({ error: "API key is required" });
+      return res.status(400).json({ message: "API key is required" });
     }
 
     const { key, ...queryParams } = req.query;
@@ -147,7 +147,7 @@ app.all("/api/maps/*", async (req, res) => {
         });
         break;
       default:
-        return res.status(405).json({ error: "Method Not Allowed" });
+        return res.status(405).json({ message: "Method Not Allowed" });
     }
     res.status(response.status).json(response.data);
   } catch (error) {
