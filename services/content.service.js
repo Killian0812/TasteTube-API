@@ -55,7 +55,7 @@ const searchVideos = async (keyword, userId = null) => {
         path: "embedding",
         queryVector: queryEmbedding,
         numCandidates: 150,
-        limit: 2,
+        limit: 10,
       },
     },
     {
