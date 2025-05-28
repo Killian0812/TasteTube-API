@@ -61,6 +61,12 @@ const searchVideos = async (keyword, userId = null) => {
     {
       $match: matchStage,
     },
+    // Remove embedding field
+    {
+      $project: {
+        embedding: 0,
+      },
+    },
     // Lookup for userId
     {
       $lookup: {
@@ -170,7 +176,7 @@ const searchVideos = async (keyword, userId = null) => {
         ],
       },
     },
-    // Project final fields
+    // Add score field
     {
       $addFields: {
         score: { $meta: "vectorSearchScore" },
@@ -180,14 +186,6 @@ const searchVideos = async (keyword, userId = null) => {
 
   return videos;
 };
-
-searchVideos("Bombs")
-  .then((videos) => {
-    console.log("Videos found:", videos);
-  })
-  .catch((error) => {
-    console.error("Error searching videos:", error);
-  });
 
 module.exports = {
   searchUsers,
