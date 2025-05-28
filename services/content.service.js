@@ -172,17 +172,7 @@ const searchVideos = async (keyword, userId = null) => {
     },
     // Project final fields
     {
-      $project: {
-        title: 1,
-        description: 1,
-        hashtags: 1,
-        url: 1,
-        thumbnail: 1,
-        userId: 1,
-        targetUserId: 1,
-        products: 1,
-        views: 1,
-        createdAt: 1,
+      $addFields: {
         score: { $meta: "vectorSearchScore" },
       },
     },
