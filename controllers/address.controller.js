@@ -3,7 +3,7 @@ const Address = require("../models/address.model");
 const getAddresses = async (req, res) => {
   const userId = req.userId;
   try {
-    const addresses = await Address.find({ userId: userId, active: true });
+    const addresses = await Address.find({ userId: userId, active: { $ne: false } });
     res.status(200).json(addresses);
   } catch (error) {
     res.status(500).json({ message: error.message });
