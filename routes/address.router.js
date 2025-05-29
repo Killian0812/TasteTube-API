@@ -5,6 +5,8 @@ router.get("/", addressController.getAddresses);
 
 router.post("/", addressController.upsertAddress);
 
+router.put("/:addressId", addressController.setDefaultAddress);
+
 router.delete("/:addressId", addressController.deleteAddress);
 
 module.exports = router;

@@ -3,8 +3,30 @@ const Address = require("../models/address.model");
 const getAddresses = async (req, res) => {
   const userId = req.userId;
   try {
-    const addresses = await Address.find({ userId: userId, active: { $ne: false } });
+    const addresses = await Address.find({
+      userId: userId,
+      active: { $ne: false },
+    });
     res.status(200).json(addresses);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+const setDefaultAddress = async (req, res) => {
+  const userId = req.userId;
+  const { addressId } = req.params;
+  try {
+    await Address.updateMany(
+      { userId: userId },
+      {
+        isDefault: false,
+      }
+    );
+    const address = await Address.findByIdAndUpdate(addressId, {
+      isDefault: true,
+    });
+    res.status(200).json(address);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -57,4 +79,4 @@ const deleteAddress = async (req, res) => {
   }
 };
 
-module.exports = { getAddresses, upsertAddress, deleteAddress };
+module.exports = { getAddresses, upsertAddress, deleteAddress, setDefaultAddress };
