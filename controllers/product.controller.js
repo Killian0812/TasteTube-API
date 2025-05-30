@@ -121,7 +121,8 @@ const getProduct = async (req, res) => {
 
 const createProduct = async (req, res) => {
   try {
-    const { name, cost, description, quantity, category, ship } = req.body;
+    const { name, cost, description, quantity, prepTime, category, ship } =
+      req.body;
 
     if (!name || !cost || !quantity) {
       return res.status(400).json({ message: "Missing required information" });
@@ -148,6 +149,7 @@ const createProduct = async (req, res) => {
       currency: shop.currency ?? "VND",
       description,
       quantity,
+      prepTime,
       category,
       images,
       ship,
@@ -168,6 +170,7 @@ const updateProduct = async (req, res) => {
       currency,
       description,
       quantity,
+      prepTime,
       ship,
       category,
       reordered_images,
@@ -183,6 +186,7 @@ const updateProduct = async (req, res) => {
     product.currency = currency || product.currency;
     product.description = description || product.description;
     product.quantity = quantity || product.quantity;
+    product.prepTime = prepTime || product.prepTime;
     product.category = category || product.category;
     product.ship = ship || product.ship;
     product.images = reordered_images || product.images;

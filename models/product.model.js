@@ -59,6 +59,9 @@ const productSchema = new Schema(
         },
       },
     ],
+    prepTime: {
+      type: Number,
+    },
   },
   {
     timestamps: true,
