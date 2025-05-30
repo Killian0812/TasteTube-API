@@ -5,12 +5,14 @@ async function getRecommendedProducts(req, res) {
   const userId = req.userId;
   const page = parseInt(req.query.page) || 1;
   const limit = parseInt(req.query.limit) || 10;
+  const pageNum = parseInt(page, 10) || 1;
+  const limitNum = parseInt(limit, 10) || 10;
 
   try {
     const result = await ShopService.getRecommendedProducts(
       userId,
-      page,
-      limit
+      pageNum,
+      limitNum
     );
     res.status(200).json(result);
   } catch (error) {
@@ -35,13 +37,15 @@ async function getProductsInShop(req, res) {
 async function searchProducts(req, res) {
   const userId = req.userId;
   const { keyword, page = 1, limit = 10 } = req.query;
+  const pageNum = parseInt(page, 10) || 1;
+  const limitNum = parseInt(limit, 10) || 10;
 
   try {
     const result = await ShopService.searchProducts(
       userId,
       keyword,
-      page,
-      limit
+      pageNum,
+      limitNum
     );
     res.status(200).json(result);
   } catch (error) {
