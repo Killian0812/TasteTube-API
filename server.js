@@ -4,8 +4,8 @@ const axios = require("axios");
 const cors = require("cors");
 const cookieParser = require("cookie-parser");
 require("dotenv").config();
-const { staticFolderPath, rootDir } = require("./utils/path");
-const { app, server } = require("./socket");
+const { staticFolderPath } = require("./utils/path");
+const { app, server } = require("./core/socket");
 const version = require("./package.json").version;
 const logger = require("./logger");
 

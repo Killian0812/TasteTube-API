@@ -5,7 +5,7 @@ const { StreamChat } = require("stream-chat");
 const streamClient = StreamChat.getInstance(apiKey, apiSecret, {
   timeout: 20000,
 });
-const logger = require("./logger");
+const logger = require("../logger");
 
 const getUsers = async () => {
   try {

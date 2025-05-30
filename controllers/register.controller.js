@@ -2,7 +2,7 @@ const { generateFromEmail } = require("unique-username-generator");
 const User = require("../models/user.model");
 const { sendVerificationLink } = require("../services/gmail.service");
 const { defaultAvatar } = require("../utils/constant");
-const { FirebaseAuth } = require("../firebase");
+const { FirebaseAuth } = require("../core/firebase");
 const logger = require("../logger");
 
 const register = async (req, res) => {

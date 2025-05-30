@@ -1,8 +1,8 @@
 const express = require("express");
 const http = require("http");
 const { Server } = require("socket.io");
-const { FirebaseRealtimeDatabase } = require("./firebase.js");
-const logger = require("./logger");
+const { FirebaseRealtimeDatabase } = require("./firebase");
+const logger = require("../logger");
 
 const app = express();
 

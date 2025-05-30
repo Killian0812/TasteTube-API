@@ -1,5 +1,5 @@
 const nodemailer = require("nodemailer");
-const { FirebaseAuth } = require("../firebase");
+const { FirebaseAuth } = require("../core/firebase");
 const logger = require("../logger");
 
 const logoUrl =

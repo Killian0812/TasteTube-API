@@ -1,5 +1,5 @@
 const logger = require("../logger");
-const twilioClient = require("../twilio");
+const twilioClient = require("../core/twilio");
 const twilioServiceSID = process.env.TWILIO_SERVICE_SID;
 
 const sendOtp = async (phoneNumber) => {

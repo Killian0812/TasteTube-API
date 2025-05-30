@@ -3,9 +3,9 @@ const { v4: uuidv4 } = require("uuid");
 const { generateUsername } = require("unique-username-generator");
 const { sendNewRegisteredPassword } = require("../services/gmail.service");
 const User = require("../models/user.model");
-const { FirebaseAuth } = require("../firebase");
+const { FirebaseAuth } = require("../core/firebase");
+const streamClient = require("../core/stream");
 const { defaultAvatar } = require("../utils/constant");
-const streamClient = require("../stream");
 
 const generateTokens = (user) => ({
   accessToken: JWT.sign(

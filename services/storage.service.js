@@ -1,5 +1,5 @@
 const { v4: uuidv4 } = require("uuid");
-const { FirebaseStorage } = require("../firebase");
+const { FirebaseStorage } = require("../core/firebase");
 const fs = require("fs");
 const bucket = FirebaseStorage.bucket();
 const Video = require("../models/video.model");

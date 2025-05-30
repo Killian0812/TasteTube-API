@@ -3,7 +3,7 @@ const {
   uploadToFirebaseStorage,
   deleteFromFirebaseStorage,
 } = require("../services/storage.service");
-const { kickoutUser } = require("../socket");
+const { kickoutUser } = require("../core/socket");
 
 const getUserInfo = async (userId, requestingUserId) => {
   if (!userId) {

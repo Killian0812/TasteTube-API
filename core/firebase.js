@@ -1,7 +1,7 @@
 const fs = require("fs");
 const path = require("path");
 const admin = require("firebase-admin");
-const logger = require("./logger");
+const logger = require("../logger");
 
 const setupFirebase = () => {
   try {
@@ -9,7 +9,7 @@ const setupFirebase = () => {
       ? JSON.parse(
           Buffer.from(process.env.SERVICE_ACCOUNT_KEY, "base64").toString()
         )
-      : require("./service-account-key.json");
+      : require("../service-account-key.json");
     if (process.env.VERCEL) {
       const tmpPath = path.join("/tmp", "service-account-key.json");
       fs.writeFileSync(tmpPath, JSON.stringify(serviceAccount));

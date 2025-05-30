@@ -1,6 +1,6 @@
 const logger = require("../logger");
 const Payment = require("../models/payment.model");
-const { notifyPayment } = require("../socket.js");
+const { notifyPayment } = require("../core/socket.js");
 
 const ipn = async (req, res) => {
   try {
