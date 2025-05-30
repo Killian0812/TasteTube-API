@@ -1,5 +1,6 @@
 const Product = require("../models/product.model");
 const ShopService = require("../services/shop.service");
+const DeliveryOption = require("../models/deliveryOption.model");
 
 async function getRecommendedProducts(req, res) {
   const userId = req.userId;
@@ -22,13 +23,20 @@ async function getRecommendedProducts(req, res) {
 }
 
 async function getProductsInShop(req, res) {
-  const userId = req.params.shopId;
+  const shopId = req.params.shopId;
   try {
-    const products = await Product.find({ userId: userId })
+    const products = await Product.find({ userId: shopId })
       .populate("category", "_id name")
       .populate("userId", "_id image username phone");
+    const deliveryOption = await DeliveryOption.findOne({
+      shopId: shopId,
+      address: { $ne: null },
+    })
+      .populate("address")
+      .select("address")
+      .lean();
 
-    res.status(200).json(products);
+    res.status(200).json({ products, shopAddress: deliveryOption?.address });
   } catch (error) {
     res.status(500).json({ message: "Failed to fetch products" });
   }

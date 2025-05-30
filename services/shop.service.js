@@ -174,7 +174,7 @@ async function _getProductWithShopDistances(products, customerAddress) {
           customerAddress,
           shopAddress
         );
-        return { ...product, distance };
+        return { ...product, distance, shopAddress };
       })
   );
 
