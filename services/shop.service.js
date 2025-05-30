@@ -90,20 +90,20 @@ async function _getProductWithShopDistances(products, customerAddress) {
   }, {});
 
   // Calculate distance for each product based on shop's address
-  return products
-    .filter((product) => {
-      // Only include products that has shop address
-      return addressMap[product.userId._id.toString()];
-    })
-    .map((product) => {
-      const shopAddress = addressMap[product.userId._id.toString()];
-      const distance = calculateDistanceBetweenAddress(
-        customerAddress,
-        shopAddress
-      );
-      return { ...product, distance };
-    })
-    .sort((a, b) => a.distance - b.distance);
+  const productsWithDistance = await Promise.all(
+    products
+      .filter((product) => addressMap[product.userId._id.toString()])
+      .map(async (product) => {
+        const shopAddress = addressMap[product.userId._id.toString()];
+        const distance = await calculateDistanceBetweenAddress(
+          customerAddress,
+          shopAddress
+        );
+        return { ...product, distance };
+      })
+  );
+
+  return productsWithDistance.sort((a, b) => a.distance - b.distance);
 }
 
 module.exports = { getRecommendedProducts };

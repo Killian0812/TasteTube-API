@@ -38,7 +38,27 @@ const closeRedisConnection = async () => {
   }
 };
 
+const getValue = async (key) => {
+  try {
+    const value = await redis.get(key);
+    return value;
+  } catch (error) {
+    logger.warn("Error getting value from Redis");
+    return null;
+  }
+};
+
+const setValue = async (key, value, tls = 3600) => {
+  try {
+    await redis.set(key, value, "EX", tls);
+  } catch (error) {
+    logger.warn("Error saving value to Redis");
+  }
+};
+
 module.exports = {
   redis,
   closeRedisConnection,
+  getValue,
+  setValue,
 };
