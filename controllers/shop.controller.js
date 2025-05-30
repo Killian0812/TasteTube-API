@@ -1,14 +1,21 @@
 const Product = require("../models/product.model");
+const ShopService = require("../services/shop.service");
 
 async function getRecommendedProducts(req, res) {
-  try {
-    const products = await Product.find()
-      .populate("category", "_id name")
-      .populate("userId", "_id image username phone");
+  const userId = req.userId;
+  const page = parseInt(req.query.page) || 1;
+  const limit = parseInt(req.query.limit) || 10;
 
-    res.status(200).json(products);
+  try {
+    const result = await ShopService.getRecommendedProducts(
+      userId,
+      page,
+      limit
+    );
+    res.status(200).json(result);
   } catch (error) {
-    res.status(500).json({ message: "Failed to fetch products" });
+    console.error(error);
+    res.status(500).json({ message: error.message });
   }
 }
 

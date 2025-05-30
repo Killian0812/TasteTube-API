@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
 const { Schema } = mongoose;
+const mongoosePaginate = require("mongoose-paginate-v2");
 const { currencies } = require("../utils/constant");
 
 const productSchema = new Schema(
@@ -64,4 +65,5 @@ const productSchema = new Schema(
   }
 );
 
+productSchema.plugin(mongoosePaginate);
 module.exports = mongoose.model("Product", productSchema);

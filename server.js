@@ -170,7 +170,7 @@ app.use("/api/users", userRouter);
 app.use("/api/product", productRouter);
 app.use("/api/videos", videoRouter);
 app.use("/api/content", verifyJWT(), contentRouter);
-app.use("/api/shop", verifyJWT(), shopRouter);
+app.use("/api/shop", verifyJWT(true), shopRouter);
 app.use("/api/cart", verifyJWT(), cartRouter);
 app.use("/api/order", verifyJWT(), orderRouter);
 app.use("/api/address", verifyJWT(), addressRouter);
