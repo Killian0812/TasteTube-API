@@ -1,4 +1,4 @@
-const logger = require("../logger");
+const logger = require("../core/logger.js");
 const Payment = require("../models/payment.model");
 const { notifyPayment } = require("../core/socket.js");
 

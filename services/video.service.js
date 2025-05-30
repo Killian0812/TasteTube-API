@@ -10,7 +10,7 @@ const {
   getVideoTranscoderJob,
 } = require("../services/storage.service");
 const { getEmbedding } = require("../services/ai.service");
-const logger = require("../logger");
+const logger = require("../core/logger");
 
 const getVideo = async (videoId, userId) => {
   if (!videoId) {

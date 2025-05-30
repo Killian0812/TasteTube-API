@@ -1,6 +1,6 @@
 const nodemailer = require("nodemailer");
 const { FirebaseAuth } = require("../core/firebase");
-const logger = require("../logger");
+const logger = require("../core/logger");
 
 const logoUrl =
   "https://firebasestorage.googleapis.com/v0/b/taste-tube.appspot.com/o/tastetube_inverted.png?alt=media&token=3616ee3f-f0fa-4109-9951-9d91b1991d94";

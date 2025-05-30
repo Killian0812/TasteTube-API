@@ -1,4 +1,4 @@
-const logger = require("../logger");
+const logger = require("../core/logger");
 const twilioClient = require("../core/twilio");
 const twilioServiceSID = process.env.TWILIO_SERVICE_SID;
 

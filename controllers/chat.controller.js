@@ -1,7 +1,7 @@
 const chatService = require("../services/chat.service");
 const aiService = require("../services/ai.service");
 const Channel = require("../models/channel.model");
-const logger = require("../logger");
+const logger = require("../core/logger");
 const { adminUsers } = require("../utils/constant");
 
 const autoAIResponse = async (req, res) => {

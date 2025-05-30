@@ -1,6 +1,6 @@
 const JWT = require("jsonwebtoken");
 const User = require("../models/user.model");
-const logger = require("../logger");
+const logger = require("../core/logger");
 const { setAuthResponse, generateTokens } = require("../services/auth.service");
 
 const refreshToken = async (req, res) => {

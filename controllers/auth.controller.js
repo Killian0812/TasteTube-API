@@ -1,7 +1,7 @@
 const JWT = require("jsonwebtoken");
 const User = require("../models/user.model");
 const { FirebaseAuth } = require("../core/firebase");
-const logger = require("../logger");
+const logger = require("../core/logger");
 const { EMAIL_REGEX } = require("../utils/regex");
 const {
   setAuthResponse,

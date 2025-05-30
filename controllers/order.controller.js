@@ -3,7 +3,7 @@ const Order = require("../models/order.model");
 const Payment = require("../models/payment.model");
 const Discount = require("../models/discount.model");
 const { sendFcmNotification } = require("../services/fcm.service");
-const logger = require("../logger");
+const logger = require("../core/logger");
 
 // Create by Customer, modify by Shop
 const createOrder = async (req, res) => {

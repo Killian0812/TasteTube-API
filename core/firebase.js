@@ -1,7 +1,7 @@
 const fs = require("fs");
 const path = require("path");
 const admin = require("firebase-admin");
-const logger = require("../logger");
+const logger = require("../core/logger");
 
 const setupFirebase = () => {
   try {

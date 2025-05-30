@@ -1,4 +1,4 @@
-const logger = require("../logger");
+const logger = require("../core/logger");
 const streamClient = require("../core/stream");
 
 async function sendMessageToChannel(channelType, channelId, messageText) {

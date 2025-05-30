@@ -1,6 +1,6 @@
 const { getMessaging } = require("firebase-admin/messaging");
 const User = require("../models/user.model");
-const logger = require("../logger");
+const logger = require("../core/logger");
 
 const sendFcmNotification = async ({ userId, title, body, data }) => {
   const user = await User.findById(userId);

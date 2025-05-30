@@ -1,5 +1,5 @@
 const User = require("../models/user.model");
-const logger = require("../logger");
+const logger = require("../core/logger");
 
 const logout = async (req, res) => {
   logger.info("Someone loging out");

@@ -5,7 +5,7 @@ const {
   getGrabAccessToken,
   setGrabAccessToken,
 } = require("../../config/grab.config");
-const logger = require("../../logger");
+const logger = require("../../core/logger");
 
 const _reissueAccessToken = async () => {
   try {

@@ -7,7 +7,7 @@ require("dotenv").config();
 const { staticFolderPath } = require("./utils/path");
 const { app, server } = require("./core/socket");
 const version = require("./package.json").version;
-const logger = require("./logger");
+const logger = require("./core/logger");
 
 // middlewares
 app.use(express.json());

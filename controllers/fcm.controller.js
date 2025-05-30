@@ -1,4 +1,4 @@
-const logger = require("../logger");
+const logger = require("../core/logger");
 const User = require("../models/user.model");
 
 const updateFcmToken = async (req, res) => {

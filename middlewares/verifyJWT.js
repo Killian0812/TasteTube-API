@@ -1,4 +1,4 @@
-const logger = require("../logger");
+const logger = require("../core/logger");
 const jwt = require("jsonwebtoken");
 
 const verifyJWT = (publicView = false) => {

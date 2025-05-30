@@ -5,7 +5,7 @@ const bucket = FirebaseStorage.bucket();
 const Video = require("../models/video.model");
 const { TranscoderServiceClient } =
   require("@google-cloud/video-transcoder").v1;
-const logger = require("../logger");
+const logger = require("../core/logger");
 const transcoderServiceClient = new TranscoderServiceClient();
 
 const projectId = process.env.GC_PROJECT_ID;

@@ -1,5 +1,5 @@
 const videoService = require("../services/video.service");
-const logger = require("../logger");
+const logger = require("../core/logger");
 
 const getVideo = async (req, res) => {
   try {

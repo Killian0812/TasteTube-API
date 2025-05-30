@@ -1,4 +1,4 @@
-const logger = require("../logger");
+const logger = require("../core/logger");
 const { Cart, CartItem } = require("../models/cart.model");
 const DeliveryOption = require("../models/deliveryOption.model");
 const Product = require("../models/product.model");

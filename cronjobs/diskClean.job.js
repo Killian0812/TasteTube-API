@@ -2,7 +2,7 @@ const cron = require("node-cron");
 const fs = require("fs");
 const path = require("path");
 const { uploadPath } = require("../utils/path");
-const logger = require("../logger");
+const logger = require("../core/logger");
 
 function _cleanupUploads() {
   logger.info("Start disk cleaning");
