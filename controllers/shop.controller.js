@@ -33,28 +33,20 @@ async function getProductsInShop(req, res) {
 }
 
 async function searchProducts(req, res) {
-  const { keyword } = req.query;
-  const { shopId } = req.params;
+  const userId = req.userId;
+  const { keyword, page = 1, limit = 10 } = req.query;
 
   try {
-    const query = {
-      $or: [
-        { name: { $regex: keyword, $options: "i" } },
-        { description: { $regex: keyword, $options: "i" } },
-      ],
-    };
-
-    if (shopId) {
-      query.userId = shopId;
-    }
-
-    const products = await Product.find(query)
-      .populate("category", "_id name")
-      .populate("userId", "_id image username phone");
-
-    res.status(200).json(products);
+    const result = await ShopService.searchProducts(
+      userId,
+      keyword,
+      page,
+      limit
+    );
+    res.status(200).json(result);
   } catch (error) {
-    res.status(500).json({ message: "Failed to search for products" });
+    console.error(error);
+    res.status(500).json({ message: error.message });
   }
 }
 
