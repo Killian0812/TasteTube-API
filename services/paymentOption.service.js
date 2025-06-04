@@ -28,18 +28,9 @@ const getUserCards = async (userId) => {
     {
       encryptedData: 0,
     }
-  );
-  return cards.map((card) => ({
-    id: card.id,
-    type: card.type,
-    lastFour: card.lastFour,
-    holderName: card.holderName,
-    expiryDate: card.expiryDate,
-    isDefault: card.isDefault,
-  }));
+  ).lean();
+  return cards;
 };
-
-
 
 const addPaymentCard = async (userId, cardDetails) => {
   const { type, cardNumber, holderName, expiryDate } = cardDetails;
@@ -47,7 +38,7 @@ const addPaymentCard = async (userId, cardDetails) => {
   const encryptedCardNumber = _encryptData(cardNumber);
   const lastFour = cardNumber.slice(-4);
 
-  const newCard = new PaymentCard({
+  const newCard = await PaymentCard.create({
     userId,
     type,
     lastFour,
@@ -55,10 +46,9 @@ const addPaymentCard = async (userId, cardDetails) => {
     expiryDate,
     encryptedData: encryptedCardNumber,
   });
-  await newCard.save();
 
   return {
-    id: newCard.id,
+    _id: newCard._id,
     type: newCard.type,
     lastFour: newCard.lastFour,
     holderName: newCard.holderName,
@@ -75,36 +65,15 @@ const setDefaultPaymentCard = async (userId, cardId) => {
   const updatedCard = await PaymentCard.findByIdAndUpdate(
     cardId,
     { isDefault: true },
-    { new: true }
+    { new: true, select: "-encryptedData" }
   );
 
-  if (!updatedCard) {
-    return null; // Or throw an error if preferred
-  }
-
-  return {
-    id: updatedCard.id,
-    type: updatedCard.type,
-    lastFour: updatedCard.lastFour,
-    holderName: updatedCard.holderName,
-    expiryDate: updatedCard.expiryDate,
-    isDefault: updatedCard.isDefault,
-  };
+  return updatedCard;
 };
 
 const removePaymentCard = async (cardId) => {
   const deletedCard = await PaymentCard.findByIdAndDelete(cardId);
-  if (!deletedCard) {
-    return null; // Or throw an error if preferred
-  }
-  return {
-    id: deletedCard.id,
-    type: deletedCard.type,
-    lastFour: deletedCard.lastFour,
-    holderName: deletedCard.holderName,
-    expiryDate: deletedCard.expiryDate,
-    isDefault: deletedCard.isDefault,
-  };
+  return deletedCard;
 };
 
 module.exports = {
