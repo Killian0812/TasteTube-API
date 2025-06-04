@@ -1,29 +1,13 @@
-const PaymentCard = require("../models/paymentCard.model");
-const User = require("../models/user.model");
-
-// TODO: Use secret encryption
-const _encryptData = (text) => {
-  const encrypted = Buffer.from(text, "utf8").toString("base64");
-  return encrypted;
-};
-
-const _decryptData = (encrypted) => {
-  const decrypted = Buffer.from(encrypted, "base64").toString("utf8");
-  return decrypted;
-};
+const paymentOptionService = require("../services/paymentOption.service");
 
 const changeCurrency = async (req, res) => {
   try {
-    const user = await User.findByIdAndUpdate(
+    const updatedCurrency = await paymentOptionService.changeUserCurrency(
       req.userId,
-      {
-        currency: req.body.currency,
-      },
-      { new: true }
+      req.body.currency
     );
-    await user.save();
     return res.status(200).json({
-      updatedCurrency: user.currency,
+      updatedCurrency: updatedCurrency,
     });
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -32,49 +16,20 @@ const changeCurrency = async (req, res) => {
 
 const getCards = async (req, res) => {
   try {
-    const cards = await PaymentCard.find({
-      userId: req.userId,
-    });
-    return res.status(200).json(
-      cards.map((card) => ({
-        id: card.id,
-        type: card.type,
-        lastFour: card.lastFour,
-        holderName: card.holderName,
-        expiryDate: card.expiryDate,
-        isDefault: card.isDefault,
-      }))
-    );
+    const cards = await paymentOptionService.getUserCards(req.userId);
+    return res.status(200).json(cards);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
 
 const addCard = async (req, res) => {
-  const { type, cardNumber, holderName, expiryDate } = req.body;
-
   try {
-    const encryptedCardNumber = _encryptData(cardNumber);
-    const lastFour = cardNumber.slice(-4);
-
-    const newCard = new PaymentCard({
-      userId: req.userId,
-      type,
-      lastFour,
-      holderName,
-      expiryDate,
-      encryptedData: encryptedCardNumber,
-    });
-    await newCard.save();
-
-    return res.status(201).json({
-      id: newCard.id,
-      type: newCard.type,
-      lastFour: newCard.lastFour,
-      holderName: newCard.holderName,
-      expiryDate: newCard.expiryDate,
-      isDefault: newCard.isDefault,
-    });
+    const newCard = await paymentOptionService.addPaymentCard(
+      req.userId,
+      req.body
+    );
+    return res.status(201).json(newCard);
   } catch (error) {
     res.status(400).json({ message: error.message });
   }
@@ -82,28 +37,16 @@ const addCard = async (req, res) => {
 
 const setDefaultCard = async (req, res) => {
   try {
-    // Reset all cards to non-default
-    await PaymentCard.updateMany({ userId: req.userId }, { isDefault: false });
-
-    // Set the selected card as default
-    const updatedCard = await PaymentCard.findByIdAndUpdate(
-      req.params.cardId,
-      { isDefault: true },
-      { new: true }
+    const updatedCard = await paymentOptionService.setDefaultPaymentCard(
+      req.userId,
+      req.params.cardId
     );
 
     if (!updatedCard) {
       return res.status(404).json({ message: "Card not found" });
     }
 
-    return res.status(200).json({
-      id: updatedCard.id,
-      type: updatedCard.type,
-      lastFour: updatedCard.lastFour,
-      holderName: updatedCard.holderName,
-      expiryDate: updatedCard.expiryDate,
-      isDefault: updatedCard.isDefault,
-    });
+    return res.status(200).json(updatedCard);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -111,18 +54,13 @@ const setDefaultCard = async (req, res) => {
 
 const removeCard = async (req, res) => {
   try {
-    const deletedCard = await PaymentCard.findByIdAndDelete(req.params.cardId);
+    const deletedCard = await paymentOptionService.removePaymentCard(
+      req.params.cardId
+    );
     if (!deletedCard) {
       return res.status(404).json({ message: "Card not found" });
     }
-    return res.status(200).json({
-      id: deletedCard.id,
-      type: deletedCard.type,
-      lastFour: deletedCard.lastFour,
-      holderName: deletedCard.holderName,
-      expiryDate: deletedCard.expiryDate,
-      isDefault: deletedCard.isDefault,
-    });
+    return res.status(200).json(deletedCard);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
