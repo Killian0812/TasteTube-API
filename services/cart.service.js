@@ -1,5 +1,5 @@
 const { Cart, CartItem, cartPopulate } = require("../models/cart.model");
-const Product = require("../models/product.model");
+const { Product } = require("../models/product.model");
 const Discount = require("../models/discount.model");
 const DeliveryOption = require("../models/deliveryOption.model");
 const { getSelfDeliveryFee } = require("./orderDelivery.service");

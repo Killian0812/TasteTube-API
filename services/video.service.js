@@ -1,5 +1,5 @@
 const Video = require("../models/video.model");
-const Product = require("../models/product.model");
+const { Product } = require("../models/product.model");
 const User = require("../models/user.model");
 const Comment = require("../models/comment.model");
 const Interaction = require("../models/interaction.model");

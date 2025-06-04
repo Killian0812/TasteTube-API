@@ -1,5 +1,5 @@
 const Address = require("../models/address.model");
-const Product = require("../models/product.model");
+const { Product } = require("../models/product.model");
 const DeliveryOption = require("../models/deliveryOption.model");
 const {
   calculateDistanceBetweenAddress,

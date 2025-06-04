@@ -1,5 +1,5 @@
 const Category = require("../models/category.model");
-const Product = require("../models/product.model");
+const { Product, productPopulate } = require("../models/product.model");
 const User = require("../models/user.model");
 const {
   uploadToFirebaseStorage,
@@ -51,19 +51,15 @@ const deleteCategoryById = async (categoryId) => {
   return true; // Indicates successful deletion
 };
 
-// --- Product Service Functions ---
-
 const getProductsByUserId = async (userId) => {
-  const products = await Product.find({ userId: userId })
-    .populate("category", "_id name")
-    .populate("userId", "_id image username phone");
+  const products = await Product.find({ userId: userId }).populate(
+    productPopulate
+  );
   return products;
 };
 
 const getProductById = async (productId) => {
-  const product = await Product.findById(productId)
-    .populate("category", "_id name")
-    .populate("userId", "_id image username phone");
+  const product = await Product.findById(productId).populate(productPopulate);
   return product;
 };
 

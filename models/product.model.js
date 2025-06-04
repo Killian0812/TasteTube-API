@@ -69,4 +69,13 @@ const productSchema = new Schema(
 );
 
 productSchema.plugin(mongoosePaginate);
-module.exports = mongoose.model("Product", productSchema);
+
+const productPopulate = [
+  { path: "category", select: "_id name" },
+  { path: "userId", select: "_id image username phone" },
+];
+
+module.exports = {
+  Product: mongoose.model("Product", productSchema),
+  productPopulate,
+};
