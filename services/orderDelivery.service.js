@@ -1,4 +1,6 @@
 const { getDistanceBetweenAddress } = require("../services/location.service");
+const { Order } = require("../models/order.model");
+const DeliveryOption = require("../models/deliveryOption.model");
 const grabAxios = require("../utils/axios/grab.axios");
 
 const deliveryStatus = [
@@ -228,6 +230,143 @@ const updateSelfDelivery = async (order, newStatus) => {
   return order;
 };
 
+const getOrderDeliveryStatus = async (orderId) => {
+  const order = await Order.findById(orderId).populate("address");
+  if (!order) throw new Error("Order not found");
+
+  const deliveryOption = await DeliveryOption.findOne({
+    shopId: order.shopId,
+  }).populate("address");
+
+  const deliveryType = order.deliveryType || "NONE";
+  const deliveryStatusLog = order.deliveryStatusLog || [];
+
+  if (order.deliveryType === "GRAB") {
+    const detail = await getGrabDeliveryDetail(order);
+    const lastStatus =
+      order.deliveryStatusLog[order.deliveryStatusLog.length - 1]
+        ?.deliveryStatus;
+
+    if (detail.status === "COMPLETED") {
+      order.status = "COMPLETED";
+    }
+
+    if (detail.status !== lastStatus) {
+      if (detail.status === "ALLOCATING") {
+        order.deliveryStatusLog = [
+          {
+            deliveryStatus: detail.status,
+            deliveryTimestamp: Date.now(),
+          },
+        ];
+      } else {
+        order.deliveryStatusLog.push({
+          deliveryStatus: detail.status,
+          deliveryTimestamp: Date.now(),
+        });
+      }
+    }
+    await order.save();
+  }
+
+  return {
+    deliveryType,
+    deliveryStatusLog,
+    origin: deliveryOption.address.value,
+    destination: order.address.value,
+  };
+};
+
+const createOrderDelivery = async (orderId, userId, deliveryType) => {
+  const order = await Order.findById(orderId)
+    .populate("address")
+    .populate("items.product");
+
+  if (!order) {
+    throw new Error("Order not found");
+  }
+
+  if (deliveryType === "SELF") {
+    return createSelfDelivery(order);
+  } else if (deliveryType === "GRAB") {
+    const deliveryOption = await DeliveryOption.findOne({
+      shopId: userId,
+    }).populate("address");
+    return createGrabDelivery(deliveryOption, order);
+  } else {
+    throw new Error("Invalid delivery type");
+  }
+};
+
+const getOrderDeliveryQuote = async (orderId, userId) => {
+  const order = await Order.findById(orderId)
+    .populate("address")
+    .populate("items.product");
+
+  if (!order) {
+    throw new Error("Order not found");
+  }
+
+  const deliveryOption = await DeliveryOption.findOne({
+    shopId: userId,
+  }).populate("address");
+
+  const selfDeliveryQuote = {
+    amount: await getSelfDeliveryFee(deliveryOption, order.address),
+  };
+  const grabDeliveryQuote = await getGrabDeliveryQuote(deliveryOption, order);
+
+  return {
+    origin: deliveryOption.address.value,
+    destination: order.address.value,
+    selfDeliveryQuote,
+    grabDeliveryQuote,
+  };
+};
+
+const updateSelfOrderDelivery = async (orderId, newStatus) => {
+  const order = await Order.findById(orderId);
+  if (!order) {
+    throw new Error("Order not found");
+  }
+  return updateSelfDelivery(order, newStatus);
+};
+
+const cancelOrderDelivery = async (orderId) => {
+  const order = await Order.findById(orderId);
+
+  if (!order) {
+    throw new Error("Order not found");
+  }
+
+  if (order.deliveryType === "SELF") {
+    order.deliveryStatusLog = [];
+    order.deliveryType = "NONE";
+    order.status = "DELIVERY";
+    await order.save();
+    return order;
+  } else if (order.deliveryType === "GRAB") {
+    await cancelGrabDelivery(order);
+    return order;
+  }
+};
+
+const renewOrderDelivery = async (orderId) => {
+  const order = await Order.findById(orderId);
+
+  if (!order) {
+    throw new Error("Order not found");
+  }
+
+  order.deliveryStatusLog = [];
+  order.deliveryType = "NONE";
+  order.deliveryId = "";
+  order.status = "DELIVERY";
+  await order.save();
+
+  return order;
+};
+
 module.exports = {
   deliveryStatus,
 
@@ -241,4 +380,11 @@ module.exports = {
   getSelfDeliveryFee,
   createSelfDelivery,
   updateSelfDelivery,
+
+  getOrderDeliveryStatus,
+  createOrderDelivery,
+  getOrderDeliveryQuote,
+  updateSelfOrderDelivery,
+  cancelOrderDelivery,
+  renewOrderDelivery,
 };
