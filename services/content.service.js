@@ -3,7 +3,7 @@ const Video = require("../models/video.model");
 const { getEmbedding } = require("../services/ai.service");
 
 // Text search for users based on username, email, or phone
-const searchUsers = async (keyword, userId = null) => {
+const _searchUsers = async (keyword, userId = null) => {
   if (!keyword || keyword.trim() === "") {
     return [];
   }
@@ -28,7 +28,7 @@ const searchUsers = async (keyword, userId = null) => {
 };
 
 // Semantic search for videos based on embedded text
-const searchVideos = async (keyword, userId = null) => {
+const _searchVideos = async (keyword, userId = null) => {
   if (!keyword || keyword.trim() === "") {
     return [];
   }
@@ -187,7 +187,83 @@ const searchVideos = async (keyword, userId = null) => {
   return videos;
 };
 
+const searchContent = async (keyword, type, userId) => {
+  if (!keyword || !type) {
+    return { status: 400, data: { message: "Keyword and type are required" } };
+  }
+
+  if (type === "user") {
+    const users = await _searchUsers(keyword, userId);
+    return { status: 200, data: users };
+  }
+
+  if (type === "video") {
+    const videos = await _searchVideos(keyword, userId);
+    return { status: 200, data: videos };
+  }
+
+  return { status: 400, data: { message: "Invalid search type" } };
+};
+
+const getPaginatedFeeds = async (query, page, limit) => {
+  const feeds = await Video.paginate(query, {
+    page,
+    limit,
+    populate: [
+      { path: "userId", select: "_id username image" },
+      { path: "targetUserId", select: "_id username image" },
+      {
+        path: "products",
+        populate: [
+          { path: "category", select: "_id name" },
+          { path: "userId", select: "_id image username phone" },
+        ],
+      },
+    ],
+  });
+
+  const feedsVideo = feeds.docs.map((video) => video.toObject());
+
+  return {
+    status: 200,
+    data: {
+      feeds: feedsVideo,
+      totalDocs: feeds.totalDocs,
+      totalPages: feeds.totalPages,
+      currentPage: feeds.page,
+      hasNextPage: feeds.hasNextPage,
+      hasPrevPage: feeds.hasPrevPage,
+      nextPage: feeds.nextPage,
+      prevPage: feeds.prevPage,
+    },
+  };
+};
+
+const getPublicFeeds = async (userId, page, limit) => {
+  const query = {
+    $or: [{ visibility: "PUBLIC" }, { visibility: "PRIVATE", userId }],
+    userId: { $ne: userId },
+  };
+
+  return await getPaginatedFeeds(query, page, limit);
+};
+
+const getFollowingFeeds = async (userId, page, limit) => {
+  const user = await User.findById(userId);
+  if (!user) {
+    return { status: 404, data: { message: "User not found" } };
+  }
+
+  const query = {
+    $or: [{ visibility: "PUBLIC" }, { visibility: "PRIVATE", userId }],
+    userId: { $in: user.followings },
+  };
+
+  return await getPaginatedFeeds(query, page, limit);
+};
+
 module.exports = {
-  searchUsers,
-  searchVideos,
+  searchContent,
+  getPublicFeeds,
+  getFollowingFeeds,
 };
