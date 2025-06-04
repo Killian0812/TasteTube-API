@@ -1,6 +1,5 @@
 const { Product, productPopulate } = require("../models/product.model");
 const ShopService = require("../services/shop.service");
-const DeliveryOption = require("../models/deliveryOption.model");
 
 async function getRecommendedProducts(req, res) {
   const userId = req.userId;
@@ -25,18 +24,8 @@ async function getRecommendedProducts(req, res) {
 async function getProductsInShop(req, res) {
   const shopId = req.params.shopId;
   try {
-    const products = await Product.find({ userId: shopId }).populate(
-      productPopulate
-    );
-    const deliveryOption = await DeliveryOption.findOne({
-      shopId: shopId,
-      address: { $ne: null },
-    })
-      .populate("address")
-      .select("address")
-      .lean();
-
-    res.status(200).json({ products, shopAddress: deliveryOption?.address });
+    const result = await ShopService.getProductsInShop(shopId);
+    res.status(200).json(result);
   } catch (error) {
     res.status(500).json({ message: "Failed to fetch products" });
   }
@@ -64,17 +53,10 @@ async function searchProducts(req, res) {
 
 async function searchProductsInShop(req, res) {
   const { keyword } = req.query;
-  const userId = req.params.shopId;
+  const shopId = req.params.shopId;
 
   try {
-    const products = await Product.find({
-      $or: [
-        { name: { $regex: keyword, $options: "i" } },
-        { description: { $regex: keyword, $options: "i" } },
-      ],
-      userId: userId,
-    }).populate(productPopulate);
-
+    const products = await ShopService.searchProductsInShop(shopId, keyword);
     res.status(200).json(products);
   } catch (error) {
     res.status(500).json({ message: "Failed to search for products" });

@@ -1,9 +1,35 @@
 const Address = require("../models/address.model");
-const { Product } = require("../models/product.model");
+const { Product, productPopulate } = require("../models/product.model");
 const DeliveryOption = require("../models/deliveryOption.model");
 const {
   calculateDistanceBetweenAddress,
 } = require("../services/location.service");
+
+async function getProductsInShop(shopId) {
+  const products = await Product.find({ userId: shopId }).populate(
+    productPopulate
+  );
+  const deliveryOption = await DeliveryOption.findOne({
+    shopId: shopId,
+    address: { $ne: null },
+  })
+    .populate("address")
+    .select("address")
+    .lean();
+
+  return { products, shopAddress: deliveryOption?.address };
+}
+
+async function searchProductsInShop(shopId, keyword) {
+  const products = await Product.find({
+    $or: [
+      { name: { $regex: keyword, $options: "i" } },
+      { description: { $regex: keyword, $options: "i" } },
+    ],
+    userId: shopId,
+  }).populate(productPopulate);
+  return products;
+}
 
 async function searchProducts(userId, keyword, page = 1, limit = 10) {
   const query = {
@@ -44,10 +70,7 @@ async function _getNewestProducts(page = 1, limit = 10) {
   const options = {
     page: page,
     limit: limit,
-    populate: [
-      { path: "category", select: "_id name" },
-      { path: "userId", select: "_id image username phone" },
-    ],
+    populate: productPopulate,
     lean: true,
     sort: { updatedAt: -1 }, // Sort by newest products
   };
@@ -60,10 +83,7 @@ async function _getNewestProductsByQuery(query, page = 1, limit = 10) {
   const options = {
     page: page,
     limit: limit,
-    populate: [
-      { path: "category", select: "_id name" },
-      { path: "userId", select: "_id image username phone" },
-    ],
+    populate: productPopulate,
     lean: true,
     sort: { updatedAt: -1 }, // Sort by newest products
   };
@@ -78,10 +98,7 @@ async function _getClosestProductsByQuery(
   page = 1,
   limit = 10
 ) {
-  const products = await Product.find(query)
-    .populate("category", "_id name")
-    .populate("userId", "_id image username phone")
-    .lean();
+  const products = await Product.find(query).populate(productPopulate).lean();
 
   // Get distances for products based on shop delivery settings
   const productsWithDistance = await _getProductWithShopDistances(
@@ -111,10 +128,7 @@ async function _getClosestProductsByQuery(
 }
 
 async function _getClosestProducts(address, page = 1, limit = 10) {
-  const products = await Product.find()
-    .populate("category", "_id name")
-    .populate("userId", "_id image username phone")
-    .lean();
+  const products = await Product.find().populate(productPopulate).lean();
 
   // Get distances for products based on shop delivery settings
   const productsWithDistance = await _getProductWithShopDistances(
@@ -181,4 +195,9 @@ async function _getProductWithShopDistances(products, customerAddress) {
   return productsWithDistance.sort((a, b) => a.distance - b.distance);
 }
 
-module.exports = { getRecommendedProducts, searchProducts };
+module.exports = {
+  getRecommendedProducts,
+  searchProducts,
+  getProductsInShop,
+  searchProductsInShop,
+};
