@@ -13,4 +13,6 @@ router.post('/facebook', authController.facebookAuth)
 
 router.post('/verify', authController.verifyToken)
 
+router.post('/logout', authController.logout)
+
 module.exports = router;

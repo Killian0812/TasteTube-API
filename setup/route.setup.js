@@ -3,7 +3,6 @@ const express = require("express");
 
 const registerRouter = require("../routes/register.router");
 const authRouter = require("../routes/auth.router");
-const logoutRouter = require("../routes/logout.router");
 const refreshTokenRouter = require("../routes/refreshToken.router");
 const userRouter = require("../routes/user.router");
 const productRouter = require("../routes/product.router");
@@ -32,7 +31,6 @@ const setupRoutes = (app) => {
   app.use("/api/register", registerRouter);
   app.use("/api/auth", authRouter);
   app.use("/api/refresh", refreshTokenRouter);
-  app.use("/api/logout", logoutRouter);
   app.use("/api/users", userRouter);
   app.use("/api/product", productRouter);
   app.use("/api/videos", videoRouter);

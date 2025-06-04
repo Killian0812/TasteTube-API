@@ -221,6 +221,39 @@ const socialAuthService = async ({ name, email, picture }, source) => {
   return { user, tokens };
 };
 
+const handleLogout = async (refreshToken) => {
+  if (!refreshToken) {
+    return {
+      status: 204,
+      message: "No refresh token",
+    };
+  }
+
+  const existingUser = await User.findOne({ refreshToken });
+
+  if (!existingUser) {
+    // Still clear the cookie on the client
+    return {
+      status: 204,
+      message: "No user found with the provided refresh token",
+    };
+  }
+
+  try {
+    existingUser.refreshToken = null;
+    await existingUser.save();
+    return {
+      status: 204,
+      message: "User's refresh token removed successfully",
+    };
+  } catch (error) {
+    return {
+      status: 500,
+      message: "Error removing user's refresh token",
+    };
+  }
+};
+
 module.exports = {
   generateTokens,
   setAuthResponse,
@@ -231,4 +264,5 @@ module.exports = {
   phoneAuthService,
   phoneOtpVerifyService,
   socialAuthService,
+  handleLogout,
 };

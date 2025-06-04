@@ -5,6 +5,7 @@ const {
   phoneOtpVerifyService,
   socialAuthService,
   setAuthResponse,
+  handleLogout,
 } = require("../services/auth.service");
 
 const login = async (req, res) => {
@@ -64,6 +65,24 @@ const facebookAuth = async (req, res) => {
   }
 };
 
+const logout = async (req, res) => {
+  try {
+    const result = await handleLogout(req.cookies?.jwt);
+
+    // Clear the cookie on the client regardless
+    res.clearCookie("jwt", {
+      httpOnly: true,
+      sameSite: "Strict",
+      secure: true,
+      maxAge: 24 * 60 * 60 * 1000,
+    });
+
+    res.status(result.status).send(result.message);
+  } catch (error) {
+    res.status(500).send("Internal Server Error");
+  }
+};
+
 module.exports = {
   login,
   verifyToken,
@@ -71,4 +90,5 @@ module.exports = {
   phoneOtpVerify,
   googleAuth,
   facebookAuth,
+  logout,
 };
