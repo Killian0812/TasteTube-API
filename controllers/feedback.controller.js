@@ -1,4 +1,4 @@
-const Feedback = require("../models/feedback.model");
+const { Feedback, feedbackPopulate } = require("../models/feedback.model");
 const Order = require("../models/order.model");
 
 // Create or update a rating for a product in an order
@@ -25,10 +25,7 @@ const updateProductFeedback = async (req, res) => {
       { new: true, upsert: true, setDefaultsOnInsert: true }
     );
 
-    feedbackDoc = await feedbackDoc.populate({
-      path: "userId",
-      select: "_id image username phone",
-    });
+    feedbackDoc = await feedbackDoc.populate(feedbackPopulate);
 
     return res.status(200).json(feedbackDoc);
   } catch (error) {
@@ -52,10 +49,7 @@ const getProductFeedbacks = async (req, res) => {
       { productId },
       {
         ...options,
-        populate: {
-          path: "userId",
-          select: "_id image username phone",
-        },
+        populate: feedbackPopulate,
       }
     );
 
@@ -69,10 +63,9 @@ const getProductFeedbacks = async (req, res) => {
 const getUserFeedbacks = async (req, res) => {
   const userId = req.userId;
   try {
-    const feedbacks = await Feedback.find({ userId }).populate({
-      path: "userId",
-      select: "_id image username phone",
-    });
+    const feedbacks = await Feedback.find({ userId }).populate(
+      feedbackPopulate
+    );
     return res.status(200).json(feedbacks);
   } catch (error) {
     return res.status(500).json({ message: error.message });
@@ -83,10 +76,9 @@ const getUserFeedbacks = async (req, res) => {
 const getOrderFeedbacks = async (req, res) => {
   const { orderId } = req.params;
   try {
-    const feedbacks = await Feedback.find({ orderId }).populate({
-      path: "userId",
-      select: "_id image username phone",
-    });
+    const feedbacks = await Feedback.find({ orderId }).populate(
+      feedbackPopulate
+    );
     return res.status(200).json(feedbacks);
   } catch (error) {
     return res.status(500).json({ message: error.message });

@@ -36,4 +36,12 @@ const feedbackSchema = new Schema(
 
 feedbackSchema.plugin(mongoosePaginate);
 
-module.exports = mongoose.model("Feedback", feedbackSchema);
+const feedbackPopulate = {
+  path: "userId",
+  select: "_id image username phone",
+};
+
+module.exports = {
+  Feedback: mongoose.model("Feedback", feedbackSchema),
+  feedbackPopulate,
+};
