@@ -1,258 +1,46 @@
-const { Cart, cartPopulate } = require("../models/cart.model");
-const { Order, orderPopulate } = require("../models/order.model");
-const Payment = require("../models/payment.model");
-const Discount = require("../models/discount.model");
-const { sendFcmNotification } = require("../services/fcm.service");
-const logger = require("../core/logger");
+const orderService = require("../services/order.service");
 
-// Create by Customer, modify by Shop
 const createOrder = async (req, res) => {
-  const userId = req.userId;
-  const {
-    selectedCartItems,
-    addressId,
-    paymentMethod,
-    notes,
-    pid,
-    orderSummary,
-    discounts,
-    appliedDiscountDetails,
-  } = req.body;
-
-  if (!paymentMethod) {
-    return res.status(400).json({ message: "Please select a payment method" });
-  }
-  if (!addressId) {
-    return res.status(400).json({ message: "Invalid delivery address" });
-  }
-  if (paymentMethod !== "COD" && paymentMethod !== "CARD" && !pid) {
-    return res.status(400).json({ message: "Payment invalid" });
-  }
-
   try {
-    let payment = null;
-    if (pid) {
-      payment = await Payment.findById(pid);
-      if (!payment || payment.status !== "paid") {
-        return res
-          .status(400)
-          .json({ message: "Must pay before creating order" });
-      }
-    }
-
-    const cart = await Cart.findOne({ userId }).populate({
-      path: "items",
-      populate: cartPopulate,
-    });
-
-    if (!cart || cart.items.length === 0) {
-      return res.status(400).json({ message: "Your cart is empty." });
-    }
-
-    // Filter out selected cart items
-    const selectedItems = cart.items.filter((item) =>
-      selectedCartItems.includes(item._id.toString())
-    );
-
-    if (selectedItems.length === 0) {
-      return res.status(400).json({ message: "No items selected." });
-    }
-
-    // Group selected items by shopId
-    const groupedItems = {};
-    selectedItems.forEach((item) => {
-      const shopId = item.product.userId._id.toString();
-      if (!groupedItems[shopId]) {
-        groupedItems[shopId] = [];
-      }
-      groupedItems[shopId].push(item);
-    });
-
-    const selectedDiscounts = await Discount.find({
-      _id: { $in: discounts },
-    });
-
-    const groupedDiscounts = selectedDiscounts.reduce((acc, discount) => {
-      const shopId = discount.shopId.toString();
-      if (!acc[shopId]) {
-        acc[shopId] = [];
-      }
-      acc[shopId].push(discount);
-      return acc;
-    }, {});
-
-    // Create orders for each shop
-    const orders = [];
-    for (const [shopId, items] of Object.entries(groupedItems)) {
-      // Get total price for current shop from orderSummary
-      const currentShopOrderSummary = orderSummary.find(
-        (summary) => summary.shopId === shopId
-      );
-
-      const total = currentShopOrderSummary["totalAmount"];
-      const deliveryFee = currentShopOrderSummary["deliveryFee"];
-      const shopDiscounts = groupedDiscounts[shopId] || [];
-      const shopDiscountsWithAmount = shopDiscounts.map((discount) => {
-        const discountAmount = appliedDiscountDetails[discount._id.toString()];
-        return {
-          discountId: discount._id,
-          amount: discountAmount || 0,
-        };
-      });
-
-      // Create single order
-      const order = new Order({
-        userId,
-        shopId,
-        total,
-        address: addressId,
-        items: items.map((item) => ({
-          product: item.product._id,
-          quantity: item.quantity,
-        })),
-        notes,
-        paymentMethod,
-        deliveryFee,
-        discounts: shopDiscountsWithAmount,
-      });
-      if (payment) {
-        order.paid = payment.status === "paid";
-        order.paymentId = payment._id;
-      }
-      if (paymentMethod === "CARD") {
-        order.paid = true;
-      }
-
-      await order.save();
-
-      setTimeout(async () => {
-        await sendFcmNotification({
-          userId: shopId,
-          title: "You have a new order from TasteTube Shop.",
-          body: `Total order cost: ${total} ${
-            items[0].currency
-          }. Payment status: ${order.paid ? "Paid" : "Unpaid"}.`,
-          data: {
-            type: "order.new",
-          },
-        });
-      }, 1);
-
-      // Update discount user usages
-      setTimeout(async () => {
-        try {
-          for (const discount of shopDiscounts) {
-            const userUsage = discount.userUsages.find(
-              (usage) => usage.userId.toString() === userId
-            );
-            if (userUsage) {
-              userUsage.count += 1;
-            } else {
-              discount.userUsages.push({ userId, count: 1 });
-            }
-            await discount.save();
-            logger.info(`Discount usages ${discount.id} updated successfully.`);
-          }
-        } catch (error) {
-          logger.error("Error updating discount usages:", error);
-        }
-      }, 1);
-
-      orders.push(order);
-    }
-
-    // Clear the selected items from user cart
-    cart.items = cart.items.filter(
-      (item) => !selectedCartItems.includes(item._id.toString())
-    );
-    await cart.save();
-
-    return res.status(201).json({ message: "Orders created successfully" });
+    const result = await orderService.createOrder(req.userId, req.body);
+    res.status(201).json(result);
   } catch (error) {
-    return res.status(500).json({ message: error.message });
+    res.status(error.status || 500).json({ message: error.message });
   }
 };
 
 const getCustomerOrder = async (req, res) => {
-  const userId = req.userId;
-
   try {
-    const orders = await Order.find({ userId: userId }).populate(orderPopulate);
-
-    return res.status(200).json(orders);
+    const orders = await orderService.getCustomerOrders(req.userId);
+    res.status(200).json(orders);
   } catch (error) {
-    return res.status(500).json({ message: error.message });
+    res.status(500).json({ message: error.message });
   }
 };
 
 const getShopOrder = async (req, res) => {
-  const userId = req.userId;
-
   try {
-    const orders = await Order.find({ shopId: userId }).populate(orderPopulate);
-
-    return res.status(200).json(orders);
+    const orders = await orderService.getShopOrders(req.userId);
+    res.status(200).json(orders);
   } catch (error) {
-    return res.status(500).json({ message: error.message });
+    res.status(500).json({ message: error.message });
   }
 };
 
 const updateOrderStatus = async (req, res) => {
   const { newStatus, cancelReason } = req.body;
-  const id = req.params.id;
-
-  if (!newStatus) {
-    return res.status(400).json({ message: "Invalid status" });
-  }
+  const orderId = req.params.id;
 
   try {
-    const order = await Order.findById(id).populate();
-
-    if (!order) {
-      return res.status(404).json({ message: "Order not found" });
-    }
-
-    if (newStatus === "COMPLETED" && order.paymentMethod === "COD") {
-      order.paid = true;
-    }
-
-    // Not allowed to cancel if order is in delivery
-    if (newStatus === "CANCELED") {
-      // Check if last deliveryStatus is "FAILED" or "RETURNED"
-      if (order.deliveryStatusLog.length > 0) {
-        const lastStatus =
-          order.deliveryStatusLog[order.deliveryStatusLog.length - 1];
-        if (lastStatus.deliveryStatus === "COMPLETED") {
-          return res
-            .status(400)
-            .json({ message: "Cannot cancel completed order" });
-        }
-        if (
-          lastStatus.deliveryStatus !== "FAILED" &&
-          lastStatus.deliveryStatus !== "RETURNED"
-        ) {
-          return res
-            .status(400)
-            .json({ message: "Cannot cancel order in delivery" });
-        }
-      }
-
-      order.cancelBy =
-        order.shopId.toString() === req.userId ? "RESTAURANT" : "CUSTOMER";
-      order.cancelReason = cancelReason ?? "No reason provided";
-    }
-
-    // Clear cancelReason and cancelBy if order is resumed
-    if (order.status === "CANCELED" && newStatus !== "CANCELED") {
-      order.cancelReason = undefined;
-      order.cancelBy = undefined;
-    }
-    order.status = newStatus;
-    await order.save();
-
-    return res.status(200).json(order);
+    const order = await orderService.updateOrderStatus(
+      orderId,
+      newStatus,
+      cancelReason,
+      req.userId
+    );
+    res.status(200).json(order);
   } catch (error) {
-    return res.status(500).json({ message: error.message });
+    res.status(error.status || 500).json({ message: error.message });
   }
 };
 
