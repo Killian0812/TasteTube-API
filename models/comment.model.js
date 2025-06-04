@@ -39,4 +39,12 @@ const commentSchema = new Schema({
   },
 });
 
-module.exports = mongoose.model("Comment", commentSchema);
+const commentPopulate = {
+  path: "userId",
+  select: "_id username image",
+};
+
+module.exports = {
+  Comment: mongoose.model("Comment", commentSchema),
+  commentPopulate,
+};

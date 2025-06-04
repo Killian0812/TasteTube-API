@@ -1,7 +1,7 @@
 const { Video, videoPopulate } = require("../models/video.model");
 const { Product } = require("../models/product.model");
 const User = require("../models/user.model");
-const Comment = require("../models/comment.model");
+const { Comment, commentPopulate } = require("../models/comment.model");
 const Interaction = require("../models/interaction.model");
 const {
   uploadToFirebaseStorage,
@@ -188,16 +188,10 @@ const getVideoComments = async (videoId, userId) => {
     videoId: videoId,
     parentCommentId: null,
   }).populate([
-    {
-      path: "userId",
-      select: "_id username image",
-    },
+    commentPopulate,
     {
       path: "replies",
-      populate: {
-        path: "userId",
-        select: "_id username image",
-      },
+      populate: commentPopulate,
     },
   ]);
 
@@ -400,10 +394,7 @@ const commentVideo = async (videoId, userId, text, parentCommentId) => {
     await parentComment.save();
   }
 
-  const populatedComment = await comment.populate({
-    path: "userId",
-    select: "_id username image",
-  });
+  const populatedComment = await comment.populate(commentPopulate);
 
   return populatedComment.toObject();
 };
