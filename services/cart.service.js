@@ -1,4 +1,4 @@
-const { Cart, CartItem } = require("../models/cart.model");
+const { Cart, CartItem, cartPopulate } = require("../models/cart.model");
 const Product = require("../models/product.model");
 const Discount = require("../models/discount.model");
 const DeliveryOption = require("../models/deliveryOption.model");
@@ -22,7 +22,7 @@ const addToCart = async (userId, { productId, quantity }) => {
 
   let cartItem = null;
   for (const itemId of cart.items) {
-    const existingItem = await CartItem.findById(itemId).populate("product");
+    const existingItem = await CartItem.findById(itemId).populate(cartPopulate);
     if (existingItem?.product.equals(productId)) {
       cartItem = existingItem;
       break;
@@ -41,13 +41,7 @@ const addToCart = async (userId, { productId, quantity }) => {
       cost: product.cost * quantity,
     });
     await cartItem.save();
-    await cartItem.populate({
-      path: "product",
-      populate: [
-        { path: "category", select: "_id name" },
-        { path: "userId", select: "_id image username phone" },
-      ],
-    });
+    await cartItem.populate(cartPopulate);
     cart.items.push(cartItem);
   }
 
@@ -73,7 +67,7 @@ const updateItemQuantity = async (userId, { cartItemId, quantity }) => {
     return { status: 404, data: { message: "Item not found in cart." } };
   }
 
-  const cartItem = await CartItem.findById(itemId).populate("product");
+  const cartItem = await CartItem.findById(itemId).populate(cartPopulate);
   cartItem.quantity = quantity;
   cartItem.cost = cartItem.product.cost * quantity;
   await cartItem.save();
@@ -104,10 +98,7 @@ const removeFromCart = async (userId, { cartItemId }) => {
 const getCart = async (userId) => {
   let cart = await Cart.findOne({ userId }).populate({
     path: "items",
-    populate: {
-      path: "product",
-      populate: [{ path: "category" }, { path: "userId" }],
-    },
+    populate: cartPopulate,
   });
 
   if (!cart) {
@@ -124,7 +115,7 @@ const getOrderSummary = async (
 ) => {
   const cart = await Cart.findOne({ userId }).populate({
     path: "items",
-    populate: { path: "product" },
+    populate: cartPopulate,
   });
   if (!cart) return { status: 404, data: { message: "Cart not found" } };
 

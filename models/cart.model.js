@@ -56,4 +56,11 @@ cartSchema.index({ userId: 1 });
 module.exports = {
   Cart: mongoose.model("Cart", cartSchema),
   CartItem: mongoose.model("CartItem", cartItemSchema),
+  cartPopulate: {
+    path: "product",
+    populate: [
+      { path: "category", select: "_id name" },
+      { path: "userId", select: "_id image username phone" },
+    ],
+  },
 };
