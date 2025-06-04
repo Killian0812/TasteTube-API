@@ -1,7 +1,8 @@
 const mongoose = require("mongoose");
 const { Schema } = mongoose;
-const { currencies } = require("../utils/constant");
 const mongoosePaginate = require("mongoose-paginate-v2");
+const streamClient = require("../core/stream");
+const { currencies } = require("../utils/constant");
 
 const userSchema = new Schema(
   {
@@ -68,6 +69,19 @@ const userSchema = new Schema(
     timestamps: true,
   }
 );
+
+userSchema.post("save", async function (doc) {
+  const { id, username, image } = doc;
+  try {
+    await streamClient.upsertUser({
+      id,
+      name: username,
+      image,
+    });
+  } catch (error) {
+    console.error("Stream user upsert failed:", error.message);
+  }
+});
 
 userSchema.plugin(mongoosePaginate);
 
