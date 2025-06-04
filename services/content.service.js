@@ -1,5 +1,5 @@
 const User = require("../models/user.model");
-const Video = require("../models/video.model");
+const { Video, videoPopulate } = require("../models/video.model");
 const { getEmbedding } = require("../services/ai.service");
 
 // Text search for users based on username, email, or phone
@@ -209,17 +209,7 @@ const getPaginatedFeeds = async (query, page, limit) => {
   const feeds = await Video.paginate(query, {
     page,
     limit,
-    populate: [
-      { path: "userId", select: "_id username image" },
-      { path: "targetUserId", select: "_id username image" },
-      {
-        path: "products",
-        populate: [
-          { path: "category", select: "_id name" },
-          { path: "userId", select: "_id image username phone" },
-        ],
-      },
-    ],
+    populate: videoPopulate,
   });
 
   const feedsVideo = feeds.docs.map((video) => video.toObject());

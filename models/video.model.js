@@ -70,4 +70,19 @@ const videoSchema = new Schema(
 
 videoSchema.plugin(mongoosePaginate);
 
-module.exports = mongoose.model("Video", videoSchema);
+const videoPopulate = [
+  { path: "userId", select: "_id username image" },
+  { path: "targetUserId", select: "_id username image" },
+  {
+    path: "products",
+    populate: [
+      { path: "category", select: "_id name" },
+      { path: "userId", select: "_id image username phone" },
+    ],
+  },
+];
+
+module.exports = {
+  Video: mongoose.model("Video", videoSchema),
+  videoPopulate,
+};

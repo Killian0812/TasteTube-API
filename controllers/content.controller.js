@@ -12,7 +12,7 @@ const search = async (req, res) => {
     res.status(result.status).json(result.data);
   } catch (error) {
     logger.error(error);
-    res.status(500).json({ message: "Internal server error" });
+    res.status(500).json({ message: error.message ?? "Internal server error" });
   }
 };
 
@@ -23,7 +23,7 @@ const getFeeds = async (req, res) => {
     res.status(result.status).json(result.data);
   } catch (error) {
     logger.error(error);
-    res.status(500).json({ message: "Internal server error" });
+    res.status(500).json({ message: error.message ?? "Internal server error" });
   }
 };
 
@@ -38,7 +38,7 @@ const getFollowingFeeds = async (req, res) => {
     res.status(result.status).json(result.data);
   } catch (error) {
     logger.error(error);
-    res.status(500).json({ message: "Internal server error" });
+    res.status(500).json({ message: error.message ?? "Internal server error" });
   }
 };
 

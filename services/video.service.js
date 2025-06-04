@@ -1,4 +1,4 @@
-const Video = require("../models/video.model");
+const { Video, videoPopulate } = require("../models/video.model");
 const { Product } = require("../models/product.model");
 const User = require("../models/user.model");
 const Comment = require("../models/comment.model");
@@ -17,28 +17,7 @@ const getVideo = async (videoId, userId) => {
     throw new Error("Please specify a video");
   }
 
-  const video = await Video.findById(videoId)
-    .populate({
-      path: "userId",
-      select: "_id username image",
-    })
-    .populate({
-      path: "targetUserId",
-      select: "_id username image",
-    })
-    .populate({
-      path: "products",
-      populate: [
-        {
-          path: "category",
-          select: "_id name",
-        },
-        {
-          path: "userId",
-          select: "_id image username phone",
-        },
-      ],
-    });
+  const video = await Video.findById(videoId).populate(videoPopulate);
 
   if (!video) {
     throw new Error("Can't find requested video");
@@ -143,29 +122,7 @@ const getUserLikedVideos = async (userId) => {
     likes: { $gt: 0 },
   }).populate({
     path: "videoId",
-    populate: [
-      {
-        path: "userId",
-        select: "_id username image",
-      },
-      {
-        path: "targetUserId",
-        select: "_id username image",
-      },
-      {
-        path: "products",
-        populate: [
-          {
-            path: "category",
-            select: "_id name",
-          },
-          {
-            path: "userId",
-            select: "_id image username phone",
-          },
-        ],
-      },
-    ],
+    populate: videoPopulate,
   });
 
   const videos = userInteracts
@@ -184,28 +141,7 @@ const getUserTargetedReviews = async (targetUserId, productId) => {
   const userTargetedReviews = await Video.find({
     targetUserId: targetUserId,
     ...(productId ? { products: productId } : {}),
-  })
-    .populate({
-      path: "userId",
-      select: "_id username image",
-    })
-    .populate({
-      path: "targetUserId",
-      select: "_id username image",
-    })
-    .populate({
-      path: "products",
-      populate: [
-        {
-          path: "category",
-          select: "_id name",
-        },
-        {
-          path: "userId",
-          select: "_id image username phone",
-        },
-      ],
-    });
+  }).populate(videoPopulate);
 
   return { videos: userTargetedReviews };
 };
@@ -401,28 +337,7 @@ const updateVideo = async (userId, videoId, body) => {
   await video.save();
 
   // Populate video for response
-  const populatedVideo = await Video.findById(videoId)
-    .populate({
-      path: "userId",
-      select: "_id username image",
-    })
-    .populate({
-      path: "targetUserId",
-      select: "_id username image",
-    })
-    .populate({
-      path: "products",
-      populate: [
-        {
-          path: "category",
-          select: "_id name",
-        },
-        {
-          path: "userId",
-          select: "_id image username phone",
-        },
-      ],
-    });
+  const populatedVideo = await Video.findById(videoId).populate(videoPopulate);
 
   setImmediate(async () => {
     await _generateVideoEmbedding(video._id);
@@ -587,29 +502,7 @@ const getVideos = async ({
     limit: parseInt(limit, 10) || 10,
     select: "-__v", // Exclude version key
     sort: { createdAt: -1 }, // Sort by newest first
-    populate: [
-      {
-        path: "userId",
-        select: "_id username image",
-      },
-      {
-        path: "targetUserId",
-        select: "_id username image",
-      },
-      {
-        path: "products",
-        populate: [
-          {
-            path: "category",
-            select: "_id name",
-          },
-          {
-            path: "userId",
-            select: "_id image username phone",
-          },
-        ],
-      },
-    ],
+    populate: videoPopulate,
   };
 
   const query = {};
@@ -651,28 +544,7 @@ const updateVideoStatus = async (videoId, newStatus) => {
     throw new Error("No video found");
   }
 
-  const video = await Video.findById(videoId)
-    .populate({
-      path: "userId",
-      select: "_id username image",
-    })
-    .populate({
-      path: "targetUserId",
-      select: "_id username image",
-    })
-    .populate({
-      path: "products",
-      populate: [
-        {
-          path: "category",
-          select: "_id name",
-        },
-        {
-          path: "userId",
-          select: "_id image username phone",
-        },
-      ],
-    });
+  const video = await Video.findById(videoId).populate(videoPopulate);
   if (!video) {
     throw new Error("Video not found");
   }
