@@ -134,4 +134,36 @@ orderSchema.pre("validate", async function (next) {
   }
 });
 
-module.exports = mongoose.model("Order", orderSchema);
+const orderPopulate = [
+  {
+    path: "items",
+    populate: [
+      {
+        path: "product",
+        populate: [
+          {
+            path: "category",
+          },
+          {
+            path: "userId",
+          },
+        ],
+      },
+    ],
+  },
+  {
+    path: "address",
+  },
+  {
+    path: "userId",
+    select: "_id phone email username image",
+  },
+  {
+    path: "discounts.discountId",
+  },
+];
+
+module.exports = {
+  Order: mongoose.model("Order", orderSchema),
+  orderPopulate: orderPopulate,
+};

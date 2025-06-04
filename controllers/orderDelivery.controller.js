@@ -1,4 +1,4 @@
-const Order = require("../models/order.model");
+const { Order } = require("../models/order.model");
 const DeliveryOption = require("../models/deliveryOption.model");
 const {
   getSelfDeliveryFee,

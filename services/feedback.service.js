@@ -1,5 +1,5 @@
 const { Feedback, feedbackPopulate } = require("../models/feedback.model");
-const Order = require("../models/order.model");
+const { Order } = require("../models/order.model");
 
 const updateProductFeedback = async (
   userId,

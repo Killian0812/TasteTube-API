@@ -1,5 +1,5 @@
-const { Cart } = require("../models/cart.model");
-const Order = require("../models/order.model");
+const { Cart, cartPopulate } = require("../models/cart.model");
+const { Order, orderPopulate } = require("../models/order.model");
 const Payment = require("../models/payment.model");
 const Discount = require("../models/discount.model");
 const { sendFcmNotification } = require("../services/fcm.service");
@@ -42,17 +42,7 @@ const createOrder = async (req, res) => {
 
     const cart = await Cart.findOne({ userId }).populate({
       path: "items",
-      populate: {
-        path: "product",
-        populate: [
-          {
-            path: "category",
-          },
-          {
-            path: "userId",
-          },
-        ],
-      },
+      populate: cartPopulate,
     });
 
     if (!cart || cart.items.length === 0) {
@@ -187,34 +177,7 @@ const getCustomerOrder = async (req, res) => {
   const userId = req.userId;
 
   try {
-    const orders = await Order.find({ userId: userId }).populate([
-      {
-        path: "items",
-        populate: [
-          {
-            path: "product",
-            populate: [
-              {
-                path: "category",
-              },
-              {
-                path: "userId",
-              },
-            ],
-          },
-        ],
-      },
-      {
-        path: "address",
-      },
-      {
-        path: "userId",
-        select: "_id phone email username image",
-      },
-      {
-        path: "discounts.discountId",
-      },
-    ]);
+    const orders = await Order.find({ userId: userId }).populate(orderPopulate);
 
     return res.status(200).json(orders);
   } catch (error) {
@@ -226,34 +189,7 @@ const getShopOrder = async (req, res) => {
   const userId = req.userId;
 
   try {
-    const orders = await Order.find({ shopId: userId }).populate([
-      {
-        path: "items",
-        populate: [
-          {
-            path: "product",
-            populate: [
-              {
-                path: "category",
-              },
-              {
-                path: "userId",
-              },
-            ],
-          },
-        ],
-      },
-      {
-        path: "address",
-      },
-      {
-        path: "userId",
-        select: "_id phone email username image",
-      },
-      {
-        path: "discounts.discountId",
-      },
-    ]);
+    const orders = await Order.find({ shopId: userId }).populate(orderPopulate);
 
     return res.status(200).json(orders);
   } catch (error) {
@@ -270,34 +206,7 @@ const updateOrderStatus = async (req, res) => {
   }
 
   try {
-    const order = await Order.findById(id).populate([
-      {
-        path: "items",
-        populate: [
-          {
-            path: "product",
-            populate: [
-              {
-                path: "category",
-              },
-              {
-                path: "userId",
-              },
-            ],
-          },
-        ],
-      },
-      {
-        path: "address",
-      },
-      {
-        path: "userId",
-        select: "_id phone email username image",
-      },
-      {
-        path: "discounts.discountId",
-      },
-    ]);
+    const order = await Order.findById(id).populate();
 
     if (!order) {
       return res.status(404).json({ message: "Order not found" });

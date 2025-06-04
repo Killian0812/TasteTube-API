@@ -1,5 +1,5 @@
 const Analytic = require("../models/analytic.model");
-const Order = require("../models/order.model");
+const { Order } = require("../models/order.model");
 const Video = require("../models/video.model");
 const User = require("../models/user.model");
 const Product = require("../models/product.model");
