@@ -1,35 +1,29 @@
-const DeliveryOption = require("../models/deliveryOption.model");
+const deliveryService = require("../services/delivery.service.js");
+const logger = require("../core/logger");
 
 const getDeliveryOption = async (req, res) => {
-  const userId = req.userId;
   try {
-    let deliveryOption = await DeliveryOption.findOne({
-      shopId: userId,
-    }).populate("address");
-    if (!deliveryOption) {
-      deliveryOption = await DeliveryOption.create({
-        shopId: userId,
-      });
-    }
-    res.status(200).json(deliveryOption);
+    const result = await deliveryService.getDeliveryOption(req.userId);
+    res.status(result.status).json(result.data);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ message: error.message ?? "Internal server error" });
   }
 };
 
 const updateDeliveryOption = async (req, res) => {
-  const userId = req.userId;
-  const { freeDistance, feePerKm, maxDistance, address } = req.body;
   try {
-    const updatedOption = await DeliveryOption.findOneAndUpdate(
-      { shopId: userId },
-      { freeDistance, feePerKm, maxDistance, address },
-      { new: true }
-    ).populate("address");
-    res.status(200).json(updatedOption);
+    const result = await deliveryService.updateDeliveryOption(
+      req.userId,
+      req.body
+    );
+    res.status(result.status).json(result.data);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    logger.error(error);
+    res.status(500).json({ message: error.message ?? "Internal server error" });
   }
 };
 
-module.exports = { getDeliveryOption, updateDeliveryOption };
+module.exports = {
+  getDeliveryOption,
+  updateDeliveryOption,
+};
