@@ -1,4 +1,4 @@
-const { Product } = require("../models/product.model");
+const { Product, productPopulate } = require("../models/product.model");
 const ShopService = require("../services/shop.service");
 const DeliveryOption = require("../models/deliveryOption.model");
 
@@ -25,9 +25,9 @@ async function getRecommendedProducts(req, res) {
 async function getProductsInShop(req, res) {
   const shopId = req.params.shopId;
   try {
-    const products = await Product.find({ userId: shopId })
-      .populate("category", "_id name")
-      .populate("userId", "_id image username phone");
+    const products = await Product.find({ userId: shopId }).populate(
+      productPopulate
+    );
     const deliveryOption = await DeliveryOption.findOne({
       shopId: shopId,
       address: { $ne: null },
@@ -73,9 +73,7 @@ async function searchProductsInShop(req, res) {
         { description: { $regex: keyword, $options: "i" } },
       ],
       userId: userId,
-    })
-      .populate("category", "_id name")
-      .populate("userId", "_id image username phone");
+    }).populate(productPopulate);
 
     res.status(200).json(products);
   } catch (error) {
