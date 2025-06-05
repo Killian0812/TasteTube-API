@@ -1,3 +1,8 @@
+const mongoose = require("mongoose");
+const { Schema } = mongoose;
+const mongoosePaginate = require("mongoose-paginate-v2");
+const { currencies } = require("../utils/constant");
+
 const productSchema = new Schema(
   {
     userId: {
