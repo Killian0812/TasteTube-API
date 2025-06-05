@@ -72,7 +72,6 @@ const productSchema = new Schema(
         extraCost: {
           type: Number,
           default: 0,
-          min: 0,
         },
       },
     ],
