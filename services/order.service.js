@@ -1,4 +1,4 @@
-const { Cart, cartPopulate } = require("../models/cart.model");
+const { Cart, cartItemPopulate } = require("../models/cart.model");
 const { Order, orderPopulate } = require("../models/order.model");
 const Payment = require("../models/payment.model");
 const Discount = require("../models/discount.model");
@@ -34,7 +34,7 @@ const createOrder = async (userId, body) => {
 
   const cart = await Cart.findOne({ userId }).populate({
     path: "items",
-    populate: cartPopulate,
+    populate: cartItemPopulate,
   });
   if (!cart || cart.items.length === 0)
     throw { status: 400, message: "Your cart is empty." };

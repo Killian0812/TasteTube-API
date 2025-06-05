@@ -1,4 +1,4 @@
-const { Cart, CartItem, cartPopulate } = require("../models/cart.model");
+const { Cart, CartItem, cartItemPopulate } = require("../models/cart.model");
 const { Product } = require("../models/product.model");
 const Discount = require("../models/discount.model");
 const DeliveryOption = require("../models/deliveryOption.model");
@@ -22,7 +22,9 @@ const addToCart = async (userId, { productId, quantity }) => {
 
   let cartItem = null;
   for (const itemId of cart.items) {
-    const existingItem = await CartItem.findById(itemId).populate(cartPopulate);
+    const existingItem = await CartItem.findById(itemId).populate(
+      cartItemPopulate
+    );
     if (existingItem?.product.equals(productId)) {
       cartItem = existingItem;
       break;
@@ -41,7 +43,7 @@ const addToCart = async (userId, { productId, quantity }) => {
       cost: product.cost * quantity,
     });
     await cartItem.save();
-    await cartItem.populate(cartPopulate);
+    await cartItem.populate(cartItemPopulate);
     cart.items.push(cartItem);
   }
 
@@ -67,7 +69,7 @@ const updateItemQuantity = async (userId, { cartItemId, quantity }) => {
     return { status: 404, data: { message: "Item not found in cart." } };
   }
 
-  const cartItem = await CartItem.findById(itemId).populate(cartPopulate);
+  const cartItem = await CartItem.findById(itemId).populate(cartItemPopulate);
   cartItem.quantity = quantity;
   cartItem.cost = cartItem.product.cost * quantity;
   await cartItem.save();
@@ -98,7 +100,7 @@ const removeFromCart = async (userId, { cartItemId }) => {
 const getCart = async (userId) => {
   let cart = await Cart.findOne({ userId }).populate({
     path: "items",
-    populate: cartPopulate,
+    populate: cartItemPopulate,
   });
 
   if (!cart) {
@@ -115,7 +117,7 @@ const getOrderSummary = async (
 ) => {
   const cart = await Cart.findOne({ userId }).populate({
     path: "items",
-    populate: cartPopulate,
+    populate: cartItemPopulate,
   });
   if (!cart) return { status: 404, data: { message: "Cart not found" } };
 

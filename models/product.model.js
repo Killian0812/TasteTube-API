@@ -1,8 +1,3 @@
-const mongoose = require("mongoose");
-const { Schema } = mongoose;
-const mongoosePaginate = require("mongoose-paginate-v2");
-const { currencies } = require("../utils/constant");
-
 const productSchema = new Schema(
   {
     userId: {
@@ -62,6 +57,38 @@ const productSchema = new Schema(
     prepTime: {
       type: Number,
     },
+    sizes: [
+      {
+        name: {
+          type: String,
+          required: true,
+          trim: true,
+        },
+        extraCost: {
+          type: Number,
+          default: 0,
+          min: 0,
+        },
+      },
+    ],
+    toppings: [
+      {
+        name: {
+          type: String,
+          required: true,
+          trim: true,
+        },
+        extraCost: {
+          type: Number,
+          default: 0,
+          min: 0,
+        },
+        isAvailable: {
+          type: Boolean,
+          default: true,
+        },
+      },
+    ],
   },
   {
     timestamps: true,

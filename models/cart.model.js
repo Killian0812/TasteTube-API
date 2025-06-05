@@ -29,6 +29,28 @@ const cartItemSchema = new Schema(
       ref: "Product",
       required: true,
     },
+
+    // Selected size (e.g., "Large")
+    size: {
+      type: String,
+      trim: true,
+    },
+    // Selected toppings (by name)
+    toppings: [
+      {
+        name: {
+          type: String,
+          required: true,
+          trim: true,
+        },
+        extraCost: {
+          type: Number,
+          default: 0,
+          min: 0,
+        },
+      },
+    ],
+
     quantity: {
       type: Number,
       min: 1,
@@ -38,7 +60,10 @@ const cartItemSchema = new Schema(
       alias: "qty",
     },
     cost: {
+      // base cost + size + toppings
       type: Number,
+      required: true,
+      min: 0,
     },
     currency: {
       type: String,
@@ -56,7 +81,7 @@ cartSchema.index({ userId: 1 });
 module.exports = {
   Cart: mongoose.model("Cart", cartSchema),
   CartItem: mongoose.model("CartItem", cartItemSchema),
-  cartPopulate: {
+  cartItemPopulate: {
     path: "product",
     populate: [
       { path: "category", select: "_id name" },
