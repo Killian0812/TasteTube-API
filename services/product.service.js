@@ -64,8 +64,17 @@ const getProductById = async (productId) => {
 };
 
 const createNewProduct = async (productData, files, userId) => {
-  const { name, cost, description, quantity, prepTime, category, ship } =
-    productData;
+  const {
+    name,
+    cost,
+    description,
+    quantity,
+    prepTime,
+    category,
+    ship,
+    sizes,
+    toppings,
+  } = productData;
 
   if (!name || !cost || !quantity) {
     throw new Error("Missing required information for product creation.");
@@ -84,16 +93,18 @@ const createNewProduct = async (productData, files, userId) => {
   const shop = await User.findById(userId);
 
   const newProduct = new Product({
-    userId: userId,
+    userId,
     name,
     cost,
-    currency: shop.currency ?? "VND", // Use default if not set
+    currency: shop.currency ?? "VND",
     description,
     quantity,
     prepTime,
     category,
     images,
     ship,
+    sizes: Array.isArray(sizes) ? sizes : [],
+    toppings: Array.isArray(toppings) ? toppings : [],
   });
   await newProduct.save().then((t) => t.populate(["category", "userId"]));
   return newProduct;
@@ -110,25 +121,33 @@ const updateProductById = async (productId, userId, updateData, files) => {
     ship,
     category,
     reordered_images,
+    sizes,
+    toppings,
   } = updateData;
 
   const product = await Product.findById(productId);
 
   if (!product || product.userId.toString() !== userId) {
-    return null; // Product not found or permission denied
+    return null;
   }
 
-  product.name = name !== undefined ? name : product.name;
-  product.cost = cost !== undefined ? cost : product.cost;
-  product.currency = currency !== undefined ? currency : product.currency;
-  product.description =
-    description !== undefined ? description : product.description;
-  product.quantity = quantity !== undefined ? quantity : product.quantity;
-  product.prepTime = prepTime !== undefined ? prepTime : product.prepTime;
-  product.category = category !== undefined ? category : product.category;
-  product.ship = ship !== undefined ? ship : product.ship;
-  product.images =
-    reordered_images !== undefined ? reordered_images : product.images;
+  product.name = name ?? product.name;
+  product.cost = cost ?? product.cost;
+  product.currency = currency ?? product.currency;
+  product.description = description ?? product.description;
+  product.quantity = quantity ?? product.quantity;
+  product.prepTime = prepTime ?? product.prepTime;
+  product.category = category ?? product.category;
+  product.ship = ship ?? product.ship;
+  product.images = reordered_images ?? product.images;
+
+  if (Array.isArray(sizes)) {
+    product.sizes = sizes;
+  }
+
+  if (Array.isArray(toppings)) {
+    product.toppings = toppings;
+  }
 
   if (files && files.length > 0) {
     const newImages = await Promise.all(
@@ -140,7 +159,7 @@ const updateProductById = async (productId, userId, updateData, files) => {
     product.images.push(...newImages);
   }
 
-  await product.save().then((t) => t.populate(["category", "userId"]));
+  await product.save().then((t) => t.populate(productPopulate));
   return product;
 };
 
