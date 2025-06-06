@@ -79,6 +79,8 @@ const createOrder = async (userId, body) => {
       items: items.map((i) => ({
         product: i.product._id,
         quantity: i.quantity,
+        size: i.size,
+        toppings: i.toppings,
       })),
       notes,
       paymentMethod,

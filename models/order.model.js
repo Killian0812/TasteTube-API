@@ -53,6 +53,24 @@ const orderSchema = new Schema(
           required: true,
           min: 1,
         },
+        size: {
+          type: String,
+          trim: true,
+        },
+        toppings: [
+          {
+            name: {
+              type: String,
+              required: true,
+              trim: true,
+            },
+            extraCost: {
+              type: Number,
+              default: 0,
+              min: 0,
+            },
+          },
+        ],
       },
     ],
     paymentMethod: {
