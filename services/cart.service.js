@@ -4,7 +4,14 @@ const Discount = require("../models/discount.model");
 const DeliveryOption = require("../models/deliveryOption.model");
 const { getSelfDeliveryFee } = require("./orderDelivery.service");
 
-const addToCart = async (userId, { productId, quantity }) => {
+// Helper to normalize toppings (compare by name only)
+const _normalizeToppings = (t) =>
+  [...t].sort((a, b) => a.name.localeCompare(b.name));
+
+const addToCart = async (
+  userId,
+  { productId, quantity, size = null, toppings = [] }
+) => {
   if (quantity <= 0) {
     return {
       status: 400,
@@ -20,29 +27,53 @@ const addToCart = async (userId, { productId, quantity }) => {
   let cart =
     (await Cart.findOne({ userId })) || new Cart({ userId, items: [] });
 
+  const inputToppings = _normalizeToppings(toppings);
+
   let cartItem = null;
   for (const itemId of cart.items) {
     const existingItem = await CartItem.findById(itemId).populate(
       cartItemPopulate
     );
-    if (existingItem?.product.equals(productId)) {
-      cartItem = existingItem;
-      break;
+    if (
+      existingItem &&
+      existingItem.product.equals(productId) &&
+      existingItem.size === size
+    ) {
+      const existingToppings = _normalizeToppings(existingItem.toppings || []);
+
+      // Check if new cartItem having same topping to an existing one
+      const sameToppings =
+        inputToppings.length === existingToppings.length &&
+        inputToppings.every((t, i) => t.name === existingToppings[i].name);
+
+      if (sameToppings) {
+        cartItem = existingItem;
+        break;
+      }
     }
   }
 
+  // Calculate total cost
+  const baseCost = product.cost;
+  const extraToppingsCost = toppings.reduce(
+    (sum, t) => sum + (t.extraCost || 0),
+    0
+  );
+  const totalCost = (baseCost + extraToppingsCost) * quantity;
+
   if (cartItem) {
     cartItem.quantity += quantity;
-    cartItem.cost += product.cost * quantity;
+    cartItem.cost += totalCost;
     await cartItem.save();
   } else {
-    cartItem = new CartItem({
+    cartItem = await CartItem.create({
       product: product._id,
       currency: product.currency,
       quantity,
-      cost: product.cost * quantity,
+      size,
+      toppings,
+      cost: totalCost,
     });
-    await cartItem.save();
     await cartItem.populate(cartItemPopulate);
     cart.items.push(cartItem);
   }
