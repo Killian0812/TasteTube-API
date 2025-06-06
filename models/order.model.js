@@ -53,6 +53,12 @@ const orderSchema = new Schema(
           required: true,
           min: 1,
         },
+        cost: {
+          // base cost + size + toppings
+          type: Number,
+          required: true,
+          min: 0,
+        },
         size: {
           type: String,
           trim: true,

@@ -81,6 +81,7 @@ const createOrder = async (userId, body) => {
         quantity: i.quantity,
         size: i.size,
         toppings: i.toppings,
+        cost: i.cost,
       })),
       notes,
       paymentMethod,
