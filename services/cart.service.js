@@ -59,7 +59,11 @@ const addToCart = async (
     (sum, t) => sum + (t.extraCost || 0),
     0
   );
-  const totalCost = (baseCost + extraToppingsCost) * quantity;
+
+  const sizeOption = product.sizes?.find((s) => s.name === size);
+  const sizeExtraCost = sizeOption?.extraCost || 0;
+
+  const totalCost = (baseCost + sizeExtraCost + extraToppingsCost) * quantity;
 
   if (cartItem) {
     cartItem.quantity += quantity;
