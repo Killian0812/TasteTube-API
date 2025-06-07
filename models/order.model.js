@@ -56,7 +56,6 @@ const orderSchema = new Schema(
         cost: {
           // base cost + size + toppings
           type: Number,
-          required: true,
           min: 0,
         },
         size: {
