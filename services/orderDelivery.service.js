@@ -3,19 +3,6 @@ const { Order } = require("../models/order.model");
 const DeliveryOption = require("../models/deliveryOption.model");
 const grabAxios = require("../utils/axios/grab.axios");
 
-const deliveryStatus = [
-  "ALLOCATING",
-  "PENDING_PICKUP",
-  "PICKING_UP",
-  "PENDING_DROP_OFF",
-  "IN_DELIVERY",
-  "IN_RETURN",
-  "RETURNED",
-  "COMPLETED",
-  "CANCELED",
-  "FAILED",
-];
-
 const getGrabDeliveryQuote = async (deliveryOption, order) => {
   const packages = order.items.map((item) => {
     const product = item.product;
@@ -368,8 +355,6 @@ const renewOrderDelivery = async (orderId) => {
 };
 
 module.exports = {
-  deliveryStatus,
-
   // Grab delivery
   getGrabDeliveryQuote,
   createGrabDelivery,
