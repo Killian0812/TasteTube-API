@@ -5,7 +5,7 @@ const {
 } = require("../services/storage.service");
 const { kickoutUser } = require("../core/socket");
 
-const getUserInfo = async (userId, requestingUserId) => {
+const getUserInfo = async (userId, requestUserId) => {
   if (!userId) {
     throw new Error("No user found");
   }
@@ -29,7 +29,7 @@ const getUserInfo = async (userId, requestingUserId) => {
   } = user;
 
   const isFollower = user.followers.some((follower) =>
-    follower.equals(requestingUserId)
+    follower.equals(requestUserId)
   );
 
   return {

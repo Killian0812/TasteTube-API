@@ -141,7 +141,10 @@ const getUserVideos = async (userId, requestUserId) => {
     .sort({ createdAt: -1 })
     .populate(videoPopulate);
 
-  const isFollower = true; // TODO: Implement
+  const user = await User.findById(userId);
+  const isFollower = user.followers.some((follower) =>
+    follower.equals(requestUserId)
+  );
 
   const visibleVideos = videos.filter((video) => {
     let canView = false;
