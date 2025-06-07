@@ -38,13 +38,6 @@ const userSchema = new Schema(
         ref: "User",
       },
     ],
-    videos: [
-      // Future remove
-      {
-        type: Schema.Types.ObjectId,
-        ref: "Video",
-      },
-    ],
     currency: {
       type: String,
       enum: currencies,

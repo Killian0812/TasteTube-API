@@ -17,6 +17,16 @@ const getVideo = async (req, res) => {
   }
 };
 
+const getUserVideos = async (req, res) => {
+  try {
+    const videos = await videoService.getUserVideos(req.query.userId, req.userId);
+    return res.status(200).json(videos);
+  } catch (error) {
+    logger.info(error);
+    return res.status(500).json({ message: error.message });
+  }
+};
+
 const getVideoInteraction = async (req, res) => {
   try {
     const totalInteractions = await videoService.getVideoInteraction(
@@ -270,6 +280,7 @@ module.exports = {
   updateVideo,
   deleteVideo,
   commentVideo,
+  getUserVideos,
   getUserLikedVideos,
   getUserTargetedReviews,
   getVideoComments,

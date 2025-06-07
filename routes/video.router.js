@@ -26,6 +26,7 @@ const videoController = require("../controllers/video.controller");
 const verifyJWT = require("../middlewares/verifyJWT");
 
 router.get("/", verifyJWT(), videoController.getVideos);
+router.get("/owned", verifyJWT(), videoController.getUserVideos);
 router.get("/liked", verifyJWT(), videoController.getUserLikedVideos);
 router.get("/review", verifyJWT(true), videoController.getUserTargetedReviews);
 router.get("/:videoId", verifyJWT(true), videoController.getVideo);

@@ -10,32 +10,7 @@ const getUserInfo = async (userId, requestingUserId) => {
     throw new Error("No user found");
   }
 
-  const user = await User.findById(userId).populate({
-    path: "videos",
-    populate: [
-      {
-        path: "userId",
-        select: "_id username image",
-      },
-      {
-        path: "targetUserId",
-        select: "_id username image",
-      },
-      {
-        path: "products",
-        populate: [
-          {
-            path: "category",
-            select: "_id name",
-          },
-          {
-            path: "userId",
-            select: "_id image username phone",
-          },
-        ],
-      },
-    ],
-  });
+  const user = await User.findById(userId);
 
   if (!user) {
     throw new Error("User not found");
@@ -51,24 +26,11 @@ const getUserInfo = async (userId, requestingUserId) => {
     role,
     filename,
     image,
-    videos,
   } = user;
 
   const isFollower = user.followers.some((follower) =>
     follower.equals(requestingUserId)
   );
-
-  const visibleVideos = videos.filter((video) => {
-    let canView = false;
-    if (video.visibility === "PRIVATE") {
-      canView = video.userId.equals(requestingUserId);
-    } else if (video.visibility === "FOLLOWERS_ONLY") {
-      canView = video.userId.equals(requestingUserId) || isFollower;
-    } else {
-      canView = true;
-    }
-    return canView;
-  });
 
   return {
     _id: userId,
@@ -77,7 +39,6 @@ const getUserInfo = async (userId, requestingUserId) => {
     phone,
     filename,
     image,
-    videos: visibleVideos,
     bio,
     role,
     followers,
@@ -95,33 +56,7 @@ const updateUserInfo = async (
   newImage,
   existingUsername
 ) => {
-  const user = await User.findById(userId).populate({
-    path: "videos",
-    populate: [
-      {
-        path: "userId",
-        select: "_id username image",
-      },
-      {
-        path: "targetUserId",
-        select: "_id username image",
-      },
-      {
-        path: "products",
-        populate: [
-          {
-            path: "category",
-            select: "_id name",
-          },
-          {
-            path: "userId",
-            select: "_id image username phone",
-          },
-        ],
-      },
-    ],
-  });
-
+  const user = await User.findById(userId);
   if (!user) {
     throw new Error("Internal Server Error");
   }
@@ -178,7 +113,6 @@ const updateUserInfo = async (
     bio: user.bio,
     filename: user.filename,
     image: user.image,
-    videos: user.videos,
     followers: user.followers,
     followings: user.followings,
   };
@@ -319,7 +253,6 @@ const updateUserStatus = async (userId, newStatus) => {
   ]);
 
   delete user.password;
-  user.videos = [];
 
   return user;
 };

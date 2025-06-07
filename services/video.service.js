@@ -129,7 +129,33 @@ const getUserLikedVideos = async (userId) => {
     .map((e) => e.videoId)
     .filter((video, index, self) => video && self.indexOf(video) === index);
 
-  return { videos };
+  return videos;
+};
+
+const getUserVideos = async (userId, requestUserId) => {
+  if (!userId) {
+    throw new Error("No user found");
+  }
+
+  const videos = await Video.find({ userId })
+    .sort({ createdAt: -1 })
+    .populate(videoPopulate);
+
+  const isFollower = true; // TODO: Implement
+
+  const visibleVideos = videos.filter((video) => {
+    let canView = false;
+    if (video.visibility === "PRIVATE") {
+      canView = video.userId.equals(requestUserId);
+    } else if (video.visibility === "FOLLOWERS_ONLY") {
+      canView = video.userId.equals(requestUserId) || isFollower;
+    } else {
+      canView = true;
+    }
+    return canView;
+  });
+
+  return visibleVideos;
 };
 
 const getUserTargetedReviews = async (targetUserId, productId) => {
@@ -276,9 +302,7 @@ const uploadVideo = async (userId, file, body) => {
   });
 
   setImmediate(async () => {
-    user.videos.push(video._id);
     await Promise.all([
-      user.save(),
       createVideoTranscoderJob(video),
       _generateVideoEmbedding(video._id),
     ]);
@@ -357,11 +381,6 @@ const deleteVideo = async (videoId, userId) => {
   await deleteFromFirebaseStorage(video.filename);
 
   await Video.deleteOne({ _id: videoId });
-
-  const user = await User.findById(userId);
-  const updatedVideos = user.videos.filter((e) => !e._id.equals(videoId));
-  user.videos = updatedVideos;
-  await user.save();
 
   await Interaction.deleteMany({ videoId });
   await Comment.deleteMany({ videoId });
@@ -550,6 +569,7 @@ module.exports = {
   getVideo,
   getVideoInteraction,
   incrementVideoView,
+  getUserVideos,
   getUserLikedVideos,
   getUserTargetedReviews,
   getVideoComments,
