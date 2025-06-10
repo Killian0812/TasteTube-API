@@ -1,6 +1,10 @@
 const mongoose = require("mongoose");
 const { Schema } = mongoose;
 const mongoosePaginate = require("mongoose-paginate-v2");
+const { getEmbedding } = require("../services/ai.service");
+const {
+  createVideoTranscoderJob,
+} = require("../services/storage.service");
 
 const videoSchema = new Schema(
   {
@@ -67,6 +71,35 @@ const videoSchema = new Schema(
     timestamps: true,
   }
 );
+
+videoSchema.post("save", async function (doc, next) {
+  try {
+    if (doc.isNew) {
+      await createVideoTranscoderJob(doc);
+    }
+    const text = [doc.title || "", doc.description || ""]
+      .filter((t) => t.trim() !== "")
+      .join(" ");
+
+    if (!text) {
+      logger.warn(
+        `No text content to generate embedding for video: ${doc._id}`
+      );
+      return next();
+    }
+
+    const embedding = await getEmbedding(text);
+    doc.embedding = embedding;
+    await doc.save();
+    logger.info(`Embedding generated for video: ${doc._id}`);
+  } catch (error) {
+    logger.error(
+      `Error generating video embedding for video: ${doc._id}`,
+      error
+    );
+    next();
+  }
+});
 
 videoSchema.plugin(mongoosePaginate);
 
