@@ -5,6 +5,7 @@ const { getEmbedding } = require("../services/ai.service");
 const {
   createVideoTranscoderJob,
 } = require("../services/storage.service");
+const logger = require("../core/logger");
 
 const videoSchema = new Schema(
   {
