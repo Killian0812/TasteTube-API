@@ -6,7 +6,7 @@ const User = require("../models/user.model");
 const { FirebaseAuth } = require("../core/firebase");
 const streamClient = require("../core/stream");
 const { defaultAvatar } = require("../utils/constant");
-const { sendOtp, verifyOtp } = require("../services/sms.service");
+const { sendOtp, verifyOtp, messageMap } = require("../services/sms.service");
 
 const generateTokens = (user) => ({
   accessToken: JWT.sign(
@@ -183,15 +183,6 @@ const phoneOtpVerifyService = async (phone, otp) => {
 
   const response = await verifyOtp(phone, otp);
   if (response.status !== "approved") {
-    const messageMap = {
-      pending: "OTP verification is still pending. Please try again.",
-      canceled: "OTP verification was canceled. Please request a new OTP.",
-      max_attempts_reached:
-        "Maximum OTP attempts reached. Please request a new OTP.",
-      deleted: "OTP session was deleted. Please request a new OTP.",
-      failed: "OTP verification failed. Please check the OTP and try again.",
-      expired: "OTP has expired. Please request a new OTP.",
-    };
     throw {
       statusCode: 400,
       message:

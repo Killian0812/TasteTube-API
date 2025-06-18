@@ -16,6 +16,13 @@ const paymentSchema = new Schema(
     },
     status: {
       type: String,
+      default: "initial",
+      enum: ["initial", "paid", "failed"],
+    },
+    type: {
+      type: String,
+      enum: ["cash", "card", "vnpay"],
+      default: "cash",
     },
   },
   {

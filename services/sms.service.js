@@ -2,6 +2,16 @@ const logger = require("../core/logger");
 const twilioClient = require("../core/twilio");
 const twilioServiceSID = process.env.TWILIO_SERVICE_SID;
 
+const messageMap = {
+  pending: "OTP verification is still pending. Please try again.",
+  canceled: "OTP verification was canceled. Please request a new OTP.",
+  max_attempts_reached:
+    "Maximum OTP attempts reached. Please request a new OTP.",
+  deleted: "OTP session was deleted. Please request a new OTP.",
+  failed: "OTP verification failed. Please check the OTP and try again.",
+  expired: "OTP has expired. Please request a new OTP.",
+};
+
 const sendOtp = async (phoneNumber) => {
   const otp = {
     code: Math.floor(100000 + Math.random() * 900000),
@@ -52,4 +62,4 @@ const verifyOtp = async (phoneNumber, otp) => {
   }
 };
 
-module.exports = { sendOtp, verifyOtp };
+module.exports = { sendOtp, verifyOtp, messageMap };
