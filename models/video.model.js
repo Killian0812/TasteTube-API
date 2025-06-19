@@ -2,9 +2,8 @@ const mongoose = require("mongoose");
 const { Schema } = mongoose;
 const mongoosePaginate = require("mongoose-paginate-v2");
 const { getEmbedding } = require("../services/ai.service");
-const {
-  createVideoTranscoderJob,
-} = require("../services/storage.service");
+const { createVideoTranscoderJob } = require("../services/storage.service");
+const ffmpeg = require("fluent-ffmpeg");
 const logger = require("../core/logger");
 
 const videoSchema = new Schema(
@@ -67,6 +66,10 @@ const videoSchema = new Schema(
       type: [Number],
       default: null,
     },
+    duration: {
+      type: Number, // in seconds
+      default: 0,
+    },
   },
   {
     timestamps: true,
@@ -77,6 +80,17 @@ videoSchema.post("save", async function (doc, next) {
   try {
     if (doc.isNew) {
       await createVideoTranscoderJob(doc);
+
+      ffmpeg.ffprobe(doc.url, async (err, metadata) => {
+        if (err) {
+          logger.error(`Error getting duration for video: ${doc._id}`, err);
+        } else {
+          const duration = metadata.format.duration;
+          doc.duration = Math.floor(duration); // Round to nearest second
+          await doc.save();
+          logger.info(`Duration saved for video: ${doc._id}`);
+        }
+      });
     }
     const text = [doc.title || "", doc.description || ""]
       .filter((t) => t.trim() !== "")
@@ -94,10 +108,7 @@ videoSchema.post("save", async function (doc, next) {
     await doc.save();
     logger.info(`Embedding generated for video: ${doc._id}`);
   } catch (error) {
-    logger.error(
-      `Error generating video embedding for video: ${doc._id}`,
-      error
-    );
+    logger.error(`Error executing hook for video: ${doc._id}`, error);
     next();
   }
 });

@@ -50,6 +50,7 @@ router.post("/:videoId/comment", verifyJWT(), videoController.commentVideo);
 router.delete("/:videoId/comment", verifyJWT(), videoController.deleteComment);
 router.post("/:videoId/like", verifyJWT(), videoController.likeVideo);
 router.delete("/:videoId/unlike", verifyJWT(), videoController.unlikeVideo);
+router.post("/:videoId/watched", verifyJWT(), videoController.updateVideoWatchTime);
 router.post("/:videoId/share", verifyJWT(), videoController.shareVideo);
 router.put("/:videoId/status", verifyJWT(), videoController.updateVideoStatus);
 

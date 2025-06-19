@@ -259,7 +259,6 @@ async function createVideoTranscoderJob(video) {
     logger.info(`Video transcode job created with ID: ${jobId}`);
   } catch (error) {
     logger.error("Error creating transcode job", error);
-    throw error;
   }
 }
 

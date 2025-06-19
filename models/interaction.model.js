@@ -29,6 +29,11 @@ const interactionSchema = new Schema(
       type: Boolean,
       default: false,
     },
+    watchTime: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
   },
   {
     timestamps: true,

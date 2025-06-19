@@ -19,7 +19,10 @@ const getVideo = async (req, res) => {
 
 const getUserVideos = async (req, res) => {
   try {
-    const videos = await videoService.getUserVideos(req.query.userId, req.userId);
+    const videos = await videoService.getUserVideos(
+      req.query.userId,
+      req.userId
+    );
     return res.status(200).json(videos);
   } catch (error) {
     logger.info(error);
@@ -212,6 +215,23 @@ const unlikeVideo = async (req, res) => {
   }
 };
 
+const updateVideoWatchTime = async (req, res) => {
+  try {
+    const { videoId } = req.params;
+    const { watchTime } = req.body;
+    const result = await videoService.updateVideoWatchTime(
+      videoId,
+      req.userId,
+      watchTime
+    );
+    return res.status(200).json(result);
+  } catch (error) {
+    return res
+      .status(500)
+      .json({ message: error.message || "Internal Server Error" });
+  }
+};
+
 const shareVideo = async (req, res) => {
   try {
     const result = await videoService.shareVideo(
@@ -287,6 +307,7 @@ module.exports = {
   deleteComment,
   likeVideo,
   unlikeVideo,
+  updateVideoWatchTime,
   shareVideo,
   getVideos,
   updateVideoStatus,

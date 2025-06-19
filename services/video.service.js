@@ -8,7 +8,9 @@ const {
   deleteFromFirebaseStorage,
   getVideoTranscoderJob,
 } = require("../services/storage.service");
-const logger = require("../core/logger");
+
+const VIEW_THRESHOLD_SECONDS = 5; // 5 seconds
+const VIEW_THRESHOLD_PERCENT = 0.3; // 30% of video duration
 
 const getVideo = async (videoId, userId) => {
   if (!videoId) {
@@ -52,10 +54,6 @@ const getVideo = async (videoId, userId) => {
         : "Content for followers only"
     );
   }
-
-  setImmediate(async () => {
-    await incrementVideoView(video, userId);
-  });
   return video;
 };
 
@@ -88,26 +86,38 @@ const getVideoInteraction = async (videoId, userId) => {
   return totalInteractions;
 };
 
-const incrementVideoView = async (video, userId) => {
-  if (!userId) return;
-  video.views++;
-  try {
-    await Promise.all([
-      Interaction.findOneAndUpdate(
-        { userId: userId, videoId: video.id },
-        { $inc: { views: 1 } },
-        { upsert: true, new: true }
-      ),
-      video.save(),
-    ]);
-    logger.info(`Views incremented ${video.id}`);
-  } catch (error) {
-    logger.error(
-      `Error updating interaction or saving video ${video.id}`,
-      error
-    );
-    throw error;
+const updateVideoWatchTime = async (videoId, userId, watchTime) => {
+  if (!videoId || !userId || !watchTime) {
+    throw new Error("Video ID, user ID, and watch time are required");
   }
+  const video = await Video.findById(videoId);
+  if (!video) {
+    throw new Error("Video not found");
+  }
+
+  const thresholdInSeconds = Math.max(
+    VIEW_THRESHOLD_SECONDS,
+    video.duration * VIEW_THRESHOLD_PERCENT
+  );
+
+  const shouldIncrementView = watchTime >= thresholdInSeconds;
+
+  const interaction = await Interaction.findOneAndUpdate(
+    { userId: userId, videoId: videoId },
+    { $inc: { watchTime: watchTime } },
+    { upsert: true, new: true }
+  );
+  if (!interaction) {
+    throw new Error("Failed to update watch time");
+  }
+
+  if (shouldIncrementView) {
+    interaction.views += 1;
+    video.views += 1;
+    await Promise.all([interaction.save(), video.save()]);
+  }
+
+  return interaction;
 };
 
 const getUserLikedVideos = async (userId) => {
@@ -529,7 +539,6 @@ const updateVideoStatus = async (videoId, newStatus) => {
 module.exports = {
   getVideo,
   getVideoInteraction,
-  incrementVideoView,
   getUserVideos,
   getUserLikedVideos,
   getUserTargetedReviews,
@@ -541,6 +550,7 @@ module.exports = {
   deleteComment,
   likeVideo,
   unlikeVideo,
+  updateVideoWatchTime,
   shareVideo,
   getVideos,
   updateVideoStatus,
