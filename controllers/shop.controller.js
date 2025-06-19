@@ -1,4 +1,3 @@
-const { Product, productPopulate } = require("../models/product.model");
 const ShopService = require("../services/shop.service");
 
 async function getRecommendedProducts(req, res) {

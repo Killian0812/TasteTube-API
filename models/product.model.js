@@ -99,6 +99,18 @@ const productSchema = new Schema(
       min: 0,
       max: 5,
     },
+    location: {
+      type: {
+        type: String,
+        enum: ["Point"],
+        required: true,
+        default: "Point",
+      },
+      coordinates: {
+        type: [Number], // [longitude, latitude]
+        required: true,
+      },
+    },
   },
   {
     timestamps: true,
@@ -106,6 +118,7 @@ const productSchema = new Schema(
 );
 
 productSchema.plugin(mongoosePaginate);
+productSchema.index({ location: "2dsphere" });
 
 const productPopulate = [
   { path: "category", select: "_id name" },

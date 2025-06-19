@@ -2,7 +2,7 @@ const { v4: uuidv4 } = require("uuid");
 const { FirebaseStorage } = require("../core/firebase");
 const fs = require("fs");
 const bucket = FirebaseStorage.bucket();
-const Video = require("../models/video.model");
+const { Video } = require("../models/video.model");
 const { TranscoderServiceClient } =
   require("@google-cloud/video-transcoder").v1;
 const logger = require("../core/logger");
