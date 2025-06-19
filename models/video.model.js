@@ -3,8 +3,13 @@ const { Schema } = mongoose;
 const mongoosePaginate = require("mongoose-paginate-v2");
 const { getEmbedding } = require("../services/ai.service");
 const { createVideoTranscoderJob } = require("../services/storage.service");
-const ffmpeg = require("fluent-ffmpeg");
+const Mux = require("@mux/mux-node");
 const logger = require("../core/logger");
+
+const mux = new Mux({
+  tokenId: process.env.MUX_TOKEN_ID,
+  tokenSecret: process.env.MUX_TOKEN_SECRET,
+});
 
 const videoSchema = new Schema(
   {
@@ -70,6 +75,9 @@ const videoSchema = new Schema(
       type: Number, // in seconds
       default: 0,
     },
+    muxAssetId: {
+      type: String,
+    },
   },
   {
     timestamps: true,
@@ -77,23 +85,27 @@ const videoSchema = new Schema(
 );
 
 async function measureVideoDuration(doc) {
-  ffmpeg.ffprobe(doc.url, async (err, metadata) => {
-    if (err) {
-      logger.error(`Error getting duration for video: ${doc._id}`, err);
+  try {
+    if (doc.duration > 0) {
+      logger.info(`Duration already set for video: ${doc._id}`);
       return;
     }
-    try {
-      await doc
-        .model("Video")
-        .updateOne(
-          { _id: doc._id },
-          { $set: { duration: metadata.format.duration } }
-        );
-      logger.info(`Duration saved for video: ${doc._id}`);
-    } catch (error) {
-      logger.error(`Error updating duration for video: ${doc._id}`, error);
+    const asset = await mux.video.assets.create({ input: doc.url });
+    let assetDetails = await mux.video.assets.retrieve(asset.id);
+    while (assetDetails.status !== "ready") {
+      await new Promise((resolve) => setTimeout(resolve, 3000));
+      assetDetails = await mux.video.assets.retrieve(asset.id);
     }
-  });
+    await doc
+      .model("Video")
+      .updateOne(
+        { _id: doc._id },
+        { $set: { duration: assetDetails.duration, muxAssetId: asset.id } }
+      );
+    logger.info(`Duration saved for video: ${doc._id}`);
+  } catch (error) {
+    logger.error(`Error getting duration for video: ${doc._id}`, error);
+  }
 }
 
 async function generateVideoEmbedding(doc) {
