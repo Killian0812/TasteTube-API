@@ -76,41 +76,58 @@ const videoSchema = new Schema(
   }
 );
 
+async function measureVideoDuration(doc) {
+  ffmpeg.ffprobe(doc.url, async (err, metadata) => {
+    if (err) {
+      logger.error(`Error getting duration for video: ${doc._id}`, err);
+      return;
+    }
+    try {
+      await doc
+        .model("Video")
+        .updateOne(
+          { _id: doc._id },
+          { $set: { duration: metadata.format.duration } }
+        );
+      logger.info(`Duration saved for video: ${doc._id}`);
+    } catch (error) {
+      logger.error(`Error updating duration for video: ${doc._id}`, error);
+    }
+  });
+}
+
+async function generateVideoEmbedding(doc) {
+  const text = [doc.title || "", doc.description || ""]
+    .filter((t) => t.trim() !== "")
+    .join(" ");
+
+  if (!text) {
+    logger.warn(`No text content to generate embedding for video: ${doc._id}`);
+    return;
+  }
+
+  try {
+    const embedding = await getEmbedding(text);
+    await doc
+      .model("Video")
+      .updateOne({ _id: doc._id }, { $set: { embedding } });
+    logger.info(`Embedding generated for video: ${doc._id}`);
+  } catch (error) {
+    logger.error(`Error generating embedding for video: ${doc._id}`, error);
+  }
+}
+
 videoSchema.post("save", async function (doc, next) {
   try {
     if (doc.isNew) {
       await createVideoTranscoderJob(doc);
-
-      ffmpeg.ffprobe(doc.url, async (err, metadata) => {
-        if (err) {
-          logger.error(`Error getting duration for video: ${doc._id}`, err);
-        } else {
-          const duration = metadata.format.duration;
-          doc.duration = Math.floor(duration); // Round to nearest second
-          await doc.save();
-          logger.info(`Duration saved for video: ${doc._id}`);
-        }
-      });
+      await measureVideoDuration(doc);
     }
-    const text = [doc.title || "", doc.description || ""]
-      .filter((t) => t.trim() !== "")
-      .join(" ");
-
-    if (!text) {
-      logger.warn(
-        `No text content to generate embedding for video: ${doc._id}`
-      );
-      return next();
-    }
-
-    const embedding = await getEmbedding(text);
-    doc.embedding = embedding;
-    await doc.save();
-    logger.info(`Embedding generated for video: ${doc._id}`);
+    await generateVideoEmbedding(doc);
   } catch (error) {
     logger.error(`Error executing hook for video: ${doc._id}`, error);
-    next();
   }
+  next();
 });
 
 videoSchema.plugin(mongoosePaginate);
