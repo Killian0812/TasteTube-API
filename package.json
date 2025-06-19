@@ -1,6 +1,6 @@
 {
   "name": "tastetube_api",
-  "version": "1.4.2",
+  "version": "1.4.3",
   "description": "backend for tastetube app",
   "main": "server.js",
   "engines": {

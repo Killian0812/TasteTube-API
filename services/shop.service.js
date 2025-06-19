@@ -1,9 +1,6 @@
 const Address = require("../models/address.model");
 const { Product, productPopulate } = require("../models/product.model");
 const DeliveryOption = require("../models/deliveryOption.model");
-const {
-  calculateDistanceBetweenAddress,
-} = require("../services/location.service");
 
 async function getProductsInShop(shopId) {
   const products = await Product.find({ userId: shopId }).populate(
@@ -98,28 +95,65 @@ async function _getClosestProductsByQuery(
   page = 1,
   limit = 10
 ) {
-  const products = await Product.find(query).populate(productPopulate).lean();
+  const skip = (page - 1) * limit;
 
-  // Get distances for products based on shop delivery settings
-  const productsWithDistance = await _getProductWithShopDistances(
-    products,
-    address
-  );
+  const pipeline = [
+    {
+      $geoNear: {
+        near: {
+          type: "Point",
+          coordinates: [address.longitude, address.latitude],
+        },
+        distanceField: "distance",
+        spherical: true,
+        query: {
+          ...query,
+          location: { $exists: true },
+        },
+      },
+    },
+    { $sort: { distance: 1 } },
+    { $skip: skip },
+    { $limit: limit },
+    {
+      $lookup: {
+        from: "categories",
+        let: { catId: "$category" },
+        pipeline: [
+          { $match: { $expr: { $eq: ["$_id", "$$catId"] } } },
+          { $project: { _id: 1, name: 1 } },
+        ],
+        as: "category",
+      },
+    },
+    { $unwind: { path: "$category", preserveNullAndEmptyArrays: true } },
+    {
+      $lookup: {
+        from: "users",
+        let: { uid: "$userId" },
+        pipeline: [
+          { $match: { $expr: { $eq: ["$_id", "$$uid"] } } },
+          { $project: { _id: 1, image: 1, username: 1, phone: 1 } },
+        ],
+        as: "userId",
+      },
+    },
+    { $unwind: { path: "$userId", preserveNullAndEmptyArrays: true } },
+  ];
 
-  // Manual pagination
-  const paginatedProducts = productsWithDistance.slice(
-    (page - 1) * limit,
-    page * limit
-  );
-  const totalProducts = productsWithDistance.length;
-  const totalPages = Math.ceil(totalProducts / limit);
+  const [results, totalCount] = await Promise.all([
+    Product.aggregate(pipeline),
+    Product.countDocuments({ ...query, location: { $exists: true } }),
+  ]);
+
+  const totalPages = Math.ceil(totalCount / limit);
 
   return {
-    docs: paginatedProducts,
-    totalDocs: totalProducts,
-    limit: limit,
-    page: page,
-    totalPages: totalPages,
+    docs: results,
+    totalDocs: totalCount,
+    limit,
+    page,
+    totalPages,
     hasNextPage: page < totalPages,
     hasPrevPage: page > 1,
     nextPage: page < totalPages ? page + 1 : null,
@@ -128,71 +162,70 @@ async function _getClosestProductsByQuery(
 }
 
 async function _getClosestProducts(address, page = 1, limit = 10) {
-  const products = await Product.find().populate(productPopulate).lean();
+  const skip = (page - 1) * limit;
 
-  // Get distances for products based on shop delivery settings
-  const productsWithDistance = await _getProductWithShopDistances(
-    products,
-    address
-  );
+  // GeoNear aggregation
+  const pipeline = [
+    {
+      $geoNear: {
+        near: {
+          type: "Point",
+          coordinates: [address.longitude, address.latitude],
+        },
+        distanceField: "distance",
+        spherical: true,
+        query: {
+          location: { $exists: true },
+        },
+      },
+    },
+    { $sort: { distance: 1 } },
+    { $skip: skip },
+    { $limit: limit },
+    {
+      $lookup: {
+        from: "categories",
+        let: { catId: "$category" },
+        pipeline: [
+          { $match: { $expr: { $eq: ["$_id", "$$catId"] } } },
+          { $project: { _id: 1, name: 1 } },
+        ],
+        as: "category",
+      },
+    },
+    { $unwind: { path: "$category", preserveNullAndEmptyArrays: true } },
+    {
+      $lookup: {
+        from: "users",
+        let: { uid: "$userId" },
+        pipeline: [
+          { $match: { $expr: { $eq: ["$_id", "$$uid"] } } },
+          { $project: { _id: 1, image: 1, username: 1, phone: 1 } },
+        ],
+        as: "userId",
+      },
+    },
+    { $unwind: { path: "$userId", preserveNullAndEmptyArrays: true } },
+  ];
 
-  // Manual pagination
-  const paginatedProducts = productsWithDistance.slice(
-    (page - 1) * limit,
-    page * limit
-  );
-  const totalProducts = productsWithDistance.length;
-  const totalPages = Math.ceil(totalProducts / limit);
+  const [results, totalCount] = await Promise.all([
+    Product.aggregate(pipeline),
+    Product.countDocuments({ location: { $exists: true } }),
+  ]);
+
+  const totalPages = Math.ceil(totalCount / limit);
 
   return {
-    docs: paginatedProducts,
-    totalDocs: totalProducts,
-    limit: limit,
-    page: page,
-    totalPages: totalPages,
+    docs: results,
+    totalDocs: totalCount,
+    limit,
+    page,
+    totalPages,
     hasNextPage: page < totalPages,
     hasPrevPage: page > 1,
     nextPage: page < totalPages ? page + 1 : null,
     prevPage: page > 1 ? page - 1 : null,
   };
-}
-
-async function _getProductWithShopDistances(products, customerAddress) {
-  // Get unique shop userIds from products
-  const shopIds = [
-    ...new Set(products.map((product) => product.userId._id.toString())),
-  ];
-
-  // Fetch delivery addresses for all shops
-  const shopDeliveryOptions = await DeliveryOption.find({
-    shopId: { $in: shopIds },
-    address: { $ne: null },
-  })
-    .populate("address")
-    .select("address")
-    .lean();
-
-  // Create a map of shopId to their address
-  const addressMap = shopDeliveryOptions.reduce((map, option) => {
-    map[option.address.userId.toString()] = option.address;
-    return map;
-  }, {});
-
-  // Calculate distance for each product based on shop’s shop's address
-  const productsWithDistance = await Promise.all(
-    products
-      .filter((product) => addressMap[product.userId._id.toString()])
-      .map(async (product) => {
-        const shopAddress = addressMap[product.userId._id.toString()];
-        const distance = await calculateDistanceBetweenAddress(
-          customerAddress,
-          shopAddress
-        );
-        return { ...product, distance, shopAddress };
-      })
-  );
-
-  return productsWithDistance.sort((a, b) => a.distance - b.distance);
 }
 
 module.exports = {
