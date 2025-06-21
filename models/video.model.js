@@ -144,6 +144,9 @@ videoSchema.post("save", async function (doc, next) {
 
 videoSchema.plugin(mongoosePaginate);
 
+videoSchema.index({ status: 1, visibility: 1, userId: 1, createdAt: -1 });
+videoSchema.index({ createdAt: -1 });
+
 const videoPopulate = [
   { path: "userId", select: "_id username image" },
   { path: "targetUserId", select: "_id username image" },
