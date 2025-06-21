@@ -118,6 +118,9 @@ const productSchema = new Schema(
 );
 
 productSchema.plugin(mongoosePaginate);
+
+productSchema.index({ category: 1 });
+productSchema.index({ userId: 1 });
 productSchema.index({ location: "2dsphere" });
 
 const productPopulate = [
