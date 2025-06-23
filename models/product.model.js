@@ -103,12 +103,10 @@ const productSchema = new Schema(
       type: {
         type: String,
         enum: ["Point"],
-        required: true,
         default: "Point",
       },
       coordinates: {
         type: [Number], // [longitude, latitude]
-        required: true,
       },
     },
   },
@@ -122,6 +120,40 @@ productSchema.plugin(mongoosePaginate);
 productSchema.index({ category: 1 });
 productSchema.index({ userId: 1 });
 productSchema.index({ location: "2dsphere" });
+
+productSchema.pre("save", async function (next) {
+  if (this.location?.coordinates?.length === 2) return next();
+
+  try {
+    const DeliveryOption = mongoose.model("DeliveryOption");
+    const Address = mongoose.model("Address");
+
+    let address;
+
+    const deliveryOption = await DeliveryOption.findOne({
+      shopId: this.userId,
+    }).lean();
+    if (deliveryOption?.address) {
+      address = await Address.findById(deliveryOption.address).lean();
+    }
+    if (!address) {
+      address = await Address.findOne({ userId: this.userId })
+        .sort({ createdAt: 1 })
+        .lean();
+    }
+
+    if (address && address.longitude != null && address.latitude != null) {
+      this.location = {
+        type: "Point",
+        coordinates: [address.longitude, address.latitude],
+      };
+    }
+
+    return next();
+  } catch (error) {
+    return next(error);
+  }
+});
 
 const productPopulate = [
   { path: "category", select: "_id name" },
