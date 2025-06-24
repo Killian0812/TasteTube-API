@@ -160,7 +160,35 @@ const productPopulate = [
   { path: "userId", select: "_id image username phone" },
 ];
 
+const productAggregatePopulate = [
+  {
+    $lookup: {
+      from: "categories",
+      let: { catId: "$category" },
+      pipeline: [
+        { $match: { $expr: { $eq: ["$_id", "$$catId"] } } },
+        { $project: { _id: 1, name: 1 } },
+      ],
+      as: "category",
+    },
+  },
+  { $unwind: { path: "$category", preserveNullAndEmptyArrays: true } },
+  {
+    $lookup: {
+      from: "users",
+      let: { uid: "$userId" },
+      pipeline: [
+        { $match: { $expr: { $eq: ["$_id", "$$uid"] } } },
+        { $project: { _id: 1, image: 1, username: 1, phone: 1 } },
+      ],
+      as: "userId",
+    },
+  },
+  { $unwind: { path: "$userId", preserveNullAndEmptyArrays: true } },
+];
+
 module.exports = {
   Product: mongoose.model("Product", productSchema),
   productPopulate,
+  productAggregatePopulate,
 };

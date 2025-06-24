@@ -1,5 +1,9 @@
 const Address = require("../models/address.model");
-const { Product, productPopulate } = require("../models/product.model");
+const {
+  Product,
+  productPopulate,
+  productAggregatePopulate,
+} = require("../models/product.model");
 const DeliveryOption = require("../models/deliveryOption.model");
 const {
   calculateDistanceBetweenAddress,
@@ -200,30 +204,7 @@ async function _getClosestProductsByQuery(
     { $sort: { distance: 1 } },
     { $skip: skip },
     { $limit: limit },
-    {
-      $lookup: {
-        from: "categories",
-        let: { catId: "$category" },
-        pipeline: [
-          { $match: { $expr: { $eq: ["$_id", "$$catId"] } } },
-          { $project: { _id: 1, name: 1 } },
-        ],
-        as: "category",
-      },
-    },
-    { $unwind: { path: "$category", preserveNullAndEmptyArrays: true } },
-    {
-      $lookup: {
-        from: "users",
-        let: { uid: "$userId" },
-        pipeline: [
-          { $match: { $expr: { $eq: ["$_id", "$$uid"] } } },
-          { $project: { _id: 1, image: 1, username: 1, phone: 1 } },
-        ],
-        as: "userId",
-      },
-    },
-    { $unwind: { path: "$userId", preserveNullAndEmptyArrays: true } },
+    ...productAggregatePopulate,
   ];
 
   const [results, totalCount] = await Promise.all([

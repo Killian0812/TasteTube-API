@@ -285,10 +285,17 @@ const getRecommendedFeeds = async (userId, page = 1, limit = 10) => {
   });
 
   const scored = videos
-    .map((video) => ({
-      ...video,
-      score: _computeRecommendationScore(video, interactions, similaritiesMap),
-    }))
+    .map((video) => {
+      const { embedding, ...rest } = video;
+      return {
+        ...rest,
+        score: _computeRecommendationScore(
+          video,
+          interactions,
+          similaritiesMap
+        ),
+      };
+    })
     .sort((a, b) => b.score - a.score);
 
   const start = (page - 1) * limit;
