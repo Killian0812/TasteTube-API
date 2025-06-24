@@ -44,7 +44,13 @@ async function searchProductsInShop(shopId, keyword) {
   return products;
 }
 
-async function searchProducts(userId, keyword, page = 1, limit = 10) {
+async function searchProducts(
+  userId,
+  keyword,
+  page = 1,
+  limit = 10,
+  orderBy = "newest"
+) {
   const query = {
     $or: [
       { name: { $regex: keyword, $options: "i" } },
@@ -52,30 +58,52 @@ async function searchProducts(userId, keyword, page = 1, limit = 10) {
     ],
   };
 
-  // Find the customer’s default address
-  const customerAddress = await Address.findOne({
-    userId: userId,
-    isDefault: true,
-  }).lean();
-
-  if (!customerAddress) {
-    return await _getNewestProductsByQuery(query, page, limit);
+  if (orderBy === "distance") {
+    const customerAddress = await Address.findOne({
+      userId: userId,
+      isDefault: true,
+    }).lean();
+    if (!customerAddress) {
+      throw new Error("You haven't set a default address yet");
+    }
+    return await _getClosestProductsByQuery(
+      query,
+      customerAddress,
+      page,
+      limit
+    );
   }
 
-  return await _getClosestProductsByQuery(query, customerAddress, page, limit);
+  if (orderBy === "rating") {
+    return await _getHighestRatingProductsByQuery(query, page, limit);
+  }
+
+  return await _getNewestProductsByQuery(query, page, limit);
 }
 
-async function getRecommendedProducts(userId, page = 1, limit = 10) {
+// Order by can be "distance", "newest", "rating", etc.
+async function getRecommendedProducts(
+  userId,
+  page = 1,
+  limit = 10,
+  orderBy = "distance"
+) {
+  if (orderBy === "newest") {
+    return await _getNewestProducts(page, limit);
+  }
+
+  if (orderBy === "rating") {
+    return await _getHighestRatingProducts(page, limit);
+  }
+
   // Find the customer's default address
   const customerAddress = await Address.findOne({
     userId: userId,
     isDefault: true,
   }).lean();
-
   if (!customerAddress) {
-    return await _getNewestProducts(page, limit);
+    throw new Error("You haven't set a default address yet");
   }
-
   return await _getClosestProducts(customerAddress, page, limit);
 }
 
@@ -92,6 +120,19 @@ async function _getNewestProducts(page = 1, limit = 10) {
   return await Product.paginate({}, options);
 }
 
+async function _getHighestRatingProducts(page = 1, limit = 10) {
+  const options = {
+    page: page,
+    limit: limit,
+    populate: productPopulate,
+    lean: true,
+    sort: { avgRating: -1 }, // Sort by highest rating
+  };
+
+  // Default pagination
+  return await Product.paginate({}, options);
+}
+
 async function _getNewestProductsByQuery(query, page = 1, limit = 10) {
   const options = {
     page: page,
@@ -102,6 +143,18 @@ async function _getNewestProductsByQuery(query, page = 1, limit = 10) {
   };
 
   // Paginate with search query
+  return await Product.paginate(query, options);
+}
+
+async function _getHighestRatingProductsByQuery(query, page = 1, limit = 10) {
+  const options = {
+    page: page,
+    limit: limit,
+    populate: productPopulate,
+    lean: true,
+    sort: { avgRating: -1 },
+  };
+
   return await Product.paginate(query, options);
 }
 

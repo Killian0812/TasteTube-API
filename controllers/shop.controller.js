@@ -6,12 +6,14 @@ async function getRecommendedProducts(req, res) {
   const limit = parseInt(req.query.limit) || 10;
   const pageNum = parseInt(page, 10) || 1;
   const limitNum = parseInt(limit, 10) || 10;
+  const orderBy = req.query.orderBy || "distance";
 
   try {
     const result = await ShopService.getRecommendedProducts(
       userId,
       pageNum,
-      limitNum
+      limitNum,
+      orderBy
     );
     res.status(200).json(result);
   } catch (error) {
