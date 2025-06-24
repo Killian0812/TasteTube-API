@@ -19,7 +19,11 @@ const search = async (req, res) => {
 const getFeeds = async (req, res) => {
   try {
     const { page = 1, limit = 10 } = req.query;
-    const result = await contentService.getPublicFeeds(req.userId, page, limit);
+    const result = await contentService.getRecommendedFeeds(
+      req.userId,
+      page,
+      limit
+    );
     res.status(result.status).json(result.data);
   } catch (error) {
     logger.error(error);

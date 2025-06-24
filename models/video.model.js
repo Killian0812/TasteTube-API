@@ -175,7 +175,120 @@ const videoPopulate = [
   },
 ];
 
+const videoAggregatePopulate = [
+  // Lookup for userId
+  {
+    $lookup: {
+      from: "users", // MongoDB collection name (lowercase, pluralized by Mongoose)
+      localField: "userId",
+      foreignField: "_id",
+      as: "userId",
+      pipeline: [
+        {
+          $project: {
+            _id: 1,
+            username: 1,
+            image: 1,
+          },
+        },
+      ],
+    },
+  },
+  // Unwind userId to convert array to single object
+  {
+    $unwind: {
+      path: "$userId",
+      preserveNullAndEmptyArrays: true, // Keep videos if userId is missing
+    },
+  },
+  // Lookup for targetUserId
+  {
+    $lookup: {
+      from: "users",
+      localField: "targetUserId",
+      foreignField: "_id",
+      as: "targetUserId",
+      pipeline: [
+        {
+          $project: {
+            _id: 1,
+            username: 1,
+            image: 1,
+          },
+        },
+      ],
+    },
+  },
+  // Unwind targetUserId
+  {
+    $unwind: {
+      path: "$targetUserId",
+      preserveNullAndEmptyArrays: true, // Keep videos if targetUserId is missing
+    },
+  },
+  // Lookup for products
+  {
+    $lookup: {
+      from: "products", // Assuming Mongoose pluralizes to 'products'
+      localField: "products",
+      foreignField: "_id",
+      as: "products",
+      pipeline: [
+        // Nested lookup for products.category
+        {
+          $lookup: {
+            from: "categories", // Assuming Mongoose pluralizes to 'categories'
+            localField: "category",
+            foreignField: "_id",
+            as: "category",
+            pipeline: [
+              {
+                $project: {
+                  _id: 1,
+                  name: 1,
+                },
+              },
+            ],
+          },
+        },
+        {
+          $unwind: {
+            path: "$category",
+            preserveNullAndEmptyArrays: true,
+          },
+        },
+        // Nested lookup for products.userId
+        {
+          $lookup: {
+            from: "users",
+            localField: "userId",
+            foreignField: "_id",
+            as: "userId",
+            pipeline: [
+              {
+                $project: {
+                  _id: 1,
+                  image: 1,
+                  username: 1,
+                  phone: 1,
+                },
+              },
+            ],
+          },
+        },
+        {
+          $unwind: {
+            path: "$userId",
+            preserveNullAndEmptyArrays: true,
+          },
+        },
+      ],
+    },
+  },
+];
+
 module.exports = {
   Video: mongoose.model("Video", videoSchema),
   videoPopulate,
+  videoAggregatePopulate,
 };
