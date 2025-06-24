@@ -1,7 +1,10 @@
 const Address = require("../models/address.model");
 const { Product, productPopulate } = require("../models/product.model");
 const DeliveryOption = require("../models/deliveryOption.model");
-const { calculateDistanceBetweenAddress } = require("./location.service");
+const {
+  calculateDistanceBetweenAddress,
+  calculateHaversineDistance,
+} = require("./location.service");
 
 async function getProductsInShop(shopId, userId) {
   const products = await Product.find({ userId: shopId }).populate(
@@ -75,10 +78,10 @@ async function searchProducts(
   }
 
   if (orderBy === "rating") {
-    return await _getHighestRatingProductsByQuery(query, page, limit);
+    return await _getHighestRatingProductsByQuery(query, page, limit, userId);
   }
 
-  return await _getNewestProductsByQuery(query, page, limit);
+  return await _getNewestProductsByQuery(query, page, limit, userId);
 }
 
 // Order by can be "distance", "newest", "rating", etc.
@@ -89,11 +92,11 @@ async function getRecommendedProducts(
   orderBy = "distance"
 ) {
   if (orderBy === "newest") {
-    return await _getNewestProducts(page, limit);
+    return await _getNewestProducts(page, limit, userId);
   }
 
   if (orderBy === "rating") {
-    return await _getHighestRatingProducts(page, limit);
+    return await _getHighestRatingProducts(page, limit, userId);
   }
 
   // Find the customer's default address
@@ -107,7 +110,7 @@ async function getRecommendedProducts(
   return await _getClosestProducts(customerAddress, page, limit);
 }
 
-async function _getNewestProducts(page = 1, limit = 10) {
+async function _getNewestProducts(page = 1, limit = 10, userId) {
   const options = {
     page: page,
     limit: limit,
@@ -117,10 +120,12 @@ async function _getNewestProducts(page = 1, limit = 10) {
   };
 
   // Default pagination
-  return await Product.paginate({}, options);
+  const result = await Product.paginate({}, options);
+  result.docs = await _appendDistanceToProducts(result.docs, userId);
+  return result;
 }
 
-async function _getHighestRatingProducts(page = 1, limit = 10) {
+async function _getHighestRatingProducts(page = 1, limit = 10, userId) {
   const options = {
     page: page,
     limit: limit,
@@ -130,10 +135,12 @@ async function _getHighestRatingProducts(page = 1, limit = 10) {
   };
 
   // Default pagination
-  return await Product.paginate({}, options);
+  const result = await Product.paginate({}, options);
+  result.docs = await _appendDistanceToProducts(result.docs, userId);
+  return result;
 }
 
-async function _getNewestProductsByQuery(query, page = 1, limit = 10) {
+async function _getNewestProductsByQuery(query, page = 1, limit = 10, userId) {
   const options = {
     page: page,
     limit: limit,
@@ -143,10 +150,17 @@ async function _getNewestProductsByQuery(query, page = 1, limit = 10) {
   };
 
   // Paginate with search query
-  return await Product.paginate(query, options);
+  const result = await Product.paginate(query, options);
+  result.docs = await _appendDistanceToProducts(result.docs, userId);
+  return result;
 }
 
-async function _getHighestRatingProductsByQuery(query, page = 1, limit = 10) {
+async function _getHighestRatingProductsByQuery(
+  query,
+  page = 1,
+  limit = 10,
+  userId
+) {
   const options = {
     page: page,
     limit: limit,
@@ -155,7 +169,9 @@ async function _getHighestRatingProductsByQuery(query, page = 1, limit = 10) {
     sort: { avgRating: -1 },
   };
 
-  return await Product.paginate(query, options);
+  const result = await Product.paginate(query, options);
+  result.docs = await _appendDistanceToProducts(result.docs, userId);
+  return result;
 }
 
 async function _getClosestProductsByQuery(
@@ -295,6 +311,34 @@ async function _getClosestProducts(address, page = 1, limit = 10) {
     nextPage: page < totalPages ? page + 1 : null,
     prevPage: page > 1 ? page - 1 : null,
   };
+}
+
+async function _appendDistanceToProducts(products, userId) {
+  const customerAddress = await Address.findOne({
+    userId: userId,
+    isDefault: true,
+  }).lean();
+
+  if (!customerAddress) return products;
+
+  const productsWithDistance = products.map((product) => {
+    if (!product?.location) return product;
+
+    const distance = calculateHaversineDistance({
+      lng1: customerAddress.longitude,
+      lat1: customerAddress.latitude,
+      lng2: product.location.coordinates[0],
+      lat2: product.location.coordinates[1],
+      unit: "m",
+    });
+
+    return {
+      ...product,
+      distance,
+    };
+  });
+
+  return productsWithDistance;
 }
 
 module.exports = {

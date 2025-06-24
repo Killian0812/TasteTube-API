@@ -1,5 +1,5 @@
 const axios = require("axios");
-const { redis, getValue, setValue } = require("../core/redis");
+const { getValue, setValue } = require("../core/redis");
 const googleMapsConfig = require("../config/googleMaps.config");
 
 // Distance between two addresses in meters
@@ -32,25 +32,42 @@ const calculateDistanceBetweenAddress = async (
     return parseFloat(cachedDistance);
   }
 
-  const R = 6371; // Earth's radius in km
-  const dLat =
-    ((destinationAddress.latitude - originAddress.latitude) * Math.PI) / 180;
-  const dLng =
-    ((destinationAddress.longitude - originAddress.longitude) * Math.PI) / 180;
+  const distance = await calculateHaversineDistance(
+    originAddress.longitude,
+    originAddress.latitude,
+    destinationAddress.longitude,
+    destinationAddress.latitude
+  );
+
+  await setValue(cacheKey, distance);
+  return distance;
+};
+
+// Unit can be 'km' or 'm'
+const calculateHaversineDistance = ({
+  lng1,
+  lat1,
+  lng2,
+  lat2,
+  unit = "km",
+}) => {
+  const R = unit === "km" ? 6371 : 6371000;
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLng = ((lng2 - lng1) * Math.PI) / 180;
+
   const a =
     Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos((originAddress.latitude * Math.PI) / 180) *
-      Math.cos((destinationAddress.latitude * Math.PI) / 180) *
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
       Math.sin(dLng / 2) *
       Math.sin(dLng / 2);
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   const distance = R * c;
-
-  await setValue(cacheKey, distance);
   return distance;
 };
 
 module.exports = {
   getDistanceBetweenAddress,
   calculateDistanceBetweenAddress,
+  calculateHaversineDistance,
 };
