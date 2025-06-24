@@ -1,8 +1,9 @@
 const Address = require("../models/address.model");
 const { Product, productPopulate } = require("../models/product.model");
 const DeliveryOption = require("../models/deliveryOption.model");
+const { calculateDistanceBetweenAddress } = require("./location.service");
 
-async function getProductsInShop(shopId) {
+async function getProductsInShop(shopId, userId) {
   const products = await Product.find({ userId: shopId }).populate(
     productPopulate
   );
@@ -14,7 +15,22 @@ async function getProductsInShop(shopId) {
     .select("address")
     .lean();
 
-  return { products, shopAddress: deliveryOption?.address };
+  let distance = null;
+  if (userId) {
+    const customerAddress = await Address.findOne({
+      userId: userId,
+      isDefault: true,
+    }).lean();
+
+    if (customerAddress) {
+      distance = await calculateDistanceBetweenAddress(
+        customerAddress,
+        deliveryOption.address
+      );
+    }
+  }
+
+  return { products, shopAddress: deliveryOption?.address, distance };
 }
 
 async function searchProductsInShop(shopId, keyword) {

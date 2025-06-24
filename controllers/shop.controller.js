@@ -22,8 +22,9 @@ async function getRecommendedProducts(req, res) {
 
 async function getProductsInShop(req, res) {
   const shopId = req.params.shopId;
+  const userId = req.userId;
   try {
-    const result = await ShopService.getProductsInShop(shopId);
+    const result = await ShopService.getProductsInShop(shopId, userId);
     res.status(200).json(result);
   } catch (error) {
     res.status(500).json({ message: "Failed to fetch products" });
